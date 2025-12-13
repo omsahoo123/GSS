@@ -22,9 +22,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, Video } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
 
 const pastConsultations = [
   {
@@ -162,17 +161,6 @@ export default function HealthRecordsPage() {
                           <Download className="mr-2 h-4 w-4" />
                           Prescription
                         </Button>
-                        {consultation.type === 'Video' && (
-                          <Link
-                            href={`/dashboard/patient/consultation/replay?id=${consultation.id}`}
-                            passHref
-                          >
-                             <Button variant="outline" size="sm">
-                              <Video className="mr-2 h-4 w-4" />
-                              Replay
-                            </Button>
-                          </Link>
-                        )}
                       </TableCell>
                     </TableRow>
                   ))}
