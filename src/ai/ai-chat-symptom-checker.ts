@@ -34,6 +34,7 @@ export async function chatSymptomChecker(input: ChatSymptomCheckerInput): Promis
 
 const chatSymptomCheckerPrompt = ai.definePrompt({
   name: 'chatSymptomCheckerPrompt',
+  model: 'gemini-1.5-flash-latest',
   input: {schema: ChatSymptomCheckerInputSchema},
   output: {schema: ChatSymptomCheckerOutputSchema},
   prompt: `You are a friendly and empathetic healthcare assistant. Your role is to chat with users to understand their health symptoms and provide helpful, preliminary guidance. Your tone should be warm, reassuring, and professional, like a caring doctor talking to a patient.
