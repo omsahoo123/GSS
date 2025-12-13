@@ -17,35 +17,8 @@ import {
   Video,
 } from 'lucide-react';
 import Link from 'next/link';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartConfig,
-} from '@/components/ui/chart';
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
-
-const chartData = [
-  { month: 'January', systolic: 120, diastolic: 80 },
-  { month: 'February', systolic: 122, diastolic: 81 },
-  { month: 'March', systolic: 118, diastolic: 79 },
-  { month: 'April', systolic: 125, diastolic: 82 },
-  { month: 'May', systolic: 123, diastolic: 80 },
-  { month: 'June', systolic: 121, diastolic: 78 },
-];
-
-const chartConfig = {
-  systolic: {
-    label: 'Systolic',
-    color: 'hsl(var(--primary))',
-  },
-  diastolic: {
-    label: 'Diastolic',
-    color: 'hsl(var(--accent))',
-  },
-} satisfies ChartConfig;
 
 export default function PatientDashboardPage() {
   const doctorImage = PlaceHolderImages.find((img) => img.id === 'doctor-1');
@@ -99,7 +72,7 @@ export default function PatientDashboardPage() {
             <CardDescription>Concerned about a symptom?</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="#" passHref>
+            <Link href="/dashboard/patient/symptom-checker" passHref>
               <Button size="lg" className="w-full">
                 <Stethoscope className="mr-2 h-5 w-5" /> Start Check
               </Button>
@@ -133,62 +106,6 @@ export default function PatientDashboardPage() {
               </Button>
             </Link>
           </CardFooter>
-        </Card>
-
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Blood Pressure Trend</CardTitle>
-            <CardDescription>
-              Your blood pressure readings for the last 6 months.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-64 w-full">
-              <AreaChart
-                accessibilityLayer
-                data={chartData}
-                margin={{
-                  left: 12,
-                  right: 12,
-                }}
-              >
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  tickFormatter={(value) => value.slice(0, 3)}
-                />
-                 <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  domain={[60, 140]}
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="dot" />}
-                />
-                <Area
-                  dataKey="systolic"
-                  type="natural"
-                  fill="var(--color-systolic)"
-                  fillOpacity={0.4}
-                  stroke="var(--color-systolic)"
-                  stackId="a"
-                />
-                <Area
-                  dataKey="diastolic"
-                  type="natural"
-                  fill="var(--color-diastolic)"
-                  fillOpacity={0.4}
-                  stroke="var(--color-diastolic)"
-                  stackId="b"
-                />
-              </AreaChart>
-            </ChartContainer>
-          </CardContent>
         </Card>
       </div>
     </div>
