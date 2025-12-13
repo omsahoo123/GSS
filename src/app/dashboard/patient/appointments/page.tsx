@@ -17,9 +17,12 @@ import { Video, Building } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 const doctors = [
-  { id: 'dr-anjali-sharma', name: 'Dr. Anjali Sharma', specialty: 'Cardiologist', imageId: 'doctor-1' },
-  { id: 'dr-priya-singh', name: 'Dr. Priya Singh', specialty: 'General Physician', imageId: 'avatar-doctor' },
+  { id: 'dr-anjali-sharma', name: 'Dr. Anjali Sharma', specialty: 'Cardiologist', imageId: 'doctor-1', department: 'Cardiology' },
+  { id: 'dr-priya-singh', name: 'Dr. Priya Singh', specialty: 'General Physician', imageId: 'avatar-doctor', department: 'General Medicine' },
+  { id: 'dr-arun-verma', name: 'Dr. Arun Verma', specialty: 'Dermatologist', imageId: 'doctor-2', department: 'Dermatology' },
 ];
+
+const departments = ['Cardiology', 'General Medicine', 'Dermatology'];
 
 const availableTimeSlots = [
   "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
@@ -27,6 +30,7 @@ const availableTimeSlots = [
 ];
 
 const appointmentSchema = z.object({
+  department: z.string().min(1, 'Please select a department.'),
   doctorId: z.string().min(1, 'Please select a doctor.'),
   appointmentDate: z.string().min(1, 'Please enter a date.'),
   appointmentTime: z.string().min(1, 'Please select a time slot.'),
@@ -37,12 +41,15 @@ type AppointmentFormValues = z.infer<typeof appointmentSchema>;
 
 export default function AppointmentsPage() {
   const [isBooking, setIsBooking] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
 
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
       consultationType: 'video',
       appointmentDate: '',
+      department: '',
+      doctorId: '',
     },
   });
 
@@ -57,7 +64,8 @@ export default function AppointmentsPage() {
         description: `Your ${data.consultationType} consultation with ${doctors.find(d => d.id === data.doctorId)?.name} is confirmed for ${data.appointmentDate} at ${data.appointmentTime}.`,
       });
       form.reset();
-       form.setValue('consultationType', 'video');
+      form.setValue('consultationType', 'video');
+      setSelectedDepartment('');
       setIsBooking(false);
     }, 1500);
   };
@@ -65,6 +73,8 @@ export default function AppointmentsPage() {
   const selectedDoctorId = form.watch('doctorId');
   const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
   const doctorImage = PlaceHolderImages.find(p => p.id === selectedDoctor?.imageId);
+
+  const filteredDoctors = selectedDepartment ? doctors.filter(d => d.department === selectedDepartment) : [];
 
   return (
     <div className="space-y-6">
@@ -83,22 +93,51 @@ export default function AppointmentsPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="grid gap-8 md:grid-cols-2">
-                {/* Column 1: Doctor and Type */}
+                {/* Column 1: Department, Doctor and Type */}
                 <div className="space-y-8">
+                   <FormField
+                    control={form.control}
+                    name="department"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Select Department</FormLabel>
+                        <Select onValueChange={(value) => {
+                          field.onChange(value);
+                          setSelectedDepartment(value);
+                          form.setValue('doctorId', ''); // Reset doctor when department changes
+                        }} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Choose a department..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {departments.map(dept => (
+                              <SelectItem key={dept} value={dept}>
+                                {dept}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="doctorId"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Select Doctor</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedDepartment}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Choose a doctor..." />
+                              <SelectValue placeholder={selectedDepartment ? "Choose a doctor..." : "Select a department first"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {doctors.map(doctor => (
+                            {filteredDoctors.map(doctor => (
                               <SelectItem key={doctor.id} value={doctor.id}>
                                 {doctor.name} - {doctor.specialty}
                               </SelectItem>
@@ -119,8 +158,11 @@ export default function AppointmentsPage() {
                        </div>
                      </div>
                    )}
+                </div>
 
-                  <FormField
+                {/* Column 2: Consultation, Date and Time */}
+                <div className="space-y-8">
+                   <FormField
                     control={form.control}
                     name="consultationType"
                     render={({ field }) => (
@@ -154,10 +196,7 @@ export default function AppointmentsPage() {
                       </FormItem>
                     )}
                   />
-                </div>
 
-                {/* Column 2: Date and Time */}
-                <div className="space-y-8">
                    <FormField
                     control={form.control}
                     name="appointmentDate"
