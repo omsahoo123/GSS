@@ -3,8 +3,8 @@
     {
       "id": "hero",
       "description": "Hero image for the landing page showing a rural healthcare scene.",
-      "imageUrl": "https://images.unsplash.com/photo-1698465281093-9f09159733b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxydXJhbCUyMGhlYWx0aGNhcmUlMjBpbmRpYXxlbnwwfHx8fDE3NjU2MjgwNTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "rural healthcare india"
+      "imageUrl": "https://images.unsplash.com/photo-1599049449830-38a4d46c483a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxydXJhbCUyMHZpbGxhZ2UlMjBoZWFsdGhjYXJlfGVufDB8fHx8MTY3MjUzNjAwMHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "rural village healthcare"
     },
     {
       "id": "avatar-patient",
