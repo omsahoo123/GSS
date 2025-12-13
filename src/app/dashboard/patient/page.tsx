@@ -20,8 +20,51 @@ import { ArrowRight, HeartPulse, Pill, Stethoscope, Video } from 'lucide-react';
 import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
+
+const appointmentTime = new Date();
+appointmentTime.setDate(appointmentTime.getDate() + 1);
+appointmentTime.setHours(10, 30, 0, 0); // Tomorrow at 10:30 AM
 
 export default function PatientDashboardPage() {
+  const [canJoin, setCanJoin] = useState(false);
+  const [countdown, setCountdown] = useState('');
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const diff = appointmentTime.getTime() - now.getTime();
+
+      const joinWindowStart = appointmentTime.getTime() - 15 * 60 * 1000; // 15 mins before
+      const joinWindowEnd = appointmentTime.getTime() + 60 * 60 * 1000; // 1 hour after
+
+      if (now.getTime() >= joinWindowStart && now.getTime() <= joinWindowEnd) {
+        setCanJoin(true);
+        setCountdown('You can join the call now.');
+        return;
+      } else {
+        setCanJoin(false);
+      }
+      
+      if (diff > 0) {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diff / 1000 / 60) % 60);
+        const seconds = Math.floor((diff / 1000) % 60);
+        setCountdown(`Join in: ${days}d ${hours}h ${minutes}m ${seconds}s`);
+      } else {
+        setCountdown('Appointment time has passed.');
+      }
+    };
+    
+    const interval = setInterval(updateCountdown, 1000);
+    updateCountdown();
+
+    return () => clearInterval(interval);
+
+  }, []);
+
+
   const doctorImage = PlaceHolderImages.find((img) => img.id === 'doctor-1');
   const healthyHabitsImages = PlaceHolderImages.filter((img) =>
     img.id.startsWith('healthy-habit-')
@@ -94,20 +137,25 @@ export default function PatientDashboardPage() {
             )}
           </CardHeader>
           <CardContent>
-            <div className="flex items-center space-x-4 rounded-md border p-4">
-              <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Video Consultation
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Tomorrow, 10:30 AM
-                </p>
+            <div className="space-y-4 rounded-md border p-4">
+              <div className="flex flex-1 items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium leading-none">
+                    Video Consultation
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                    Tomorrow, 10:30 AM
+                    </p>
+                </div>
+                <Link href="/dashboard/patient/consultation" passHref>
+                    <Button disabled={!canJoin}>
+                    <Video className="mr-2 h-4 w-4" /> Join Call
+                    </Button>
+                </Link>
               </div>
-              <Link href="/dashboard/patient/consultation" passHref>
-                <Button>
-                  <Video className="mr-2 h-4 w-4" /> Join Call
-                </Button>
-              </Link>
+               <div className="text-center text-sm font-medium text-primary">
+                {countdown}
+              </div>
             </div>
           </CardContent>
         </Card>

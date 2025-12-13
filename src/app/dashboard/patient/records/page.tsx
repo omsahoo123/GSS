@@ -22,8 +22,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, Video } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 const pastConsultations = [
   {
@@ -31,6 +32,7 @@ const pastConsultations = [
     doctor: 'Dr. Anjali Sharma',
     department: 'Cardiology',
     date: '2024-06-15',
+    type: 'Video',
     fileName: 'Prescription_Dr_Sharma_20240615.txt',
     fileUrl: '#',
   },
@@ -39,6 +41,7 @@ const pastConsultations = [
     doctor: 'Dr. Priya Singh',
     department: 'General Medicine',
     date: '2024-04-22',
+    type: 'In-Person',
     fileName: 'Prescription_Dr_Singh_20240422.txt',
     fileUrl: '#',
   },
@@ -47,6 +50,7 @@ const pastConsultations = [
     doctor: 'Dr. Arun Verma',
     department: 'Dermatology',
     date: '2024-02-10',
+    type: 'In-Person',
     fileName: 'Prescription_Dr_Verma_20240210.txt',
     fileUrl: '#',
   },
@@ -117,7 +121,7 @@ export default function HealthRecordsPage() {
         <TabsList>
           <TabsTrigger value="prescriptions">
             <FileText className="mr-2 h-4 w-4" />
-            Past Prescriptions
+            Past Consultations
           </TabsTrigger>
           <TabsTrigger value="lab-reports">
             <FileText className="mr-2 h-4 w-4" />
@@ -128,9 +132,9 @@ export default function HealthRecordsPage() {
         <TabsContent value="prescriptions">
           <Card>
             <CardHeader>
-              <CardTitle>Past Consultancy Prescriptions</CardTitle>
+              <CardTitle>Past Consultations</CardTitle>
               <CardDescription>
-                Here is a list of your prescriptions from previous consultations.
+                Here is a list of your prescriptions and recordings from previous consultations.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -140,6 +144,7 @@ export default function HealthRecordsPage() {
                     <TableHead>Doctor</TableHead>
                     <TableHead>Department</TableHead>
                     <TableHead>Date</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -149,15 +154,27 @@ export default function HealthRecordsPage() {
                       <TableCell className="font-medium">{consultation.doctor}</TableCell>
                       <TableCell>{consultation.department}</TableCell>
                       <TableCell>{consultation.date}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell>{consultation.type}</TableCell>
+                      <TableCell className="text-right space-x-2">
                         <Button 
                           variant="outline" 
                           size="sm"
                           onClick={() => handleDownload(consultation.fileName, `Doctor: ${consultation.doctor}\nDate: ${consultation.date}`)}
                         >
                           <Download className="mr-2 h-4 w-4" />
-                          Download
+                          Prescription
                         </Button>
+                        {consultation.type === 'Video' && (
+                          <Link
+                            href={`/dashboard/patient/consultation/replay?id=${consultation.id}`}
+                            passHref
+                          >
+                             <Button variant="outline" size="sm">
+                              <Video className="mr-2 h-4 w-4" />
+                              Replay
+                            </Button>
+                          </Link>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -174,7 +191,7 @@ export default function HealthRecordsPage() {
               <CardDescription>
                 View and download your medical test results.
               </CardDescription>
-            </CardHeader>
+            </Header>
             <CardContent>
                <Table>
                 <TableHeader>

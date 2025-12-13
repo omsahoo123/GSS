@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-react';
@@ -15,7 +15,11 @@ export default function VideoConsultationPage() {
   const [isCameraOff, setIsCameraOff] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
+  const doctor = searchParams.get('doctor') || 'Dr. Anjali Sharma';
+  const time = searchParams.get('time') || 'Tomorrow, 10:30 AM';
+  
   useEffect(() => {
     const getCameraPermission = async () => {
       try {
@@ -99,8 +103,8 @@ export default function VideoConsultationPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Consultation with Dr. Anjali Sharma</CardTitle>
-          <CardDescription>The call has started. Please wait for the doctor to join.</CardDescription>
+          <CardTitle>Consultation with {doctor}</CardTitle>
+          <CardDescription>Appointment Time: {time}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
@@ -116,8 +120,8 @@ export default function VideoConsultationPage() {
                  <p className="absolute bottom-2 left-2 rounded-sm bg-black/50 px-2 py-1 text-xs text-white">Aarav Sharma (You)</p>
             </div>
             <div className="relative aspect-video rounded-lg bg-secondary flex items-center justify-center text-muted-foreground">
-                <p>Waiting for Dr. Anjali Sharma...</p>
-                 <p className="absolute bottom-2 left-2 rounded-sm bg-black/50 px-2 py-1 text-xs text-white">Dr. Anjali Sharma</p>
+                <p>Waiting for {doctor}...</p>
+                 <p className="absolute bottom-2 left-2 rounded-sm bg-black/50 px-2 py-1 text-xs text-white">{doctor}</p>
             </div>
           </div>
           <div className="mt-6 flex justify-center gap-4">
