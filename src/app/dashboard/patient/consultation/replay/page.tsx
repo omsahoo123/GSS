@@ -14,7 +14,7 @@ const pastConsultations = [
     department: 'Cardiology',
     date: '2024-06-15',
     type: 'Video',
-    videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4', // Placeholder video
+    videoUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', // Placeholder health-related video
   },
   {
     id: 'consult-2',
