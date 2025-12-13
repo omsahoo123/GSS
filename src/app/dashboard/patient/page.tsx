@@ -134,7 +134,7 @@ export default function PatientDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <Link href="#" passHref>
+            <Link href="/dashboard/patient/pharmacy-stock" passHref>
               <Button variant="outline" className="w-full">
                 <Pill className="mr-2 h-4 w-4" /> Check Stock
               </Button>
