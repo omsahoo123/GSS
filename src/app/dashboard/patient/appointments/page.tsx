@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
-import { CalendarIcon, Clock, Video, Walk } from 'lucide-react';
+import { CalendarIcon, Clock, Video, Building } from 'lucide-react';
 
 const doctors = [
   { id: 'dr-anjali-sharma', name: 'Dr. Anjali Sharma', specialty: 'Cardiologist', imageId: 'doctor-1' },
@@ -148,7 +148,7 @@ export default function AppointmentsPage() {
                                 <RadioGroupItem value="in-person" />
                               </FormControl>
                               <FormLabel className="font-normal flex items-center gap-2">
-                                <Walk className="h-4 w-4" /> In-Person Visit
+                                <Building className="h-4 w-4" /> In-Person Visit
                               </FormLabel>
                             </FormItem>
                           </RadioGroup>
@@ -198,7 +198,7 @@ export default function AppointmentsPage() {
                            <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a time" />
-                            </SelectTrigger>
+                            </Trigger>
                           </FormControl>
                           <SelectContent>
                              {availableTimeSlots.map(time => (
