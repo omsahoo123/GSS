@@ -29,7 +29,7 @@ type Message = {
 
 const welcomeMessage: Message = {
   role: 'bot',
-  text: "Hello! I'm your AI Symptom Checker. Please describe the symptoms you're experiencing. For example, you could say, 'I have a sore throat and a headache.'",
+  text: "Hello! I'm your virtual doctor. Please describe the symptoms you're experiencing. For example, you could say, 'I have a sore throat and a headache.'",
 };
 
 export default function SymptomCheckerPage() {
