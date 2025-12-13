@@ -23,7 +23,7 @@ const formSchema = z.object({
 });
 
 type Message = {
-  role: 'user' | 'bot';
+  role: 'user' | 'bot' | 'model';
   text: string;
 };
 
@@ -56,19 +56,20 @@ export default function SymptomCheckerPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     const userMessage: Message = { role: 'user', text: values.message };
-    const newMessages = [...messages, userMessage];
+    const newMessages: Message[] = [...messages, userMessage];
     setMessages(newMessages);
     form.reset();
 
     try {
-      // We pass the history of user messages to the AI
-      const userHistory = newMessages
-        .filter(m => m.role === 'user')
-        .map(m => m.text);
+      // The AI expects a slightly different message format ('model' instead of 'bot')
+      const historyForAI = newMessages.map(m => ({
+        role: m.role === 'bot' ? 'model' : 'user',
+        content: m.text,
+      }));
+
 
       const output = await chatSymptomChecker({
-        symptoms: values.message,
-        history: userHistory,
+        history: historyForAI,
       });
 
       const botMessage: Message = { role: 'bot', text: output.response };

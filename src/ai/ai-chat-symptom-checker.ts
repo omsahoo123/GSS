@@ -10,14 +10,18 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
+const MessageSchema = z.object({
+  role: z.enum(['user', 'model']),
+  content: z.string(),
+});
+
 const ChatSymptomCheckerInputSchema = z.object({
-  symptoms: z.string().describe('The most recent symptom or message from the user.'),
-  history: z.array(z.string()).describe('The history of messages from the user in the current session.'),
+  history: z.array(MessageSchema).describe('The history of messages in the current session.'),
 });
 export type ChatSymptomCheckerInput = z.infer<typeof ChatSymptomCheckerInputSchema>;
 
 const ChatSymptomCheckerOutputSchema = z.object({
-  response: z.string().describe('The AI\'s next response in the conversation.'),
+  response: z.string().describe("The AI's next response in the conversation."),
 });
 export type ChatSymptomCheckerOutput = z.infer<typeof ChatSymptomCheckerOutputSchema>;
 
@@ -35,10 +39,6 @@ const chatSymptomCheckerPrompt = ai.definePrompt({
 
   Your goal is to be interactive. Start by understanding the user's initial symptoms, then ask clarifying questions to gather more information before providing guidance.
 
-  Conversation Context:
-  - User's previous messages (history): {{{history}}}
-  - User's latest message: {{{symptoms}}}
-
   Your Task:
   1.  Analyze the full conversation history to understand the context.
   2.  If you don't have enough information (like duration, severity, or related symptoms), ask a specific follow-up question.
@@ -47,6 +47,7 @@ const chatSymptomCheckerPrompt = ai.definePrompt({
 
   Generate the next message to send back to the user in the "response" field.
   `,
+  messages: ({history}) => history.map(m => ({role: m.role, content: [{text: m.content}]})),
 });
 
 const chatSymptomCheckerFlow = ai.defineFlow(
