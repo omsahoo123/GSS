@@ -14,7 +14,6 @@ import { toast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Video, Building } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 
 const doctors = [
   { id: 'dr-anjali-sharma', name: 'Dr. Anjali Sharma', specialty: 'Cardiologist', imageId: 'doctor-1', department: 'Cardiology' },
