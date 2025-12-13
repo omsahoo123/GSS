@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { addDays, format } from 'date-fns';
+import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
-import { CalendarIcon, Clock, Video, Building } from 'lucide-react';
+import { Video, Building } from 'lucide-react';
 
 const doctors = [
   { id: 'dr-anjali-sharma', name: 'Dr. Anjali Sharma', specialty: 'Cardiologist', imageId: 'doctor-1' },
@@ -167,22 +167,18 @@ export default function AppointmentsPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>Appointment Date</FormLabel>
-                         <Controller
-                            control={form.control}
-                            name="appointmentDate"
-                            render={({ field }) => (
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                    date < new Date(new Date().setHours(0,0,0,0))
-                                    }
-                                    initialFocus
-                                    className="rounded-md border"
-                                />
-                            )}
-                        />
+                        <FormControl>
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date(new Date().setHours(0, 0, 0, 0))
+                            }
+                            initialFocus
+                            className="rounded-md border"
+                          />
+                        </FormControl>
                         <FormMessage className="pt-2"/>
                       </FormItem>
                     )}
