@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -23,22 +22,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, Video, Trash2 } from 'lucide-react';
+import { Download, FileText, Video } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 
-const initialPastConsultations = [
+const pastConsultations = [
   {
     id: 'consult-1',
     doctor: 'Dr. Anjali Sharma',
@@ -68,7 +56,7 @@ const initialPastConsultations = [
   },
 ];
 
-const initialLabReports = [
+const labReports = [
   {
     id: 'report-1',
     name: 'Complete Blood Count (CBC)',
@@ -104,8 +92,6 @@ const initialLabReports = [
 ];
 
 export default function HealthRecordsPage() {
-  const [pastConsultations, setPastConsultations] = useState(initialPastConsultations);
-  const [labReports, setLabReports] = useState(initialLabReports);
 
   const handleDownload = (fileName: string, fileContentDetails: string) => {
     const fileContent = `This is a dummy file for ${fileName}.\n\nDetails:\n${fileContentDetails}`;
@@ -119,15 +105,6 @@ export default function HealthRecordsPage() {
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   };
-  
-  const handleRemoveConsultation = (id: string) => {
-    setPastConsultations(prev => prev.filter(c => c.id !== id));
-  };
-  
-  const handleRemoveLabReport = (id: string) => {
-    setLabReports(prev => prev.filter(r => r.id !== id));
-  };
-
 
   return (
     <div className="space-y-6">
@@ -196,28 +173,6 @@ export default function HealthRecordsPage() {
                             </Button>
                           </Link>
                         )}
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Remove
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this consultation record.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleRemoveConsultation(consultation.id)}>
-                                Continue
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -255,7 +210,7 @@ export default function HealthRecordsPage() {
                             {report.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right space-x-2">
+                      <TableCell className="text-right">
                         <Button 
                           variant="outline" 
                           size="sm" 
@@ -265,28 +220,6 @@ export default function HealthRecordsPage() {
                           <Download className="mr-2 h-4 w-4" />
                           Download
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Remove
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this lab report.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleRemoveLabReport(report.id)}>
-                                Continue
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                       </TableCell>
                     </TableRow>
                   ))}
