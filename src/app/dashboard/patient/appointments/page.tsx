@@ -1,0 +1,227 @@
+'use client';
+
+import { useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { addDays, format } from 'date-fns';
+
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from '@/hooks/use-toast';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import Image from 'next/image';
+import { CalendarIcon, Clock, Video, Walk } from 'lucide-react';
+
+const doctors = [
+  { id: 'dr-anjali-sharma', name: 'Dr. Anjali Sharma', specialty: 'Cardiologist', imageId: 'doctor-1' },
+  { id: 'dr-priya-singh', name: 'Dr. Priya Singh', specialty: 'General Physician', imageId: 'avatar-doctor' },
+];
+
+const availableTimeSlots = [
+  "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
+  "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM",
+];
+
+const appointmentSchema = z.object({
+  doctorId: z.string().min(1, 'Please select a doctor.'),
+  appointmentDate: z.date({ required_error: 'Please select a date.' }),
+  appointmentTime: z.string().min(1, 'Please select a time slot.'),
+  consultationType: z.enum(['video', 'in-person'], { required_error: 'Please select a consultation type.' }),
+});
+
+type AppointmentFormValues = z.infer<typeof appointmentSchema>;
+
+export default function AppointmentsPage() {
+  const [isBooking, setIsBooking] = useState(false);
+
+  const form = useForm<AppointmentFormValues>({
+    resolver: zodResolver(appointmentSchema),
+    defaultValues: {
+      consultationType: 'video',
+    },
+  });
+
+  const onSubmit = (data: AppointmentFormValues) => {
+    setIsBooking(true);
+    console.log({
+      ...data,
+      appointmentDate: format(data.appointmentDate, 'PPP'),
+    });
+
+    // Simulate API call
+    setTimeout(() => {
+      toast({
+        title: 'Appointment Booked!',
+        description: `Your ${data.consultationType} consultation with ${doctors.find(d => d.id === data.doctorId)?.name} is confirmed for ${format(data.appointmentDate, 'PPP')} at ${data.appointmentTime}.`,
+      });
+      form.reset();
+       form.setValue('consultationType', 'video');
+      setIsBooking(false);
+    }, 1500);
+  };
+  
+  const selectedDoctorId = form.watch('doctorId');
+  const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
+  const doctorImage = PlaceHolderImages.find(p => p.id === selectedDoctor?.imageId);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-headline text-3xl font-bold">Book an Appointment</h1>
+        <p className="text-muted-foreground">
+          Choose your preferred doctor, date, and time for your consultation.
+        </p>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>New Appointment Details</CardTitle>
+          <CardDescription>Fill out the form below to schedule your next visit.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <div className="grid gap-8 md:grid-cols-2">
+                {/* Column 1: Doctor and Type */}
+                <div className="space-y-8">
+                  <FormField
+                    control={form.control}
+                    name="doctorId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Select Doctor</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Choose a doctor..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {doctors.map(doctor => (
+                              <SelectItem key={doctor.id} value={doctor.id}>
+                                {doctor.name} - {doctor.specialty}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {selectedDoctor && doctorImage && (
+                     <div className="flex items-center gap-4 rounded-lg border p-4">
+                       <Image src={doctorImage.imageUrl} alt={selectedDoctor.name} width={80} height={80} className="rounded-full" data-ai-hint={doctorImage.imageHint} />
+                       <div>
+                         <h3 className="font-bold">{selectedDoctor.name}</h3>
+                         <p className="text-sm text-muted-foreground">{selectedDoctor.specialty}</p>
+                       </div>
+                     </div>
+                   )}
+
+                  <FormField
+                    control={form.control}
+                    name="consultationType"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel>Consultation Type</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex flex-col space-y-1"
+                          >
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="video" />
+                              </FormControl>
+                              <FormLabel className="font-normal flex items-center gap-2">
+                                <Video className="h-4 w-4" /> Video Consultation
+                              </FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="in-person" />
+                              </FormControl>
+                              <FormLabel className="font-normal flex items-center gap-2">
+                                <Walk className="h-4 w-4" /> In-Person Visit
+                              </FormLabel>
+                            </FormItem>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Column 2: Date and Time */}
+                <div className="space-y-8">
+                   <FormField
+                    control={form.control}
+                    name="appointmentDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Appointment Date</FormLabel>
+                         <Controller
+                            control={form.control}
+                            name="appointmentDate"
+                            render={({ field }) => (
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) =>
+                                    date < new Date(new Date().setHours(0,0,0,0))
+                                    }
+                                    initialFocus
+                                    className="rounded-md border"
+                                />
+                            )}
+                        />
+                        <FormMessage className="pt-2"/>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="appointmentTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Available Time Slots</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                           <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a time" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                             {availableTimeSlots.map(time => (
+                              <SelectItem key={time} value={time}>
+                                {time}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" disabled={isBooking} size="lg">
+                {isBooking ? 'Booking...' : 'Confirm Appointment'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
