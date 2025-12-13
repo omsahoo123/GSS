@@ -25,6 +25,7 @@ const formSchema = z.object({
 type Message = {
   role: 'user' | 'bot' | 'model';
   text: string;
+  suggestions?: string[];
 };
 
 const welcomeMessage: Message = {
@@ -53,15 +54,14 @@ export default function SymptomCheckerPage() {
     }
   }, [messages]);
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const handleSendMessage = async (messageText: string) => {
     setIsLoading(true);
-    const userMessage: Message = { role: 'user', text: values.message };
+    const userMessage: Message = { role: 'user', text: messageText };
     const newMessages: Message[] = [...messages, userMessage];
     setMessages(newMessages);
     form.reset();
 
     try {
-      // The AI expects a slightly different message format ('model' instead of 'bot')
       const historyForAI = newMessages.map(m => ({
         role: m.role === 'bot' ? 'model' : 'user',
         content: m.text,
@@ -72,7 +72,11 @@ export default function SymptomCheckerPage() {
         history: historyForAI,
       });
 
-      const botMessage: Message = { role: 'bot', text: output.response };
+      const botMessage: Message = { 
+        role: 'bot', 
+        text: output.response,
+        suggestions: output.suggestions,
+      };
       setMessages(prev => [...prev, botMessage]);
 
     } catch (error) {
@@ -82,11 +86,23 @@ export default function SymptomCheckerPage() {
         title: 'An error occurred',
         description: 'Failed to get a response from the AI. Please try again.',
       });
-      // If AI fails, remove the user message to allow them to try again
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setIsLoading(false);
     }
+  };
+
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    await handleSendMessage(values.message);
+  }
+
+  const handleSuggestionClick = async (suggestion: string) => {
+    // Disable buttons while processing
+    const updatedMessages = messages.map(m => ({...m, suggestions: []}));
+    setMessages(updatedMessages);
+
+    await handleSendMessage(suggestion);
   }
 
   return (
@@ -125,15 +141,32 @@ export default function SymptomCheckerPage() {
                       <Bot className="h-6 w-6 text-primary" />
                     </div>
                   )}
-                  <div
-                    className={cn(
-                      'max-w-md rounded-lg p-3 text-sm',
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
+                  <div className="flex flex-col gap-2">
+                    <div
+                      className={cn(
+                        'max-w-md rounded-lg p-3 text-sm',
+                        message.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      )}
+                    >
+                      <p>{message.text}</p>
+                    </div>
+                    {message.suggestions && message.suggestions.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {message.suggestions.map((suggestion, i) => (
+                          <Button 
+                            key={i} 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleSuggestionClick(suggestion)}
+                            disabled={isLoading}
+                          >
+                            {suggestion}
+                          </Button>
+                        ))}
+                      </div>
                     )}
-                  >
-                    <p>{message.text}</p>
                   </div>
                    {message.role === 'user' && (
                      <div className="bg-muted p-2 rounded-full">
