@@ -191,7 +191,7 @@ export default function HealthRecordsPage() {
               <CardDescription>
                 View and download your medical test results.
               </CardDescription>
-            </Header>
+            </CardHeader>
             <CardContent>
                <Table>
                 <TableHeader>
