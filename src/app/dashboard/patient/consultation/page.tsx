@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-react';
@@ -13,6 +14,7 @@ export default function VideoConsultationPage() {
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     const getCameraPermission = async () => {
@@ -73,7 +75,7 @@ export default function VideoConsultationPage() {
         title: 'Call Ended',
         description: 'Your consultation has ended.',
       });
-      // Here you would typically redirect the user or update the UI
+      router.push('/dashboard/patient');
   };
 
   return (
