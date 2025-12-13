@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero",
+      "description": "Hero image for the landing page showing a rural healthcare scene.",
+      "imageUrl": "https://images.unsplash.com/photo-1698465281093-9f09159733b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxydXJhbCUyMGhlYWx0aGNhcmUlMjBpbmRpYXxlbnwwfHx8fDE3NjU2MjgwNTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "rural healthcare india"
+    },
+    {
+      "id": "avatar-patient",
+      "description": "Avatar for a patient user.",
+      "imageUrl": "https://images.unsplash.com/photo-1628264047320-49bab8dc07d6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8aW5kaWFuJTIwbWFuJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzY1NjI4MDU3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "indian man portrait"
+    },
+    {
+      "id": "avatar-doctor",
+      "description": "Avatar for a doctor user.",
+      "imageUrl": "https://images.unsplash.com/photo-1659353886973-ced1dfeab3ac?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxpbmRpYW4lMjBkb2N0b3IlMjB3b21hbnxlbnwwfHx8fDE3NjU2MjgwNTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "indian doctor woman"
+    },
+    {
+      "id": "doctor-1",
+      "description": "Profile picture for Dr. Anjali Sharma",
+      "imageUrl": "https://images.unsplash.com/photo-1618294454352-eb84462415b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmZW1hbGUlMjBkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjU2MjgwNTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "female doctor portrait"
+    }
+  ]
 }
