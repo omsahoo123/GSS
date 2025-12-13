@@ -198,7 +198,7 @@ export default function AppointmentsPage() {
                            <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a time" />
-                            </Trigger>
+                            </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                              {availableTimeSlots.map(time => (
