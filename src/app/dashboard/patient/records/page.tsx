@@ -31,6 +31,7 @@ const pastConsultations = [
     doctor: 'Dr. Anjali Sharma',
     department: 'Cardiology',
     date: '2024-06-15',
+    fileName: 'Prescription_Dr_Sharma_20240615.txt',
     fileUrl: '#',
   },
   {
@@ -38,6 +39,7 @@ const pastConsultations = [
     doctor: 'Dr. Priya Singh',
     department: 'General Medicine',
     date: '2024-04-22',
+    fileName: 'Prescription_Dr_Singh_20240422.txt',
     fileUrl: '#',
   },
   {
@@ -45,6 +47,7 @@ const pastConsultations = [
     doctor: 'Dr. Arun Verma',
     department: 'Dermatology',
     date: '2024-02-10',
+    fileName: 'Prescription_Dr_Verma_20240210.txt',
     fileUrl: '#',
   },
 ];
@@ -55,6 +58,7 @@ const labReports = [
     name: 'Complete Blood Count (CBC)',
     date: '2024-06-10',
     status: 'Available',
+    fileName: 'LabReport_CBC_20240610.txt',
     fileUrl: '#',
   },
   {
@@ -62,6 +66,7 @@ const labReports = [
     name: 'Lipid Profile',
     date: '2024-06-10',
     status: 'Available',
+    fileName: 'LabReport_LipidProfile_20240610.txt',
     fileUrl: '#',
   },
   {
@@ -69,6 +74,7 @@ const labReports = [
     name: 'Thyroid Function Test',
     date: '2024-03-05',
     status: 'Available',
+    fileName: 'LabReport_Thyroid_20240305.txt',
     fileUrl: '#',
   },
   {
@@ -76,11 +82,28 @@ const labReports = [
     name: 'Liver Function Test',
     date: '2023-11-20',
     status: 'Superseded',
+    fileName: 'LabReport_Liver_20231120.txt',
     fileUrl: '#',
   },
 ];
 
 export default function HealthRecordsPage() {
+
+  const handleDownload = (fileName: string, fileContentDetails: string) => {
+    // In a real app, you would fetch the file from a URL.
+    // For this demo, we create a dummy text file on the fly.
+    const fileContent = `This is a dummy file for ${fileName}.\n\nDetails:\n${fileContentDetails}`;
+    const blob = new Blob([fileContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -127,7 +150,11 @@ export default function HealthRecordsPage() {
                       <TableCell>{consultation.department}</TableCell>
                       <TableCell>{consultation.date}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDownload(consultation.fileName, `Doctor: ${consultation.doctor}\nDate: ${consultation.date}`)}
+                        >
                           <Download className="mr-2 h-4 w-4" />
                           Download
                         </Button>
@@ -169,7 +196,12 @@ export default function HealthRecordsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="outline" size="sm" disabled={report.status !== 'Available'}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          disabled={report.status !== 'Available'}
+                          onClick={() => handleDownload(report.fileName, `Report: ${report.name}\nDate: ${report.date}`)}
+                        >
                           <Download className="mr-2 h-4 w-4" />
                           Download
                         </Button>
