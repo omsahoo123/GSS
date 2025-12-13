@@ -110,20 +110,6 @@ export default function PatientDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="flex flex-col justify-center bg-primary/20 text-center transition-transform hover:scale-105 hover:shadow-xl">
-          <CardHeader>
-            <CardTitle>AI Symptom Checker</CardTitle>
-            <CardDescription>Concerned about a symptom?</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/dashboard/patient/symptom-checker" passHref>
-              <Button size="lg" className="w-full">
-                <Stethoscope className="mr-2 h-5 w-5" /> Start Check
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
         <Card className="transition-transform hover:scale-105 hover:shadow-xl">
           <CardHeader>
             <CardTitle>My Health Records</CardTitle>
@@ -132,7 +118,7 @@ export default function PatientDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <Link href="#" passHref>
+            <Link href="/dashboard/patient/records" passHref>
               <Button variant="outline" className="w-full">
                 <HeartPulse className="mr-2 h-4 w-4" /> View Records
               </Button>

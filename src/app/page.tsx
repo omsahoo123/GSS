@@ -3,7 +3,14 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { ArrowRight, Briefcase, HeartPulse, Hospital, Syringe, TestTube } from 'lucide-react';
+import {
+  ArrowRight,
+  Briefcase,
+  HeartPulse,
+  Hospital,
+  Syringe,
+  TestTube,
+} from 'lucide-react';
 import { Logo } from '@/components/icons';
 
 const roles = [
@@ -58,38 +65,47 @@ export default function Home() {
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center p-4">
         <div className="flex flex-col items-center text-center">
           <Logo className="mb-4 h-16 w-16 text-primary" />
-          <h1 className="font-headline text-4xl font-bold tracking-tight text-foreground md:text-6xl">
+          <h1 className="font-headline text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
             Grameen Swasthya Setu
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-            Bridging the Gap in Rural Healthcare. Accessible, reliable, and intelligent healthcare for everyone.
+            Bridging the Gap in Rural Healthcare. Accessible, reliable, and
+            intelligent healthcare for everyone.
           </p>
         </div>
 
         <Card className="mt-12 w-full max-w-4xl animate-fade-in-up shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-center text-2xl font-semibold">Choose Your Role</CardTitle>
+            <CardTitle className="text-center text-2xl font-semibold">
+              Choose Your Role
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {roles.map((role) => (
-                <Link href={role.href} key={role.name} passHref>
-                  <Button
-                    variant="outline"
-                    className="h-auto w-full justify-start p-4 text-left transition-transform hover:scale-105 hover:bg-accent/50"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="rounded-lg bg-primary/20 p-3">
-                        <role.icon className="h-6 w-6 text-primary" />
+                <div key={role.name} className="p-1">
+                  <Link href={role.href} passHref>
+                    <Button
+                      variant="outline"
+                      className="h-auto w-full justify-start p-4 text-left transition-transform hover:scale-105 hover:bg-accent/50"
+                    >
+                      <div className="flex w-full items-center gap-4">
+                        <div className="rounded-lg bg-primary/20 p-3">
+                          <role.icon className="h-6 w-6 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-foreground">
+                            {role.name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {role.description}
+                          </p>
+                        </div>
+                        <ArrowRight className="h-5 w-5 text-muted-foreground" />
                       </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-foreground">{role.name}</p>
-                        <p className="text-sm text-muted-foreground">{role.description}</p>
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </Button>
-                </Link>
+                    </Button>
+                  </Link>
+                </div>
               ))}
             </div>
           </CardContent>

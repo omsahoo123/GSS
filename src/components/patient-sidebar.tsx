@@ -31,7 +31,6 @@ const menuItems = [
   { href: '/dashboard/patient', label: 'Dashboard', icon: Home },
   { href: '/dashboard/patient/appointments', label: 'Appointments', icon: Calendar },
   { href: '/dashboard/patient/records', label: 'Health Records', icon: HeartPulse },
-  { href: '/dashboard/patient/symptom-checker', label: 'Symptom Checker', icon: Stethoscope },
   { href: '/dashboard/patient/pharmacy-stock', label: 'Pharmacy Stock', icon: Pill },
   { href: '/dashboard/patient/consultation', label: 'Video Consultation', icon: Video },
 ];
