@@ -103,9 +103,11 @@ export default function PatientDashboardPage() {
                   Tomorrow, 10:30 AM
                 </p>
               </div>
-              <Button>
-                <Video className="mr-2 h-4 w-4" /> Join Call
-              </Button>
+              <Link href="/dashboard/patient/consultation" passHref>
+                <Button>
+                  <Video className="mr-2 h-4 w-4" /> Join Call
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
