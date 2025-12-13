@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
+import 'react-day-picker/dist/style.css';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
