@@ -4,11 +4,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format } from 'date-fns';
-import 'react-day-picker/dist/style.css';
 
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -17,6 +14,7 @@ import { toast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Video, Building } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 const doctors = [
   { id: 'dr-anjali-sharma', name: 'Dr. Anjali Sharma', specialty: 'Cardiologist', imageId: 'doctor-1' },
@@ -30,7 +28,7 @@ const availableTimeSlots = [
 
 const appointmentSchema = z.object({
   doctorId: z.string().min(1, 'Please select a doctor.'),
-  appointmentDate: z.date({ required_error: 'Please select a date.' }),
+  appointmentDate: z.string().min(1, 'Please enter a date.'),
   appointmentTime: z.string().min(1, 'Please select a time slot.'),
   consultationType: z.enum(['video', 'in-person'], { required_error: 'Please select a consultation type.' }),
 });
@@ -44,21 +42,19 @@ export default function AppointmentsPage() {
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
       consultationType: 'video',
+      appointmentDate: '',
     },
   });
 
   const onSubmit = (data: AppointmentFormValues) => {
     setIsBooking(true);
-    console.log({
-      ...data,
-      appointmentDate: format(data.appointmentDate, 'PPP'),
-    });
+    console.log(data);
 
     // Simulate API call
     setTimeout(() => {
       toast({
         title: 'Appointment Booked!',
-        description: `Your ${data.consultationType} consultation with ${doctors.find(d => d.id === data.doctorId)?.name} is confirmed for ${format(data.appointmentDate, 'PPP')} at ${data.appointmentTime}.`,
+        description: `Your ${data.consultationType} consultation with ${doctors.find(d => d.id === data.doctorId)?.name} is confirmed for ${data.appointmentDate} at ${data.appointmentTime}.`,
       });
       form.reset();
        form.setValue('consultationType', 'video');
@@ -166,21 +162,12 @@ export default function AppointmentsPage() {
                     control={form.control}
                     name="appointmentDate"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem>
                         <FormLabel>Appointment Date</FormLabel>
                         <FormControl>
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date(new Date().setHours(0, 0, 0, 0))
-                            }
-                            initialFocus
-                            className="rounded-md border"
-                          />
+                          <Input placeholder="e.g., July 25, 2024" {...field} />
                         </FormControl>
-                        <FormMessage className="pt-2"/>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
