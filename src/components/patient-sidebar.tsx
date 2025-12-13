@@ -41,54 +41,49 @@ export function PatientSidebar() {
   const patientAvatar = PlaceHolderImages.find((img) => img.id === 'avatar-patient');
 
   return (
-    <>
-      <div className="absolute left-4 top-4 z-20 md:hidden">
-        <SidebarTrigger />
-      </div>
-      <Sidebar>
-        <SidebarHeader className="border-b">
-          <div className="flex items-center gap-2">
-            <Logo className="h-8 w-8 text-primary" />
-            <span className="text-lg font-semibold">G.S. Setu</span>
+    <Sidebar>
+      <SidebarHeader className="border-b">
+        <div className="flex items-center gap-2">
+          <Logo className="h-8 w-8 text-primary" />
+          <span className="text-lg font-semibold">G.S. Setu</span>
+        </div>
+      </SidebarHeader>
+      <SidebarContent className="p-2">
+        <SidebarMenu>
+          {menuItems.map((item) => (
+            <SidebarMenuItem key={item.label}>
+              <Link href={item.href} passHref>
+                <SidebarMenuButton
+                  isActive={pathname === item.href}
+                  tooltip={item.label}
+                >
+                  <item.icon />
+                  <span>{item.label}</span>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter className="border-t">
+        <div className="flex items-center gap-3 p-2">
+          <Avatar className="h-10 w-10">
+            {patientAvatar && (
+              <AvatarImage src={patientAvatar.imageUrl} alt="Aarav Sharma" data-ai-hint={patientAvatar.imageHint} />
+            )}
+            <AvatarFallback>AS</AvatarFallback>
+          </Avatar>
+          <div className="overflow-hidden">
+            <p className="truncate font-semibold">Aarav Sharma</p>
+            <p className="truncate text-xs text-muted-foreground">Patient</p>
           </div>
-        </SidebarHeader>
-        <SidebarContent className="p-2">
-          <SidebarMenu>
-            {menuItems.map((item) => (
-              <SidebarMenuItem key={item.label}>
-                <Link href={item.href} passHref>
-                  <SidebarMenuButton
-                    isActive={pathname === item.href}
-                    tooltip={item.label}
-                  >
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter className="border-t">
-          <div className="flex items-center gap-3 p-2">
-            <Avatar className="h-10 w-10">
-              {patientAvatar && (
-                <AvatarImage src={patientAvatar.imageUrl} alt="Aarav Sharma" data-ai-hint={patientAvatar.imageHint} />
-              )}
-              <AvatarFallback>AS</AvatarFallback>
-            </Avatar>
-            <div className="overflow-hidden">
-              <p className="truncate font-semibold">Aarav Sharma</p>
-              <p className="truncate text-xs text-muted-foreground">Patient</p>
-            </div>
-            <Link href="/" className="ml-auto" passHref>
-              <Button variant="ghost" size="icon" aria-label="Log out">
-                <LogOut />
-              </Button>
-            </Link>
-          </div>
-        </SidebarFooter>
-      </Sidebar>
-    </>
+          <Link href="/" className="ml-auto" passHref>
+            <Button variant="ghost" size="icon" aria-label="Log out">
+              <LogOut />
+            </Button>
+          </Link>
+        </div>
+      </SidebarFooter>
+    </Sidebar>
   );
 }
