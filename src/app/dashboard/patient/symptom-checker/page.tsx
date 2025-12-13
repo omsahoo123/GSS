@@ -150,7 +150,7 @@ export default function SymptomCheckerPage() {
                           : 'bg-muted'
                       )}
                     >
-                      <p>{message.text}</p>
+                      <p className="whitespace-pre-wrap">{message.text}</p>
                     </div>
                     {message.suggestions && message.suggestions.length > 0 && (
                       <div className="flex flex-wrap gap-2">

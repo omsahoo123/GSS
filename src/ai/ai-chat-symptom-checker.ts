@@ -55,7 +55,7 @@ Your primary goal is to be interactive and accessible, especially for users who 
 
 Generate the next message to send back to the user in the "response" field, and provide suggested replies in the "suggestions" field.
   `,
-  messages: ({history}) => history.map(m => ({role: m.role, content: [{text: m.text}]})),
+  messages: ({history}) => history.map(m => ({role: m.role, content: [{text: m.content}]})),
 });
 
 const chatSymptomCheckerFlow = ai.defineFlow(
