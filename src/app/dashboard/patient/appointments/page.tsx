@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,10 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
-import { Video, Building, CalendarIcon } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
+import { Video, Building } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 const doctors = [
   { id: 'dr-anjali-sharma', name: 'Dr. Anjali Sharma', specialty: 'Cardiologist', imageId: 'doctor-1', department: 'Cardiology' },
@@ -35,9 +32,7 @@ const availableTimeSlots = [
 const appointmentSchema = z.object({
   department: z.string().min(1, 'Please select a department.'),
   doctorId: z.string().min(1, 'Please select a doctor.'),
-  appointmentDate: z.date({
-    required_error: 'A date is required.',
-  }),
+  appointmentDate: z.string().min(1, 'Please enter a date.'),
   appointmentTime: z.string().min(1, 'Please select a time slot.'),
   consultationType: z.enum(['video', 'in-person'], { required_error: 'Please select a consultation type.' }),
 });
@@ -54,22 +49,19 @@ export default function AppointmentsPage() {
       consultationType: 'video',
       department: '',
       doctorId: '',
+      appointmentDate: '',
     },
   });
 
   const onSubmit = (data: AppointmentFormValues) => {
     setIsBooking(true);
-    const formattedData = {
-      ...data,
-      appointmentDate: format(data.appointmentDate, 'PPP'), // Format date for submission
-    };
-    console.log(formattedData);
+    console.log(data);
 
     // Simulate API call
     setTimeout(() => {
       toast({
         title: 'Appointment Booked!',
-        description: `Your ${formattedData.consultationType} consultation with ${doctors.find(d => d.id === formattedData.doctorId)?.name} is confirmed for ${formattedData.appointmentDate} at ${formattedData.appointmentTime}.`,
+        description: `Your ${data.consultationType} consultation with ${doctors.find(d => d.id === data.doctorId)?.name} is confirmed for ${data.appointmentDate} at ${data.appointmentTime}.`,
       });
       form.reset();
       form.setValue('consultationType', 'video');
@@ -205,43 +197,15 @@ export default function AppointmentsPage() {
                     )}
                   />
 
-                   <FormField
+                  <FormField
                     control={form.control}
                     name="appointmentDate"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem>
                         <FormLabel>Appointment Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) =>
-                                date < new Date(new Date().setHours(0,0,0,0))
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
+                        <FormControl>
+                          <Input placeholder="YYYY-MM-DD" {...field} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
