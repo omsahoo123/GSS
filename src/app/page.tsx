@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -74,16 +75,16 @@ export default function Home() {
           </p>
         </div>
 
-        <Card className="mt-12 w-full max-w-4xl animate-fade-in-up shadow-2xl">
+        <Card className="mt-12 w-full max-w-2xl animate-fade-in-up shadow-2xl">
           <CardHeader>
             <CardTitle className="text-center text-2xl font-semibold">
               Choose Your Role
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4">
               {roles.map((role) => (
-                <div key={role.name} className="p-1">
+                <div key={role.name}>
                   <Link href={role.href} passHref>
                     <Button
                       variant="outline"
