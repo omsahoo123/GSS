@@ -16,7 +16,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { ArrowRight, HeartPulse, Pill, Stethoscope, Video } from 'lucide-react';
+import { HeartPulse, Pill, Video } from 'lucide-react';
 import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
@@ -79,7 +79,7 @@ export default function PatientDashboardPage() {
         </p>
       </div>
 
-      <Card className="col-span-1 lg:col-span-3">
+      <Card>
         <CardHeader>
           <CardTitle>Healthy Habits Slideshow</CardTitle>
           <CardDescription>
@@ -118,48 +118,48 @@ export default function PatientDashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="flex flex-col justify-between transition-transform hover:scale-105 hover:shadow-xl lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="space-y-1.5">
-              <CardTitle>Upcoming Appointment</CardTitle>
-              <CardDescription>with Dr. Anjali Sharma</CardDescription>
-            </div>
-            {doctorImage && (
-              <Image
-                src={doctorImage.imageUrl}
-                alt="Dr. Anjali Sharma"
-                width={64}
-                height={64}
-                className="rounded-full border-2 border-primary"
-                data-ai-hint={doctorImage.imageHint}
-              />
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 rounded-md border p-4">
-              <div className="flex flex-1 items-center justify-between">
-                <div>
-                    <p className="text-sm font-medium leading-none">
-                    Video Consultation
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                    Tomorrow, 10:30 AM
-                    </p>
-                </div>
-                <Link href="/dashboard/patient/consultation" passHref>
-                    <Button disabled={!canJoin}>
-                    <Video className="mr-2 h-4 w-4" /> Join Call
-                    </Button>
-                </Link>
+      <Card className="transition-transform hover:scale-105 hover:shadow-xl">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="space-y-1.5">
+            <CardTitle>Upcoming Appointment</CardTitle>
+            <CardDescription>with Dr. Anjali Sharma</CardDescription>
+          </div>
+          {doctorImage && (
+            <Image
+              src={doctorImage.imageUrl}
+              alt="Dr. Anjali Sharma"
+              width={64}
+              height={64}
+              className="rounded-full border-2 border-primary"
+              data-ai-hint={doctorImage.imageHint}
+            />
+          )}
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4 rounded-md border p-4">
+            <div className="flex flex-1 items-center justify-between">
+              <div>
+                  <p className="text-sm font-medium leading-none">
+                  Video Consultation
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                  Tomorrow, 10:30 AM
+                  </p>
               </div>
-               <div className="text-center text-sm font-medium text-primary">
-                {countdown}
-              </div>
+              <Link href="/dashboard/patient/consultation?doctor=Dr.+Anjali+Sharma&time=Tomorrow,+10:30+AM" passHref>
+                  <Button disabled={!canJoin}>
+                  <Video className="mr-2 h-4 w-4" /> Join Call
+                  </Button>
+              </Link>
             </div>
-          </CardContent>
-        </Card>
+             <div className="text-center text-sm font-medium text-primary">
+              {countdown}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
+      <div className="grid gap-6 md:grid-cols-2">
         <Card className="transition-transform hover:scale-105 hover:shadow-xl">
           <CardHeader>
             <CardTitle>My Health Records</CardTitle>
