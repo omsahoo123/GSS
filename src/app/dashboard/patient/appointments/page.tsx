@@ -29,10 +29,31 @@ const availableTimeSlots = [
   "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM",
 ];
 
+const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
+const months = [
+  { value: '01', label: 'January' },
+  { value: '02', label: 'February' },
+  { value: '03', label: 'March' },
+  { value: '04', label: 'April' },
+  { value: '05', label: 'May' },
+  { value: '06', label: 'June' },
+  { value: '07', label: 'July' },
+  { value: '08', label: 'August' },
+  { value: '09', label: 'September' },
+  { value: '10', label: 'October' },
+  { value: '11', label: 'November' },
+  { value: '12', label: 'December' },
+];
+const currentYear = new Date().getFullYear();
+const years = [String(currentYear), String(currentYear + 1)];
+
+
 const appointmentSchema = z.object({
   department: z.string().min(1, 'Please select a department.'),
   doctorId: z.string().min(1, 'Please select a doctor.'),
-  appointmentDate: z.string().min(1, 'Please enter a date.'),
+  appointmentDay: z.string().min(1, 'Please select a day.'),
+  appointmentMonth: z.string().min(1, 'Please select a month.'),
+  appointmentYear: z.string().min(1, 'Please select a year.'),
   appointmentTime: z.string().min(1, 'Please select a time slot.'),
   consultationType: z.enum(['video', 'in-person'], { required_error: 'Please select a consultation type.' }),
 });
@@ -49,19 +70,23 @@ export default function AppointmentsPage() {
       consultationType: 'video',
       department: '',
       doctorId: '',
-      appointmentDate: '',
+      appointmentDay: '',
+      appointmentMonth: '',
+      appointmentYear: '',
+      appointmentTime: '',
     },
   });
 
   const onSubmit = (data: AppointmentFormValues) => {
     setIsBooking(true);
-    console.log(data);
+    const appointmentDate = `${data.appointmentYear}-${data.appointmentMonth}-${data.appointmentDay}`;
+    console.log({ ...data, appointmentDate });
 
     // Simulate API call
     setTimeout(() => {
       toast({
         title: 'Appointment Booked!',
-        description: `Your ${data.consultationType} consultation with ${doctors.find(d => d.id === data.doctorId)?.name} is confirmed for ${data.appointmentDate} at ${data.appointmentTime}.`,
+        description: `Your ${data.consultationType} consultation with ${doctors.find(d => d.id === data.doctorId)?.name} is confirmed for ${appointmentDate} at ${data.appointmentTime}.`,
       });
       form.reset();
       form.setValue('consultationType', 'video');
@@ -196,20 +221,69 @@ export default function AppointmentsPage() {
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={form.control}
-                    name="appointmentDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Appointment Date</FormLabel>
-                        <FormControl>
-                          <Input placeholder="YYYY-MM-DD" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  
+                  <div className="space-y-2">
+                    <FormLabel>Appointment Date</FormLabel>
+                    <div className="grid grid-cols-3 gap-2">
+                      <FormField
+                        control={form.control}
+                        name="appointmentDay"
+                        render={({ field }) => (
+                          <FormItem>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Day" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {days.map(day => <SelectItem key={day} value={day}>{day}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                        control={form.control}
+                        name="appointmentMonth"
+                        render={({ field }) => (
+                          <FormItem>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Month" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {months.map(month => <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                             <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                        control={form.control}
+                        name="appointmentYear"
+                        render={({ field }) => (
+                          <FormItem>
+                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Year" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {years.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                             <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
                   
                   <FormField
                     control={form.control}
