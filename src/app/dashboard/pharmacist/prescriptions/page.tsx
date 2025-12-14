@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,6 +45,14 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 
+type Medicine = {
+    id: string;
+    name: string;
+    quantity: number;
+    supplier: string;
+    status: string;
+};
+
 const initialRecordedPrescriptions = [
   {
     id: 'rec-presc-1',
@@ -76,10 +85,13 @@ const prescriptionSchema = z.object({
   medication: z.string().min(1, 'Medication name is required.'),
   dosage: z.string().min(1, 'Dosage is required.'),
   instructions: z.string().min(1, 'Instructions are required.'),
+  quantity: z.coerce.number().min(1, 'Quantity must be at least 1.'),
 });
 
 type PrescriptionFormValues = z.infer<typeof prescriptionSchema>;
 type RecordedPrescription = (typeof initialRecordedPrescriptions)[0];
+
+const INVENTORY_STORAGE_KEY = 'pharmacistInventory';
 
 export default function PharmacistPrescriptionsPage() {
   const [recordedPrescriptions, setRecordedPrescriptions] = useState(initialRecordedPrescriptions);
@@ -96,6 +108,7 @@ export default function PharmacistPrescriptionsPage() {
       medication: '',
       dosage: '',
       instructions: '',
+      quantity: 1,
     },
   });
 
@@ -116,6 +129,42 @@ export default function PharmacistPrescriptionsPage() {
       title: 'Prescription Recorded',
       description: `A new prescription for ${data.patientName} has been recorded as filled.`,
     });
+
+    // Update inventory
+    try {
+        const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
+        if (storedInventory) {
+            let inventory: Medicine[] = JSON.parse(storedInventory);
+            const medicineIndex = inventory.findIndex(m => m.name.toLowerCase() === data.medication.toLowerCase());
+
+            if (medicineIndex > -1) {
+                inventory[medicineIndex].quantity -= data.quantity;
+                if(inventory[medicineIndex].quantity < 0) inventory[medicineIndex].quantity = 0;
+
+                // Update status based on new quantity
+                const med = inventory[medicineIndex];
+                if (med.quantity <= 0) med.status = 'Out of Stock';
+                else if (med.quantity < 50) med.status = 'Low Stock';
+                else med.status = 'In Stock';
+
+                localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+                toast({
+                    title: 'Inventory Updated',
+                    description: `${data.quantity} unit(s) of ${data.medication} deducted from stock.`,
+                });
+            } else {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Medicine Not Found',
+                    description: `${data.medication} is not in the inventory. Please add it first.`,
+                });
+            }
+        }
+    } catch (error) {
+        console.error("Failed to update inventory from localStorage", error);
+    }
+
+
     form.reset();
   };
   
@@ -203,9 +252,22 @@ export default function PharmacistPrescriptionsPage() {
                   />
                    <FormField
                     control={form.control}
+                    name="quantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantity Filled</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
                     name="instructions"
                     render={({ field }) => (
-                      <FormItem className="md:col-span-2">
+                      <FormItem>
                         <FormLabel>Instructions</FormLabel>
                         <FormControl>
                           <Textarea

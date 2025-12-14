@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -84,12 +84,38 @@ const inventorySchema = z.object({
 type InventoryFormValues = z.infer<typeof inventorySchema>;
 type Medicine = (typeof initialInventory)[0];
 
+const INVENTORY_STORAGE_KEY = 'pharmacistInventory';
+
 export default function InventoryPage() {
-  const [inventory, setInventory] = useState(initialInventory);
+  const [inventory, setInventory] = useState<Medicine[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingMedicineId, setEditingMedicineId] = useState<string | null>(null);
   const [editingQuantity, setEditingQuantity] = useState<number>(0);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    try {
+      const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
+      if (storedInventory) {
+        setInventory(JSON.parse(storedInventory));
+      } else {
+        setInventory(initialInventory);
+      }
+    } catch (error) {
+      console.error("Failed to load inventory from localStorage", error);
+      setInventory(initialInventory);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (inventory.length > 0) {
+      try {
+        localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+      } catch (error) {
+        console.error("Failed to save inventory to localStorage", error);
+      }
+    }
+  }, [inventory]);
 
   const form = useForm<InventoryFormValues>({
     resolver: zodResolver(inventorySchema),
@@ -324,4 +350,3 @@ export default function InventoryPage() {
   );
 }
 
-    
