@@ -31,17 +31,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, PackageSearch } from 'lucide-react';
+import { PlusCircle, PackageSearch, Edit, Save, XCircle } from 'lucide-react';
 
 const initialInventory = [
   {
@@ -94,6 +87,8 @@ type Medicine = (typeof initialInventory)[0];
 export default function InventoryPage() {
   const [inventory, setInventory] = useState(initialInventory);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingMedicineId, setEditingMedicineId] = useState<string | null>(null);
+  const [editingQuantity, setEditingQuantity] = useState<number>(0);
   const { toast } = useToast();
 
   const form = useForm<InventoryFormValues>({
@@ -107,6 +102,12 @@ export default function InventoryPage() {
   
   const medicineName = form.watch('medicineName');
   const existingMedicine = inventory.find(m => m.name.toLowerCase() === medicineName.toLowerCase());
+
+  const updateStatus = (medicine: Medicine): Medicine => {
+    if (medicine.quantity <= 0) return { ...medicine, status: 'Out of Stock' };
+    if (medicine.quantity < 50) return { ...medicine, status: 'Low Stock' };
+    return { ...medicine, status: 'In Stock' };
+  };
 
   const onSubmit = (data: InventoryFormValues) => {
     const existing = inventory.find(m => m.name.toLowerCase() === data.medicineName.toLowerCase());
@@ -127,7 +128,7 @@ export default function InventoryPage() {
         name: data.medicineName,
         quantity: data.quantity,
         supplier: data.supplier || 'N/A',
-        status: data.quantity > 0 ? 'In Stock' : 'Out of Stock',
+        status: 'In Stock', // Initial status will be updated by updateStatus
       };
       updatedInventory = [newMedicine, ...inventory];
        toast({
@@ -140,10 +141,27 @@ export default function InventoryPage() {
     form.reset();
   };
 
-  const updateStatus = (medicine: Medicine): Medicine => {
-    if (medicine.quantity <= 0) return { ...medicine, status: 'Out of Stock' };
-    if (medicine.quantity < 50) return { ...medicine, status: 'Low Stock' };
-    return { ...medicine, status: 'In Stock' };
+  const handleStartEditing = (medicine: Medicine) => {
+    setEditingMedicineId(medicine.id);
+    setEditingQuantity(medicine.quantity);
+  };
+
+  const handleCancelEditing = () => {
+    setEditingMedicineId(null);
+  };
+
+  const handleSaveEditing = (medicineId: string) => {
+    const updatedInventory = inventory.map(m =>
+      m.id === medicineId ? { ...m, quantity: editingQuantity } : m
+    ).map(updateStatus);
+    
+    setInventory(updatedInventory);
+    setEditingMedicineId(null);
+
+    toast({
+      title: 'Quantity Updated',
+      description: `Stock for ${inventory.find(m => m.id === medicineId)?.name} has been set to ${editingQuantity}.`,
+    });
   };
 
   const getStatusVariant = (status: string) => {
@@ -250,22 +268,50 @@ export default function InventoryPage() {
                   <TableHead>Quantity</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Supplier</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredInventory.map((med) => (
                   <TableRow key={med.id}>
                     <TableCell className="font-medium">{med.name}</TableCell>
-                    <TableCell>{med.quantity}</TableCell>
+                    <TableCell>
+                      {editingMedicineId === med.id ? (
+                        <Input 
+                          type="number" 
+                          value={editingQuantity}
+                          onChange={(e) => setEditingQuantity(Number(e.target.value))}
+                          className="h-8 w-24"
+                        />
+                      ) : (
+                        med.quantity
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(med.status)}>{med.status}</Badge>
                     </TableCell>
                     <TableCell>{med.supplier}</TableCell>
+                    <TableCell className="text-right">
+                       {editingMedicineId === med.id ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSaveEditing(med.id)}>
+                            <Save className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCancelEditing}>
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStartEditing(med)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
                  {filteredInventory.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={4} className="text-center text-muted-foreground">
+                        <TableCell colSpan={5} className="text-center text-muted-foreground">
                             No medicines found.
                         </TableCell>
                     </TableRow>
@@ -277,3 +323,5 @@ export default function InventoryPage() {
     </div>
   );
 }
+
+    
