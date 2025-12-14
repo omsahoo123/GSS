@@ -20,6 +20,7 @@ import {
   Users,
   FileText,
   Video,
+  BeakerIcon,
 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -43,6 +44,11 @@ const menuItems = [
     href: '/dashboard/doctor/prescriptions',
     label: 'Prescriptions',
     icon: FileText,
+  },
+  {
+    href: '/dashboard/doctor/lab-reports',
+    label: 'Lab Reports',
+    icon: BeakerIcon,
   },
 ];
 
