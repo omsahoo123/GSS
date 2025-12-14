@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Video, Building } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 const doctors = [
   { id: 'dr-anjali-sharma', name: 'Dr. Anjali Sharma', specialty: 'Cardiologist', imageId: 'doctor-1', department: 'Cardiology' },
@@ -28,31 +30,10 @@ const availableTimeSlots = [
   "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM",
 ];
 
-const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
-const months = [
-  { value: '01', label: 'January' },
-  { value: '02', label: 'February' },
-  { value: '03', label: 'March' },
-  { value: '04', label: 'April' },
-  { value: '05', label: 'May' },
-  { value: '06', label: 'June' },
-  { value: '07', label: 'July' },
-  { value: '08', label: 'August' },
-  { value: '09', label: 'September' },
-  { value: '10', label: 'October' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'December' },
-];
-const currentYear = new Date().getFullYear();
-const years = [String(currentYear), String(currentYear + 1)];
-
-
 const appointmentSchema = z.object({
   department: z.string().min(1, 'Please select a department.'),
   doctorId: z.string().min(1, 'Please select a doctor.'),
-  appointmentDay: z.string().min(1, 'Please select a day.'),
-  appointmentMonth: z.string().min(1, 'Please select a month.'),
-  appointmentYear: z.string().min(1, 'Please select a year.'),
+  appointmentDate: z.string().min(1, 'Please select a date.'),
   appointmentTime: z.string().min(1, 'Please select a time slot.'),
   consultationType: z.enum(['video', 'in-person'], { required_error: 'Please select a consultation type.' }),
 });
@@ -69,23 +50,20 @@ export default function AppointmentsPage() {
       consultationType: 'video',
       department: '',
       doctorId: '',
-      appointmentDay: '',
-      appointmentMonth: '',
-      appointmentYear: '',
+      appointmentDate: '',
       appointmentTime: '',
     },
   });
 
   const onSubmit = (data: AppointmentFormValues) => {
     setIsBooking(true);
-    const appointmentDate = `${data.appointmentYear}-${data.appointmentMonth}-${data.appointmentDay}`;
-    console.log({ ...data, appointmentDate });
+    console.log({ ...data });
 
     // Simulate API call
     setTimeout(() => {
       toast({
         title: 'Appointment Booked!',
-        description: `Your ${data.consultationType} consultation with ${doctors.find(d => d.id === data.doctorId)?.name} is confirmed for ${appointmentDate} at ${data.appointmentTime}.`,
+        description: `Your ${data.consultationType} consultation with ${doctors.find(d => d.id === data.doctorId)?.name} is confirmed for ${format(new Date(data.appointmentDate), 'PPP')} at ${data.appointmentTime}.`,
       });
       form.reset();
       form.setValue('consultationType', 'video');
@@ -221,68 +199,19 @@ export default function AppointmentsPage() {
                     )}
                   />
                   
-                  <div className="space-y-2">
-                    <FormLabel>Appointment Date</FormLabel>
-                    <div className="grid grid-cols-3 gap-2">
-                      <FormField
-                        control={form.control}
-                        name="appointmentDay"
-                        render={({ field }) => (
-                          <FormItem>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Day" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {days.map(day => <SelectItem key={day} value={day}>{day}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                       <FormField
-                        control={form.control}
-                        name="appointmentMonth"
-                        render={({ field }) => (
-                          <FormItem>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Month" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {months.map(month => <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                       <FormField
-                        control={form.control}
-                        name="appointmentYear"
-                        render={({ field }) => (
-                          <FormItem>
-                             <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Year" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {years.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="appointmentDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Appointment Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
                   <FormField
                     control={form.control}
