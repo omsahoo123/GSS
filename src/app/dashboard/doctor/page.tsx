@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -18,12 +19,33 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarCheck, Users, Video, Search, CheckSquare } from 'lucide-react';
+import {
+  CalendarCheck,
+  Users,
+  Video,
+  Search,
+  CheckSquare,
+  Trash2,
+  Edit,
+  Save,
+  PlusCircle,
+} from 'lucide-react';
 import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 import { PatientDemographicsChart } from '@/components/patient-demographics-chart';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const upcomingAppointments = [
   {
@@ -49,7 +71,7 @@ const upcomingAppointments = [
   },
 ];
 
-const pendingTasks = [
+const initialPendingTasks = [
   {
     id: 'task-1',
     description: 'Review new lab results for Sunita Devi',
@@ -68,6 +90,53 @@ const pendingTasks = [
 ];
 
 export default function DoctorDashboardPage() {
+  const [tasks, setTasks] = useState(initialPendingTasks);
+  const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingTaskText, setEditingTaskText] = useState('');
+
+  const handleAddTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newTaskDescription.trim()) {
+      setTasks([
+        ...tasks,
+        {
+          id: `task-${Date.now()}`,
+          description: newTaskDescription,
+          completed: false,
+        },
+      ]);
+      setNewTaskDescription('');
+    }
+  };
+
+  const handleToggleTask = (taskId: string) => {
+    setTasks(
+      tasks.map((task) =>
+        task.id === taskId ? { ...task, completed: !task.completed } : task
+      )
+    );
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    setTasks(tasks.filter((task) => task.id !== taskId));
+  };
+
+  const handleStartEditing = (task: typeof tasks[0]) => {
+    setEditingTaskId(task.id);
+    setEditingTaskText(task.description);
+  };
+
+  const handleSaveEditing = (taskId: string) => {
+    setTasks(
+      tasks.map((task) =>
+        task.id === taskId ? { ...task, description: editingTaskText } : task
+      )
+    );
+    setEditingTaskId(null);
+    setEditingTaskText('');
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -124,10 +193,10 @@ export default function DoctorDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {pendingTasks.filter((t) => !t.completed).length}
+              {tasks.filter((t) => !t.completed).length}
             </div>
             <p className="text-xs text-muted-foreground">
-              {pendingTasks.length} total tasks
+              {tasks.length} total tasks
             </p>
           </CardContent>
         </Card>
@@ -149,27 +218,99 @@ export default function DoctorDashboardPage() {
           <CardHeader>
             <CardTitle>Pending Tasks</CardTitle>
             <CardDescription>
-              Actionable items that need your attention.
+              Manage your actionable items that need attention.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {pendingTasks.map((task) => (
-              <div key={task.id} className="flex items-start space-x-3">
-                <Checkbox
-                  id={`task-${task.id}`}
-                  className="mt-1"
-                  defaultChecked={task.completed}
-                />
-                <label
-                  htmlFor={`task-${task.id}`}
-                  className={`flex-1 text-sm leading-snug ${
-                    task.completed ? 'text-muted-foreground line-through' : ''
-                  }`}
-                >
-                  {task.description}
-                </label>
-              </div>
-            ))}
+            <form onSubmit={handleAddTask} className="flex items-center gap-2">
+              <Input
+                value={newTaskDescription}
+                onChange={(e) => setNewTaskDescription(e.target.value)}
+                placeholder="Add a new task..."
+              />
+              <Button type="submit" size="icon">
+                <PlusCircle />
+                <span className="sr-only">Add Task</span>
+              </Button>
+            </form>
+            <div className="space-y-4">
+              {tasks.map((task) => (
+                <div key={task.id} className="flex items-center space-x-3">
+                  <Checkbox
+                    id={`task-${task.id}`}
+                    checked={task.completed}
+                    onCheckedChange={() => handleToggleTask(task.id)}
+                  />
+                  {editingTaskId === task.id ? (
+                    <Input
+                      value={editingTaskText}
+                      onChange={(e) => setEditingTaskText(e.target.value)}
+                      className="h-8 flex-1"
+                    />
+                  ) : (
+                    <label
+                      htmlFor={`task-${task.id}`}
+                      className={`flex-1 text-sm leading-snug ${
+                        task.completed
+                          ? 'text-muted-foreground line-through'
+                          : ''
+                      }`}
+                    >
+                      {task.description}
+                    </label>
+                  )}
+                  <div className="ml-auto flex items-center gap-2">
+                    {editingTaskId === task.id ? (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => handleSaveEditing(task.id)}
+                      >
+                        <Save className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => handleStartEditing(task)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently
+                            delete the task from your list.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteTask(task.id)}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -218,7 +359,9 @@ export default function DoctorDashboardPage() {
                     <TableCell>{appt.time}</TableCell>
                     <TableCell>
                       <Badge
-                        variant={appt.type === 'Video' ? 'default' : 'secondary'}
+                        variant={
+                          appt.type === 'Video' ? 'default' : 'secondary'
+                        }
                       >
                         {appt.type}
                       </Badge>
