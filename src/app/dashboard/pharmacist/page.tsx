@@ -9,7 +9,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save } from 'lucide-react';
+import { Package, PackageCheck, PackageX, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,9 +23,20 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 export const PHARMACY_LOCATION_KEY = 'pharmacistLocation';
+const INVENTORY_STORAGE_KEY = 'pharmacistInventory';
+
+type Medicine = {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  supplier: string;
+  status: 'In Stock' | 'Low Stock' | 'Out of Stock';
+};
 
 const locationSchema = z.object({
   name: z.string().min(1, 'Pharmacy name is required.'),
@@ -36,6 +47,7 @@ type LocationFormValues = z.infer<typeof locationSchema>;
 
 export default function PharmacistDashboardPage() {
   const { toast } = useToast();
+  const [inventory, setInventory] = useState<Medicine[]>([]);
 
   const form = useForm<LocationFormValues>({
     resolver: zodResolver(locationSchema),
@@ -52,8 +64,13 @@ export default function PharmacistDashboardPage() {
         const location = JSON.parse(storedLocation);
         form.reset(location);
       }
+      
+      const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
+      if (storedInventory) {
+        setInventory(JSON.parse(storedInventory));
+      }
     } catch (error) {
-      console.error("Failed to load location from localStorage", error);
+      console.error("Failed to load data from localStorage", error);
     }
   }, [form]);
 
@@ -74,6 +91,11 @@ export default function PharmacistDashboardPage() {
     }
   };
 
+  const inStockCount = inventory.filter(m => m.status === 'In Stock').length;
+  const lowStockCount = inventory.filter(m => m.status === 'Low Stock').length;
+  const outOfStockCount = inventory.filter(m => m.status === 'Out of Stock').length;
+
+
   return (
     <div className="space-y-6">
       <div>
@@ -89,14 +111,30 @@ export default function PharmacistDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Inventory Overview</CardTitle>
+            <CardDescription>A summary of your current stock status.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <p>
-              This is where the main content for the pharmacist's dashboard will
-              go. It can include low-stock alerts, new prescription
-              notifications, and inventory management tools.
-            </p>
+          <CardContent className="grid grid-cols-3 gap-4 text-center">
+            <div className="rounded-lg border p-4">
+              <PackageCheck className="mx-auto h-8 w-8 text-green-600" />
+              <p className="mt-2 text-2xl font-bold">{inStockCount}</p>
+              <p className="text-sm text-muted-foreground">In Stock</p>
+            </div>
+             <div className="rounded-lg border p-4">
+              <Package className="mx-auto h-8 w-8 text-yellow-600" />
+              <p className="mt-2 text-2xl font-bold">{lowStockCount}</p>
+              <p className="text-sm text-muted-foreground">Low Stock</p>
+            </div>
+             <div className="rounded-lg border p-4">
+              <PackageX className="mx-auto h-8 w-8 text-red-600" />
+              <p className="mt-2 text-2xl font-bold">{outOfStockCount}</p>
+              <p className="text-sm text-muted-foreground">Out of Stock</p>
+            </div>
           </CardContent>
+          <CardFooter>
+            <Link href="/dashboard/pharmacist/inventory" className="w-full">
+              <Button variant="outline" className="w-full">Manage Inventory</Button>
+            </Link>
+          </CardFooter>
         </Card>
         <Card>
           <Form {...form}>
