@@ -83,7 +83,7 @@ const inventorySchema = z.object({
   medicineId: z.string().optional(),
   medicineName: z.string().min(1, 'Medicine name is required.'),
   quantity: z.coerce.number().min(0, 'Quantity cannot be negative.'),
-  price: z.coerce.number().min(0, 'Price cannot be negative.'),
+  price: z.coerce.number().min(0.01, 'Price must be greater than 0.'),
   supplier: z.string().optional(),
 });
 
@@ -156,6 +156,10 @@ export default function InventoryPage() {
         description: `Added ${data.quantity} units to ${existing.name}. New total: ${existing.quantity + data.quantity}.`,
       });
     } else {
+       if (data.price <= 0) {
+         form.setError("price", { type: "manual", message: "Price is required for new medicines." });
+         return;
+       }
       const newMedicine: Medicine = {
         id: `med-${Date.now()}`,
         name: data.medicineName,
@@ -350,7 +354,7 @@ export default function InventoryPage() {
                           className="h-8 w-24"
                         />
                       ) : (
-                        med.price.toFixed(2)
+                        med.price?.toFixed(2)
                       )}
                     </TableCell>
                     <TableCell>
@@ -389,3 +393,5 @@ export default function InventoryPage() {
     </div>
   );
 }
+
+    
