@@ -50,7 +50,7 @@ export default function AppointmentsPage() {
       consultationType: 'video',
       department: '',
       doctorId: '',
-      appointmentDate: '',
+      appointmentDate: format(new Date(), 'yyyy-MM-dd'),
       appointmentTime: '',
     },
   });
@@ -67,6 +67,7 @@ export default function AppointmentsPage() {
       });
       form.reset();
       form.setValue('consultationType', 'video');
+      form.setValue('appointmentDate', format(new Date(), 'yyyy-MM-dd'));
       setSelectedDepartment('');
       setIsBooking(false);
     }, 1500);
