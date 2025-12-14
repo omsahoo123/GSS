@@ -43,20 +43,34 @@ import { Badge } from '@/components/ui/badge';
 import { allPatients } from '@/lib/patients-data';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, FileSearch } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 const initialPrescriptions = [
   {
     id: 'presc-1',
+    patientId: 'pat-1',
     patientName: 'Aarav Sharma',
     date: format(new Date(), 'yyyy-MM-dd'),
-    medication: 'Amoxicillin 500mg',
+    medication: 'Amoxicillin',
+    dosage: '500mg',
+    instructions: 'Take one tablet twice a day for 7 days.',
     status: 'Filled',
   },
   {
     id: 'presc-2',
+    patientId: 'pat-2',
     patientName: 'Sunita Devi',
     date: format(new Date(new Date().setDate(new Date().getDate() - 1)), 'yyyy-MM-dd'),
-    medication: 'Metformin 1000mg',
+    medication: 'Metformin',
+    dosage: '1000mg',
+    instructions: 'Take one tablet daily with breakfast.',
     status: 'Pending',
   },
 ];
@@ -69,11 +83,14 @@ const prescriptionSchema = z.object({
 });
 
 type PrescriptionFormValues = z.infer<typeof prescriptionSchema>;
+type Prescription = (typeof initialPrescriptions)[0];
 
 export default function PrescriptionsPage() {
   const [prescriptions, setPrescriptions] = useState(initialPrescriptions);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
 
   const form = useForm<PrescriptionFormValues>({
     resolver: zodResolver(prescriptionSchema),
@@ -89,11 +106,14 @@ export default function PrescriptionsPage() {
     const patient = allPatients.find(p => p.id === data.patientId);
     if (!patient) return;
 
-    const newPrescription = {
+    const newPrescription: Prescription = {
       id: `presc-${Date.now()}`,
+      patientId: patient.id,
       patientName: patient.name,
       date: format(new Date(), 'yyyy-MM-dd'),
-      medication: `${data.medication} ${data.dosage}`,
+      medication: data.medication,
+      dosage: data.dosage,
+      instructions: data.instructions,
       status: 'Pending',
     };
 
@@ -103,6 +123,11 @@ export default function PrescriptionsPage() {
       description: `A new prescription for ${patient.name} has been issued.`,
     });
     form.reset();
+  };
+
+  const handleViewDetails = (prescription: Prescription) => {
+    setSelectedPrescription(prescription);
+    setIsDetailDialogOpen(true);
   };
   
   const getStatusVariant = (status: string) => {
@@ -260,7 +285,7 @@ export default function PrescriptionsPage() {
                     <TableCell className="font-medium">
                       {presc.patientName}
                     </TableCell>
-                    <TableCell>{presc.medication}</TableCell>
+                    <TableCell>{presc.medication} {presc.dosage}</TableCell>
                     <TableCell>{presc.date}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(presc.status)}>
@@ -268,7 +293,7 @@ export default function PrescriptionsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => handleViewDetails(presc)}>
                             View
                         </Button>
                     </TableCell>
@@ -285,6 +310,50 @@ export default function PrescriptionsPage() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Prescription Detail Dialog */}
+        <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Prescription Details</DialogTitle>
+              <DialogDescription>
+                Viewing prescription for {selectedPrescription?.patientName} issued on {selectedPrescription?.date}.
+              </DialogDescription>
+            </DialogHeader>
+            {selectedPrescription && (
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold">Patient</h4>
+                  <p>{selectedPrescription.patientName}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold">Medication</h4>
+                  <p>{selectedPrescription.medication}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold">Dosage</h4>
+                  <p>{selectedPrescription.dosage}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold">Instructions</h4>
+                  <p>{selectedPrescription.instructions}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold">Status</h4>
+                  <Badge variant={getStatusVariant(selectedPrescription.status)}>
+                    {selectedPrescription.status}
+                  </Badge>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
