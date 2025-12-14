@@ -28,15 +28,29 @@ import { Button } from './ui/button';
 
 const menuItems = [
   { href: '/dashboard/doctor', label: 'Dashboard', icon: Home },
-  { href: '/dashboard/doctor/appointments', label: 'Appointments', icon: Calendar },
+  {
+    href: '/dashboard/doctor/appointments',
+    label: 'Appointments',
+    icon: Calendar,
+  },
   { href: '/dashboard/doctor/patients', label: 'Patients', icon: Users },
-  { href: '/dashboard/doctor/consultations', label: 'Consultations', icon: Video },
-  { href: '/dashboard/doctor/prescriptions', label: 'Prescriptions', icon: FileText },
+  {
+    href: '/dashboard/doctor/consultations',
+    label: 'Consultations',
+    icon: Video,
+  },
+  {
+    href: '/dashboard/doctor/prescriptions',
+    label: 'Prescriptions',
+    icon: FileText,
+  },
 ];
 
 export function DoctorSidebar() {
   const pathname = usePathname();
-  const doctorAvatar = PlaceHolderImages.find((img) => img.id === 'avatar-doctor');
+  const doctorAvatar = PlaceHolderImages.find(
+    (img) => img.id === 'avatar-doctor'
+  );
 
   return (
     <Sidebar>
@@ -67,7 +81,11 @@ export function DoctorSidebar() {
         <div className="flex items-center gap-3 p-2">
           <Avatar className="h-10 w-10">
             {doctorAvatar && (
-              <AvatarImage src={doctorAvatar.imageUrl} alt="Dr. Priya Singh" data-ai-hint={doctorAvatar.imageHint} />
+              <AvatarImage
+                src={doctorAvatar.imageUrl}
+                alt="Dr. Priya Singh"
+                data-ai-hint={doctorAvatar.imageHint}
+              />
             )}
             <AvatarFallback>PS</AvatarFallback>
           </Avatar>
