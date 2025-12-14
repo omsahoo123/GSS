@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -28,8 +29,14 @@ import { allPatients } from '@/lib/patients-data';
 const remotePatients = allPatients.filter((p) => p.type === 'Remote');
 const inClinicPatients = allPatients.filter((p) => p.type === 'In-Clinic');
 
-export default function PatientsPage() {
-    const [searchTerm, setSearchTerm] = useState('');
+function PatientsPageComponent() {
+    const searchParams = useSearchParams();
+    const initialSearch = searchParams.get('search') || '';
+    const [searchTerm, setSearchTerm] = useState(initialSearch);
+
+    useEffect(() => {
+      setSearchTerm(initialSearch);
+    }, [initialSearch]);
 
     const filterPatients = (patients: typeof allPatients) => {
         if (!searchTerm) return patients;
@@ -155,3 +162,13 @@ export default function PatientsPage() {
     </div>
   );
 }
+
+export default function PatientsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PatientsPageComponent />
+    </Suspense>
+  )
+}
+
+    

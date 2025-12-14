@@ -31,6 +31,7 @@ import {
   PlusCircle,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 import { PatientDemographicsChart } from '@/components/patient-demographics-chart';
@@ -98,6 +99,9 @@ export default function DoctorDashboardPage() {
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTaskText, setEditingTaskText] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
+
 
   useEffect(() => {
     // This effect runs once on mount on the client side.
@@ -168,6 +172,13 @@ export default function DoctorDashboardPage() {
     setEditingTaskId(null);
     setEditingTaskText('');
   };
+  
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/dashboard/doctor/patients?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -178,14 +189,16 @@ export default function DoctorDashboardPage() {
             Welcome, Dr. Priya Singh. Here is your daily overview.
           </p>
         </div>
-        <div className="relative w-full max-w-sm">
+        <form onSubmit={handleSearchSubmit} className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Search for a patient..."
             className="pl-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
-        </div>
+        </form>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -420,3 +433,5 @@ export default function DoctorDashboardPage() {
     </div>
   );
 }
+
+    
