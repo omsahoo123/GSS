@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -209,6 +210,7 @@ export default function InventoryPage() {
                           <Input placeholder="e.g., Cipla" {...field} disabled={!!existingMedicine} />
                         </FormControl>
                         <FormDescription className="text-xs">{existingMedicine ? 'Supplier cannot be changed for existing medicine.' : 'Required for new medicine.'}</FormDescription>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
