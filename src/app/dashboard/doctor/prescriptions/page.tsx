@@ -42,7 +42,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { allPatients } from '@/lib/patients-data';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, FileSearch } from 'lucide-react';
 
 const initialPrescriptions = [
   {
@@ -72,6 +72,7 @@ type PrescriptionFormValues = z.infer<typeof prescriptionSchema>;
 
 export default function PrescriptionsPage() {
   const [prescriptions, setPrescriptions] = useState(initialPrescriptions);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   const form = useForm<PrescriptionFormValues>({
@@ -115,6 +116,12 @@ export default function PrescriptionsPage() {
     }
   };
 
+  const filteredPrescriptions = prescriptions.filter(
+    (presc) =>
+      presc.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      presc.medication.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
 
   return (
     <div className="space-y-6">
@@ -128,9 +135,8 @@ export default function PrescriptionsPage() {
           </p>
         </div>
       </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+      
+      <Card>
           <CardHeader>
             <CardTitle>Create New Prescription</CardTitle>
             <CardDescription>
@@ -140,72 +146,74 @@ export default function PrescriptionsPage() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="patientId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Patient</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="patientId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Patient</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a patient" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {allPatients.map(patient => (
+                              <SelectItem key={patient.id} value={patient.id}>
+                                {patient.name} (ID: {patient.id})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="medication"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Medication Name</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a patient" />
-                          </SelectTrigger>
+                          <Input placeholder="e.g., Paracetamol" {...field} />
                         </FormControl>
-                        <SelectContent>
-                          {allPatients.map(patient => (
-                            <SelectItem key={patient.id} value={patient.id}>
-                              {patient.name} (ID: {patient.id})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="medication"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Medication Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Paracetamol" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="dosage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Dosage</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., 500mg" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="instructions"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Instructions</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="e.g., Take one tablet twice a day after meals."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="dosage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dosage</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., 500mg" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="instructions"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Instructions</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="e.g., Take one tablet twice a day after meals."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <Button type="submit">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Issue Prescription
@@ -215,12 +223,25 @@ export default function PrescriptionsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+      <Card>
           <CardHeader>
-            <CardTitle>Recent Prescriptions</CardTitle>
-            <CardDescription>
-              A list of the most recently issued prescriptions.
-            </CardDescription>
+             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <CardTitle>Recent Prescriptions</CardTitle>
+                    <CardDescription>
+                    A list of the most recently issued prescriptions.
+                    </CardDescription>
+                </div>
+                <div className="relative">
+                    <FileSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by patient or medication..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-9 md:w-64 lg:w-80"
+                    />
+                </div>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -230,10 +251,11 @@ export default function PrescriptionsPage() {
                   <TableHead>Medication</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Details</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {prescriptions.map((presc) => (
+                {filteredPrescriptions.map((presc) => (
                   <TableRow key={presc.id}>
                     <TableCell className="font-medium">
                       {presc.patientName}
@@ -245,12 +267,17 @@ export default function PrescriptionsPage() {
                         {presc.status}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-right">
+                        <Button variant="outline" size="sm">
+                            View
+                        </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
-                 {prescriptions.length === 0 && (
+                 {filteredPrescriptions.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={4} className="text-center text-muted-foreground">
-                            No recent prescriptions found.
+                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                            No prescriptions found.
                         </TableCell>
                     </TableRow>
                  )}
@@ -258,7 +285,6 @@ export default function PrescriptionsPage() {
             </Table>
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }
