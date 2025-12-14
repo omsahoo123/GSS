@@ -138,11 +138,11 @@ export default function DoctorDashboardPage() {
             </CardHeader>
             <CardContent className="space-y-4">
                 {pendingTasks.map(task => (
-                    <div key={task.id} className="flex items-center space-x-3">
-                        <Checkbox id={`task-${task.id}`} defaultChecked={task.completed} />
+                    <div key={task.id} className="flex items-start space-x-3">
+                        <Checkbox id={`task-${task.id}`} className="mt-1" defaultChecked={task.completed} />
                         <label
                         htmlFor={`task-${task.id}`}
-                        className={`text-sm ${task.completed ? 'text-muted-foreground line-through' : ''}`}
+                        className={`text-sm leading-snug ${task.completed ? 'text-muted-foreground line-through' : ''}`}
                         >
                         {task.description}
                         </label>
