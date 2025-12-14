@@ -25,11 +25,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -37,11 +32,10 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
-import { Video, Building, Calendar as CalendarIcon, FileText } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { Video, Calendar as CalendarIcon, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 // Mock data for all appointments in the system
@@ -114,7 +108,7 @@ type Appointment = typeof allAppointmentsData[0];
 
 export default function DoctorAppointmentsPage() {
   const [appointments, setAppointments] = useState(allAppointmentsData);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [currentAppointment, setCurrentAppointment] = useState<Appointment | null>(null);
   const [noteText, setNoteText] = useState('');
@@ -172,25 +166,14 @@ export default function DoctorAppointmentsPage() {
             Here is your schedule for {selectedDate ? format(selectedDate, "PPP") : 'today'}, {loggedInDoctorName}.
             </p>
         </div>
-        <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={'outline'}
-                className="w-full justify-start text-left font-normal md:w-auto"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? format(selectedDate, 'PPP') : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+        <div className="relative">
+          <input
+            type="date"
+            value={format(selectedDate, 'yyyy-MM-dd')}
+            onChange={(e) => setSelectedDate(parseISO(e.target.value))}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 md:w-auto"
+          />
+        </div>
       </div>
 
       <Card>
