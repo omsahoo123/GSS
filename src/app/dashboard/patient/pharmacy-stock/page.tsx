@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,56 +14,25 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { PHARMACY_LOCATION_KEY } from '../../pharmacist/page';
 
-// Mock data for pharmacies and medicine stock
-const pharmacies = [
-  {
-    id: 'ph-1',
-    name: 'Jan Aushadhi Kendra',
-    address: '123, Village Market Rd, Rampur',
-    medicines: [
-      { name: 'Paracetamol', stock: 'available' },
-      { name: 'Amoxicillin', stock: 'low' },
-      { name: 'Metformin', stock: 'available' },
-    ],
-  },
-  {
-    id: 'ph-2',
-    name: 'Gramin Pharmacy',
-    address: '45, Main Bazaar, Sitapur',
-    medicines: [
-      { name: 'Paracetamol', stock: 'available' },
-      { name: 'Ibuprofen', stock: 'not-available' },
-      { name: 'Metformin', stock: 'available' },
-    ],
-  },
-  {
-    id: 'ph-3',
-    name: 'Sehat Medical Store',
-    address: '7, Panchayat Bhawan, Aligarh',
-    medicines: [
-      { name: 'Paracetamol', stock: 'low' },
-      { name: 'Lisinopril', stock: 'available' },
-      { name: 'Amoxicillin', stock: 'available' },
-    ],
-  },
-  {
-    id: 'ph-4',
-    name: 'Arogya Medicals',
-    address: 'Near Bus Stand, Fatehpur',
-    medicines: [
-      { name: 'Ibuprofen', stock: 'available' },
-      { name: 'Metformin', stock: 'not-available' },
-    ],
-  },
-];
 
+const INVENTORY_STORAGE_KEY = 'pharmacistInventory';
+
+type Medicine = {
+    id: string;
+    name: string;
+    quantity: number;
+    price: number;
+    supplier: string;
+    status: 'In Stock' | 'Low Stock' | 'Out of Stock';
+};
 
 type PharmacyResult = {
   id: string;
   name: string;
   address: string;
-  stock: 'available' | 'low' | 'not-available';
+  stockStatus: 'available' | 'low' | 'not-available';
 };
 
 
@@ -72,34 +41,56 @@ export default function PharmacyStockPage() {
   const [searchResults, setSearchResults] = useState<PharmacyResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [inventory, setInventory] = useState<Medicine[]>([]);
+  const [pharmacyLocation, setPharmacyLocation] = useState<{name: string, address: string} | null>(null);
+
+  useEffect(() => {
+    try {
+        const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
+        if (storedInventory) {
+            setInventory(JSON.parse(storedInventory));
+        }
+        const storedLocation = localStorage.getItem(PHARMACY_LOCATION_KEY);
+        if (storedLocation) {
+            setPharmacyLocation(JSON.parse(storedLocation));
+        }
+    } catch (error) {
+        console.error("Failed to load data from localStorage", error);
+    }
+  }, []);
+
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim() || !pharmacyLocation) return;
 
     setIsLoading(true);
     setHasSearched(true);
     
     // Simulate API call
     setTimeout(() => {
-      const results: PharmacyResult[] = [];
-      pharmacies.forEach(pharmacy => {
-        const medicine = pharmacy.medicines.find(m => m.name.toLowerCase() === searchQuery.trim().toLowerCase());
+        const results: PharmacyResult[] = [];
+        const medicine = inventory.find(m => m.name.toLowerCase() === searchQuery.trim().toLowerCase());
+        
         if (medicine) {
-          results.push({
-            id: pharmacy.id,
-            name: pharmacy.name,
-            address: pharmacy.address,
-            stock: medicine.stock as PharmacyResult['stock'],
-          });
+            let stockStatus: PharmacyResult['stockStatus'] = 'not-available';
+            if (medicine.status === 'In Stock') stockStatus = 'available';
+            if (medicine.status === 'Low Stock') stockStatus = 'low';
+
+            results.push({
+                id: 'pharm-1',
+                name: pharmacyLocation.name,
+                address: pharmacyLocation.address,
+                stockStatus: stockStatus,
+            });
         }
-      });
-      setSearchResults(results);
-      setIsLoading(false);
+
+        setSearchResults(results);
+        setIsLoading(false);
     }, 1000);
   };
 
-  const getStockVariant = (stock: PharmacyResult['stock']) => {
+  const getStockVariant = (stock: PharmacyResult['stockStatus']) => {
     switch (stock) {
       case 'available':
         return 'secondary';
@@ -112,7 +103,7 @@ export default function PharmacyStockPage() {
     }
   };
   
-  const getStockText = (stock: PharmacyResult['stock']) => {
+  const getStockText = (stock: PharmacyResult['stockStatus']) => {
     switch (stock) {
       case 'available':
         return 'In Stock';
@@ -149,10 +140,11 @@ export default function PharmacyStockPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-grow"
             />
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !pharmacyLocation}>
               {isLoading ? 'Searching...' : <><Search className="mr-2 h-4 w-4" /> Search</>}
             </Button>
           </form>
+           {!pharmacyLocation && <p className="mt-4 text-sm text-destructive">The pharmacy has not set their location yet. Please check back later.</p>}
         </CardContent>
       </Card>
 
@@ -186,9 +178,9 @@ export default function PharmacyStockPage() {
                     <TableRow key={result.id}>
                       <TableCell className="font-medium">{result.name}</TableCell>
                        <TableCell>
-                         <Badge variant={getStockVariant(result.stock)}>
+                         <Badge variant={getStockVariant(result.stockStatus)}>
                            <CheckCircle2 className="mr-1 h-3 w-3"/>
-                           {getStockText(result.stock)}
+                           {getStockText(result.stockStatus)}
                          </Badge>
                        </TableCell>
                       <TableCell>{result.address}</TableCell>
@@ -208,7 +200,7 @@ export default function PharmacyStockPage() {
               </Table>
             ) : (
                <div className="text-center py-10">
-                 <p className="text-muted-foreground">Try another medicine name or check your spelling.</p>
+                 <p className="text-muted-foreground">This medicine is not in stock, or the pharmacy has not listed it. Try another medicine or check back later.</p>
                </div>
             )}
           </CardContent>
