@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -23,34 +24,57 @@ import {
 } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { IndianRupee, Pill, CalendarDays } from 'lucide-react';
+import { format, subDays } from 'date-fns';
 
-const salesData = [
-  { date: 'Mon', sales: 23 },
-  { date: 'Tue', sales: 21 },
-  { date: 'Wed', sales: 35 },
-  { date: 'Thu', sales: 42 },
-  { date: 'Fri', sales: 28 },
-  { date: 'Sat', sales: 52 },
-  { date: 'Sun', sales: 18 },
-];
+type Transaction = {
+    id: string;
+    medicine: string;
+    amount: number;
+    date: string;
+};
 
-const recentTransactions = [
-    { id: 't-1', medicine: 'Paracetamol', amount: 50.00, date: '2024-07-29' },
-    { id: 't-2', medicine: 'Amoxicillin', amount: 120.00, date: '2024-07-29' },
-    { id: 't-3', medicine: 'Metformin', amount: 85.00, date: '2024-07-28' },
-    { id: 't-4', medicine: 'Lisinopril', amount: 150.00, date: '2024-07-28' },
-    { id: 't-5', medicine: 'Ibuprofen', amount: 40.00, date: '2024-07-27' },
-]
+const TRANSACTIONS_STORAGE_KEY = 'pharmacistTransactions';
 
 const chartConfig = {
   sales: {
-    label: 'Sales',
+    label: 'Sales (₹)',
     color: 'hsl(var(--primary))',
   },
 };
 
 
 export default function PharmacistReportsPage() {
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+    useEffect(() => {
+        try {
+            const storedTransactions = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
+            if (storedTransactions) {
+                setTransactions(JSON.parse(storedTransactions));
+            }
+        } catch (error) {
+            console.error("Failed to load transactions from localStorage", error);
+        }
+    }, []);
+
+    const totalRevenue = transactions.reduce((sum, t) => sum + t.amount, 0);
+    const totalPrescriptions = transactions.length;
+
+    // Prepare data for the sales chart (last 7 days)
+    const salesData = Array.from({ length: 7 }).map((_, i) => {
+        const date = subDays(new Date(), i);
+        const dateString = format(date, 'yyyy-MM-dd');
+        const daySales = transactions
+            .filter(t => t.date === dateString)
+            .reduce((sum, t) => sum + t.amount, 0);
+        return {
+            date: format(date, 'E'), // e.g., 'Mon'
+            sales: daySales,
+        };
+    }).reverse();
+    
+    const busiestDayData = salesData.reduce((max, day) => day.sales > max.sales ? day : max, salesData[0] || { date: 'N/A', sales: 0 });
+
   return (
     <div className="space-y-6">
       <h1 className="font-headline text-3xl font-bold">Sales Reports</h1>
@@ -62,9 +86,9 @@ export default function PharmacistReportsPage() {
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹45,231.89</div>
+            <div className="text-2xl font-bold">₹{totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              +20.1% from last month
+              From all recorded transactions
             </p>
           </CardContent>
         </Card>
@@ -74,9 +98,9 @@ export default function PharmacistReportsPage() {
             <Pill className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+2350</div>
+            <div className="text-2xl font-bold">+{totalPrescriptions}</div>
             <p className="text-xs text-muted-foreground">
-              +180.1% from last month
+              Total prescriptions recorded
             </p>
           </CardContent>
         </Card>
@@ -86,7 +110,7 @@ export default function PharmacistReportsPage() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Saturday</div>
+            <div className="text-2xl font-bold">{busiestDayData.date}</div>
             <p className="text-xs text-muted-foreground">
               Based on sales volume this week
             </p>
@@ -117,7 +141,7 @@ export default function PharmacistReportsPage() {
                 axisLine={false}
                 tickMargin={8}
                 fontSize={12}
-                tickFormatter={(value) => `${value}`}
+                tickFormatter={(value) => `₹${value}`}
               />
               <ChartTooltip
                 cursor={false}
@@ -146,13 +170,20 @@ export default function PharmacistReportsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentTransactions.map((transaction) => (
+                {transactions.slice(0, 10).map((transaction) => (
                     <TableRow key={transaction.id}>
                         <TableCell className="font-medium">{transaction.medicine}</TableCell>
-                        <TableCell>{transaction.date}</TableCell>
+                        <TableCell>{format(new Date(transaction.date), 'PPP')}</TableCell>
                         <TableCell className="text-right">₹{transaction.amount.toFixed(2)}</TableCell>
                     </TableRow>
                 ))}
+                 {transactions.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground">
+                            No transactions recorded yet.
+                        </TableCell>
+                    </TableRow>
+                )}
               </TableBody>
             </Table>
         </CardContent>

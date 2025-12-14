@@ -41,6 +41,7 @@ const initialInventory = [
     id: 'med-1',
     name: 'Paracetamol',
     quantity: 250,
+    price: 1.5,
     supplier: 'Geno Pharmaceuticals',
     status: 'In Stock',
   },
@@ -48,6 +49,7 @@ const initialInventory = [
     id: 'med-2',
     name: 'Amoxicillin',
     quantity: 45,
+    price: 5.0,
     supplier: 'Cipla',
     status: 'Low Stock',
   },
@@ -55,6 +57,7 @@ const initialInventory = [
     id: 'med-3',
     name: 'Metformin',
     quantity: 150,
+    price: 3.2,
     supplier: 'Sun Pharma',
     status: 'In Stock',
   },
@@ -62,6 +65,7 @@ const initialInventory = [
     id: 'med-4',
     name: 'Ibuprofen',
     quantity: 0,
+    price: 2.0,
     supplier: 'Mankind Pharma',
     status: 'Out of Stock',
   },
@@ -69,6 +73,7 @@ const initialInventory = [
     id: 'med-5',
     name: 'Lisinopril',
     quantity: 80,
+    price: 7.8,
     supplier: 'Cipla',
     status: 'In Stock',
   },
@@ -78,6 +83,7 @@ const inventorySchema = z.object({
   medicineId: z.string().optional(),
   medicineName: z.string().min(1, 'Medicine name is required.'),
   quantity: z.coerce.number().min(0, 'Quantity cannot be negative.'),
+  price: z.coerce.number().min(0, 'Price cannot be negative.'),
   supplier: z.string().optional(),
 });
 
@@ -90,7 +96,7 @@ export default function InventoryPage() {
   const [inventory, setInventory] = useState<Medicine[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingMedicineId, setEditingMedicineId] = useState<string | null>(null);
-  const [editingQuantity, setEditingQuantity] = useState<number>(0);
+  const [editingValues, setEditingValues] = useState<{ quantity: number, price: number }>({ quantity: 0, price: 0 });
   const { toast } = useToast();
   
   useEffect(() => {
@@ -122,6 +128,7 @@ export default function InventoryPage() {
     defaultValues: {
       medicineName: '',
       quantity: 0,
+      price: 0,
       supplier: '',
     },
   });
@@ -153,6 +160,7 @@ export default function InventoryPage() {
         id: `med-${Date.now()}`,
         name: data.medicineName,
         quantity: data.quantity,
+        price: data.price,
         supplier: data.supplier || 'N/A',
         status: 'In Stock', // Initial status will be updated by updateStatus
       };
@@ -169,7 +177,7 @@ export default function InventoryPage() {
 
   const handleStartEditing = (medicine: Medicine) => {
     setEditingMedicineId(medicine.id);
-    setEditingQuantity(medicine.quantity);
+    setEditingValues({ quantity: medicine.quantity, price: medicine.price });
   };
 
   const handleCancelEditing = () => {
@@ -178,16 +186,20 @@ export default function InventoryPage() {
 
   const handleSaveEditing = (medicineId: string) => {
     const updatedInventory = inventory.map(m =>
-      m.id === medicineId ? { ...m, quantity: editingQuantity } : m
+      m.id === medicineId ? { ...m, ...editingValues } : m
     ).map(updateStatus);
     
     setInventory(updatedInventory);
     setEditingMedicineId(null);
 
     toast({
-      title: 'Quantity Updated',
-      description: `Stock for ${inventory.find(m => m.id === medicineId)?.name} has been set to ${editingQuantity}.`,
+      title: 'Inventory Updated',
+      description: `Stock details for ${inventory.find(m => m.id === medicineId)?.name} have been updated.`,
     });
+  };
+  
+  const handleEditingChange = (field: 'quantity' | 'price', value: string) => {
+    setEditingValues(prev => ({ ...prev, [field]: Number(value) }));
   };
 
   const getStatusVariant = (status: string) => {
@@ -217,7 +229,7 @@ export default function InventoryPage() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-3">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                    <FormField
                     control={form.control}
                     name="medicineName"
@@ -246,6 +258,20 @@ export default function InventoryPage() {
                   />
                   <FormField
                     control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price (₹)</FormLabel>
+                        <FormControl>
+                           <Input type="number" step="0.01" placeholder="0.00" {...field} disabled={!!existingMedicine} />
+                        </FormControl>
+                         <FormDescription className="text-xs">{existingMedicine ? 'Price cannot be changed here.' : 'Required for new medicine.'}</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="supplier"
                     render={({ field }) => (
                       <FormItem>
@@ -253,7 +279,7 @@ export default function InventoryPage() {
                         <FormControl>
                           <Input placeholder="e.g., Cipla" {...field} disabled={!!existingMedicine} />
                         </FormControl>
-                        <FormDescription className="text-xs">{existingMedicine ? 'Supplier cannot be changed for existing medicine.' : 'Required for new medicine.'}</FormDescription>
+                        <FormDescription className="text-xs">{existingMedicine ? 'Supplier cannot be changed.' : 'Required for new medicine.'}</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -292,6 +318,7 @@ export default function InventoryPage() {
                 <TableRow>
                   <TableHead>Medicine</TableHead>
                   <TableHead>Quantity</TableHead>
+                   <TableHead>Price (₹)</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Supplier</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -305,12 +332,25 @@ export default function InventoryPage() {
                       {editingMedicineId === med.id ? (
                         <Input 
                           type="number" 
-                          value={editingQuantity}
-                          onChange={(e) => setEditingQuantity(Number(e.target.value))}
+                          value={editingValues.quantity}
+                          onChange={(e) => handleEditingChange('quantity', e.target.value)}
                           className="h-8 w-24"
                         />
                       ) : (
                         med.quantity
+                      )}
+                    </TableCell>
+                     <TableCell>
+                      {editingMedicineId === med.id ? (
+                        <Input 
+                          type="number"
+                          step="0.01"
+                          value={editingValues.price}
+                          onChange={(e) => handleEditingChange('price', e.target.value)}
+                          className="h-8 w-24"
+                        />
+                      ) : (
+                        med.price.toFixed(2)
                       )}
                     </TableCell>
                     <TableCell>
@@ -337,7 +377,7 @@ export default function InventoryPage() {
                 ))}
                  {filteredInventory.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground">
                             No medicines found.
                         </TableCell>
                     </TableRow>
@@ -349,4 +389,3 @@ export default function InventoryPage() {
     </div>
   );
 }
-

@@ -49,9 +49,17 @@ type Medicine = {
     id: string;
     name: string;
     quantity: number;
+    price: number;
     supplier: string;
     status: string;
 };
+
+type Transaction = {
+    id: string;
+    medicine: string;
+    amount: number;
+    date: string;
+}
 
 const initialRecordedPrescriptions = [
   {
@@ -92,6 +100,7 @@ type PrescriptionFormValues = z.infer<typeof prescriptionSchema>;
 type RecordedPrescription = (typeof initialRecordedPrescriptions)[0];
 
 const INVENTORY_STORAGE_KEY = 'pharmacistInventory';
+const TRANSACTIONS_STORAGE_KEY = 'pharmacistTransactions';
 
 export default function PharmacistPrescriptionsPage() {
   const [recordedPrescriptions, setRecordedPrescriptions] = useState(initialRecordedPrescriptions);
@@ -130,7 +139,7 @@ export default function PharmacistPrescriptionsPage() {
       description: `A new prescription for ${data.patientName} has been recorded as filled.`,
     });
 
-    // Update inventory
+    // Update inventory and create transaction
     try {
         const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
         if (storedInventory) {
@@ -138,19 +147,32 @@ export default function PharmacistPrescriptionsPage() {
             const medicineIndex = inventory.findIndex(m => m.name.toLowerCase() === data.medication.toLowerCase());
 
             if (medicineIndex > -1) {
-                inventory[medicineIndex].quantity -= data.quantity;
-                if(inventory[medicineIndex].quantity < 0) inventory[medicineIndex].quantity = 0;
+                const med = inventory[medicineIndex];
+                med.quantity -= data.quantity;
+                if(med.quantity < 0) med.quantity = 0;
 
                 // Update status based on new quantity
-                const med = inventory[medicineIndex];
                 if (med.quantity <= 0) med.status = 'Out of Stock';
                 else if (med.quantity < 50) med.status = 'Low Stock';
                 else med.status = 'In Stock';
-
+                
+                inventory[medicineIndex] = med;
                 localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+
+                // Create Transaction
+                const transaction: Transaction = {
+                    id: `t-${Date.now()}`,
+                    medicine: med.name,
+                    amount: med.price * data.quantity,
+                    date: format(new Date(), 'yyyy-MM-dd')
+                };
+                const storedTransactions = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
+                const transactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions) : [];
+                localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify([transaction, ...transactions]));
+
                 toast({
-                    title: 'Inventory Updated',
-                    description: `${data.quantity} unit(s) of ${data.medication} deducted from stock.`,
+                    title: 'Inventory & Sales Updated',
+                    description: `${data.quantity} unit(s) of ${data.medication} deducted. New sale of ₹${transaction.amount.toFixed(2)} recorded.`,
                 });
             } else {
                  toast({
@@ -161,7 +183,7 @@ export default function PharmacistPrescriptionsPage() {
             }
         }
     } catch (error) {
-        console.error("Failed to update inventory from localStorage", error);
+        console.error("Failed to update inventory/transactions from localStorage", error);
     }
 
 
