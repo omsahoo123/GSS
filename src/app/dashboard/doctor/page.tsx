@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -90,10 +90,42 @@ const initialPendingTasks = [
 ];
 
 export default function DoctorDashboardPage() {
-  const [tasks, setTasks] = useState(initialPendingTasks);
+  const [tasks, setTasks] = useState(() => {
+    // This function now runs only on the client, avoiding SSR issues.
+    // It's safe to access localStorage here.
+    return [];
+  });
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTaskText, setEditingTaskText] = useState('');
+
+  useEffect(() => {
+    // This effect runs once on mount on the client side.
+    try {
+      const storedTasks = localStorage.getItem('doctorTasks');
+      if (storedTasks) {
+        setTasks(JSON.parse(storedTasks));
+      } else {
+        setTasks(initialPendingTasks);
+      }
+    } catch (error) {
+      console.error("Failed to load tasks from localStorage", error);
+      setTasks(initialPendingTasks);
+    }
+  }, []);
+
+  useEffect(() => {
+    // This effect runs whenever 'tasks' state changes.
+    // It's client-side only, so localStorage is safe.
+    if (tasks.length > 0) {
+        try {
+            localStorage.setItem('doctorTasks', JSON.stringify(tasks));
+        } catch (error) {
+            console.error("Failed to save tasks to localStorage", error);
+        }
+    }
+  }, [tasks]);
+
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
