@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -107,6 +108,19 @@ export default function LabReportsPage() {
       description: `A new report for ${patient.name} has been added.`,
     });
     form.reset();
+  };
+  
+  const handleDownload = (report: LabReport) => {
+    const fileContent = `This is a dummy lab report for ${report.reportName} for patient ${report.patientName} dated ${report.date}.`;
+    const blob = new Blob([fileContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = report.fileName;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   };
   
   const getStatusVariant = (status: string) => {
@@ -234,7 +248,7 @@ export default function LabReportsPage() {
                       <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => handleDownload(report)}>
                            <Download className="mr-2 h-4 w-4" /> Download
                         </Button>
                     </TableCell>
