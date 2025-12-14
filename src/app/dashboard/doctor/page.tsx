@@ -18,10 +18,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarCheck, Users, Video } from 'lucide-react';
+import { CalendarCheck, Users, Video, Search, CheckSquare } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Input } from '@/components/ui/input';
+import { PatientDemographicsChart } from '@/components/patient-demographics-chart';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const upcomingAppointments = [
   {
@@ -47,33 +49,32 @@ const upcomingAppointments = [
   },
 ];
 
-const recentActivity = [
-  {
-    id: 'act-1',
-    description: 'Aarav Sharma sent a new message regarding his prescription.',
-    time: '2 hours ago',
-  },
-  {
-    id: 'act-2',
-    description: 'New lab results uploaded for Sunita Devi.',
-    time: '5 hours ago',
-  },
-  {
-    id: 'act-3',
-    description: 'Rohan Verma scheduled a follow-up appointment.',
-    time: '1 day ago',
-  },
+const pendingTasks = [
+    { id: 'task-1', description: 'Review new lab results for Sunita Devi', completed: false },
+    { id: 'task-2', description: 'Follow up with Rohan Verma about his medication', completed: true },
+    { id: 'task-3', description: 'Sign prescription renewal for Aarav Sharma', completed: false },
 ];
 
 export default function DoctorDashboardPage() {
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="font-headline text-3xl font-bold">Doctor Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome, Dr. Priya Singh. Here is your daily overview.
-        </p>
+       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 className="font-headline text-3xl font-bold">Doctor Dashboard</h1>
+            <p className="text-muted-foreground">
+              Welcome, Dr. Priya Singh. Here is your daily overview.
+            </p>
+        </div>
+         <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search for a patient..."
+              className="pl-9"
+            />
+          </div>
       </div>
+
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
@@ -102,6 +103,53 @@ export default function DoctorDashboardPage() {
             </p>
           </CardContent>
         </Card>
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Tasks</CardTitle>
+            <CheckSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pendingTasks.filter(t => !t.completed).length}</div>
+            <p className="text-xs text-muted-foreground">
+              {pendingTasks.length} total tasks
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+         <Card>
+            <CardHeader>
+              <CardTitle>Patient Demographics</CardTitle>
+              <CardDescription>
+                A breakdown of your patient population by age group.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <PatientDemographicsChart />
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader>
+              <CardTitle>Pending Tasks</CardTitle>
+              <CardDescription>
+                Actionable items that need your attention.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {pendingTasks.map(task => (
+                    <div key={task.id} className="flex items-center space-x-3">
+                        <Checkbox id={`task-${task.id}`} defaultChecked={task.completed} />
+                        <label
+                        htmlFor={`task-${task.id}`}
+                        className={`text-sm ${task.completed ? 'text-muted-foreground line-through' : ''}`}
+                        >
+                        {task.description}
+                        </label>
+                    </div>
+                ))}
+            </CardContent>
+          </Card>
       </div>
 
       <Card>
@@ -156,23 +204,6 @@ export default function DoctorDashboardPage() {
               })}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>
-            Latest updates from your patients.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6">
-          {recentActivity.map((activity) => (
-            <div key={activity.id} className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">{activity.description}</p>
-              <p className="text-xs text-muted-foreground">{activity.time}</p>
-            </div>
-          ))}
         </CardContent>
       </Card>
     </div>
