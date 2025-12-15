@@ -22,13 +22,13 @@ export const REGIONAL_DATA_KEY = 'healthRegionalData';
 
 const initialDistricts = ['Rampur', 'Sitapur', 'Aligarh', 'Bareilly', 'Meerut'];
 
-const initialData: RegionalData[] = initialDistricts.map(district => ({
-    district,
-    population: 0,
-    beds: { occupied: 0, total: 0 },
-    ambulances: 0,
-    staff: { doctors: 0, nurses: 0 }
-}));
+const initialData: RegionalData[] = [
+    { district: 'Rampur', population: 950000, beds: { occupied: 95, total: 120 }, ambulances: 15, staff: { doctors: 50, nurses: 120 } },
+    { district: 'Sitapur', population: 800000, beds: { occupied: 70, total: 100 }, ambulances: 12, staff: { doctors: 40, nurses: 90 } },
+    { district: 'Aligarh', population: 1200000, beds: { occupied: 140, total: 150 }, ambulances: 25, staff: { doctors: 70, nurses: 160 } },
+    { district: 'Bareilly', population: 1100000, beds: { occupied: 100, total: 130 }, ambulances: 20, staff: { doctors: 60, nurses: 140 } },
+    { district: 'Meerut', population: 1300000, beds: { occupied: 110, total: 140 }, ambulances: 22, staff: { doctors: 65, nurses: 150 } },
+];
 
 
 const regionalDataSchema = z.object({
@@ -58,7 +58,7 @@ export default function RegionalDataPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(regionalDataSchema),
     defaultValues: {
-      regionalData: initialData,
+      regionalData: [],
     },
   });
   
