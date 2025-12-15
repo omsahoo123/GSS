@@ -69,8 +69,8 @@ allAgeDemographicsData['all'] = Object.values(allAgeDemographicsData).flat().red
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const diseaseChartConfig = {
-  flu_cases: { label: 'Flu', color: 'hsl(var(--chart-1))' },
-  dengue_cases: { label: 'Dengue', color: 'hsl(var(--chart-2))' },
+  Flu: { label: 'Flu', color: 'hsl(var(--chart-1))' },
+  Dengue: { label: 'Dengue', color: 'hsl(var(--chart-2))' },
 };
 
 const occupancyChartConfig = {
@@ -111,21 +111,23 @@ export default function HealthAnalyticsPage() {
       filtered = filtered.filter(d => d.district.toLowerCase() === selectedRegion);
     }
 
-    // This part needs more historical data to be meaningful, so we'll simulate it for now.
-    // In a real app, this would come from a time-series database.
-    const aggregatedByDate = Array.from({ length: 30 }).map((_, i) => {
+    return Array.from({ length: 30 }).map((_, i) => {
         const date = subDays(new Date(), 29 - i);
-        const dailyFlu = filtered.reduce((sum, d) => sum + Math.floor(d.flu_cases / 30 * (Math.random() * 0.4 + 0.8)), 0);
-        const dailyDengue = filtered.reduce((sum, d) => sum + Math.floor(d.dengue_cases / 30 * (Math.random() * 0.4 + 0.8)), 0);
-        return {
-            date: format(date, 'MMM d'),
-            flu_cases: dailyFlu,
-            dengue_cases: dailyDengue,
-        }
+        const dailyData: {[key: string]: any} = { date: format(date, 'MMM d') };
+
+        const allDiseasesInFilteredData = new Set(filtered.flatMap(d => d.cases.map(c => c.diseaseName)));
+
+        allDiseasesInFilteredData.forEach(diseaseName => {
+            const totalCasesForDisease = filtered.reduce((sum, d) => {
+                const diseaseCase = d.cases.find(c => c.diseaseName === diseaseName);
+                return sum + (diseaseCase ? diseaseCase.caseCount : 0);
+            }, 0);
+
+            dailyData[diseaseName] = Math.floor(totalCasesForDisease / 30 * (Math.random() * 0.4 + 0.8));
+        });
+
+        return dailyData;
     });
-
-    return aggregatedByDate;
-
   }, [selectedRegion, diseaseData]);
 
   const hospitalOccupancyData = useMemo(() => {
@@ -138,24 +140,27 @@ export default function HealthAnalyticsPage() {
   const ageDemographicsData = useMemo(() => {
     return allAgeDemographicsData[selectedRegion] || [];
   }, [selectedRegion]);
+  
+  const availableDiseases = useMemo(() => {
+    const all = new Set(diseaseData.flatMap(d => d.cases.map(c => c.diseaseName)))
+    return Array.from(all);
+  }, [diseaseData]);
 
   const handleDownload = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
     
-    // Header
     csvContent += `Health Analytics Report\n`;
     csvContent += `Region: ${selectedRegion},Disease: ${selectedDisease}\n`;
     csvContent += `Generated on: ${format(new Date(), 'yyyy-MM-dd')}\n\n`;
 
-    // Daily Trends
     csvContent += "Daily Disease Trends (Simulated Last 30 Days)\n";
-    csvContent += "Date,Flu Cases,Dengue Cases\n";
+    csvContent += "Date," + availableDiseases.join(',') + '\n';
     dailyCaseData.forEach(row => {
-        csvContent += `${row.date},${row.flu_cases},${row.dengue_cases}\n`;
+        const rowData = [row.date, ...availableDiseases.map(d => row[d] || 0)];
+        csvContent += rowData.join(',') + '\n';
     });
     csvContent += "\n";
 
-    // Hospital Occupancy
     csvContent += "Hospital Bed Occupancy\n";
     csvContent += "Region,Occupied,Total,Occupancy (%)\n";
     hospitalOccupancyData.forEach(row => {
@@ -164,7 +169,6 @@ export default function HealthAnalyticsPage() {
     });
     csvContent += "\n";
 
-    // Age Demographics
     csvContent += "Patient Demographics by Age (Sample Data)\n";
     csvContent += "Age Group,Value\n";
     ageDemographicsData.forEach(row => {
@@ -205,7 +209,7 @@ export default function HealthAnalyticsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Diseases</SelectItem>
-              {Object.entries(diseaseChartConfig).map(([key, config]) => <SelectItem key={key} value={key}>{config.label}</SelectItem>)}
+              {availableDiseases.map((disease) => <SelectItem key={disease} value={disease}>{disease}</SelectItem>)}
             </SelectContent>
           </Select>
           <Button onClick={handleDownload} variant="outline">
@@ -236,26 +240,20 @@ export default function HealthAnalyticsPage() {
               <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
               <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
               <Legend />
-              {(selectedDisease === 'all' || selectedDisease === 'flu_cases') && (
-                 <Line
-                    type="monotone"
-                    dataKey="flu_cases"
-                    stroke="var(--color-flu_cases)"
-                    strokeWidth={2}
-                    dot={false}
-                    name="Flu"
-                  />
-              )}
-              {(selectedDisease === 'all' || selectedDisease === 'dengue_cases') && (
-                 <Line
-                    type="monotone"
-                    dataKey="dengue_cases"
-                    stroke="var(--color-dengue_cases)"
-                    strokeWidth={2}
-                    dot={false}
-                    name="Dengue"
-                  />
-              )}
+              {availableDiseases.map((disease, index) => {
+                if (selectedDisease === 'all' || selectedDisease === disease) {
+                   return <Line
+                        key={disease}
+                        type="monotone"
+                        dataKey={disease}
+                        stroke={Object.values(diseaseChartConfig)[index % Object.keys(diseaseChartConfig).length].color}
+                        strokeWidth={2}
+                        dot={false}
+                        name={disease}
+                    />
+                }
+                return null;
+              })}
             </LineChart>
           </ChartContainer>
         </CardContent>

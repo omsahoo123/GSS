@@ -79,7 +79,7 @@ export default function HealthOfficialDashboardPage() {
     
     const formattedDiseaseData = diseaseData.map(d => ({
         region: d.district,
-        cases: d.flu_cases + d.dengue_cases,
+        cases: d.cases.reduce((total, current) => total + current.caseCount, 0),
     }));
 
 
