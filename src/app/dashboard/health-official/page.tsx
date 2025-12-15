@@ -48,10 +48,10 @@ const chartConfig = {
 };
 
 const resourceData = [
-  { district: 'Rampur', beds: '85/100', vaccines: '1.2k', status: 'Stable' },
-  { district: 'Sitapur', beds: '60/80', vaccines: '800', status: 'Stable' },
-  { district: 'Aligarh', beds: '190/200', vaccines: '450', status: 'Critical' },
-  { district: 'Bareilly', beds: '70/100', vaccines: '1.5k', status: 'Stable' },
+  { district: 'Rampur', beds: '85/100', status: 'Stable' },
+  { district: 'Sitapur', beds: '60/80', status: 'Stable' },
+  { district: 'Aligarh', beds: '190/200', status: 'Critical' },
+  { district: 'Bareilly', beds: '70/100', status: 'Stable' },
 ];
 
 const alertData = [
@@ -83,7 +83,7 @@ export default function HealthOfficialDashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -109,20 +109,6 @@ export default function HealthOfficialDashboardPage() {
             <div className="text-2xl font-bold">3</div>
             <p className="text-xs text-muted-foreground">
               1 new alert this week
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Vaccination Rate
-            </CardTitle>
-            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">82.5%</div>
-            <p className="text-xs text-muted-foreground">
-              Target: 90%
             </p>
           </CardContent>
         </Card>
@@ -186,7 +172,6 @@ export default function HealthOfficialDashboardPage() {
                         <TableRow>
                             <TableHead>District</TableHead>
                             <TableHead>Bed Occupancy</TableHead>
-                            <TableHead>Vaccine Stock</TableHead>
                             <TableHead>Status</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -195,7 +180,6 @@ export default function HealthOfficialDashboardPage() {
                             <TableRow key={res.district}>
                                 <TableCell className="font-medium">{res.district}</TableCell>
                                 <TableCell>{res.beds}</TableCell>
-                                <TableCell>{res.vaccines}</TableCell>
                                 <TableCell>
                                     <Badge variant={res.status === 'Critical' ? 'destructive' : 'secondary'}>{res.status}</Badge>
                                 </TableCell>
