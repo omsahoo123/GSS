@@ -18,115 +18,122 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { PlayCircle, Loader2 } from 'lucide-react';
+import { PlayCircle, Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-const sampleQuery = `SELECT 
-    d.region,
-    d.disease_name,
-    COUNT(p.patient_id) AS number_of_cases,
-    AVG(p.age) AS average_age
-FROM 
-    disease_incidents d
-JOIN 
-    patients p ON d.patient_id = p.patient_id
-WHERE 
-    d.incident_date >= '2024-01-01'
-    AND d.disease_name = 'Flu'
-GROUP BY 
-    d.region, d.disease_name
-ORDER BY 
-    number_of_cases DESC;`;
-
-const mockResults = {
-  columns: ['region', 'disease_name', 'number_of_cases', 'average_age'],
-  rows: [
-    { region: 'Aligarh', disease_name: 'Flu', number_of_cases: 450, average_age: 35.2 },
-    { region: 'Meerut', disease_name: 'Flu', number_of_cases: 320, average_age: 38.1 },
-    { region: 'Rampur', disease_name: 'Flu', number_of_cases: 210, average_age: 32.5 },
-    { region: 'Sitapur', disease_name: 'Flu', number_of_cases: 180, average_age: 41.0 },
-    { region: 'Bareilly', disease_name: 'Flu', number_of_cases: 150, average_age: 39.7 },
-  ],
-};
+import { NaturalLanguageToQueryOutput, naturalLanguageToQuery } from '@/ai/flows/natural-language-query-flow';
 
 export default function DataQueriesPage() {
-  const [query, setQuery] = useState(sampleQuery);
-  const [results, setResults] = useState<{columns: string[], rows: any[]} | null>(null);
+  const [question, setQuestion] = useState('How many flu cases were there in Aligarh last month?');
+  const [generatedQuery, setGeneratedQuery] = useState('');
+  const [results, setResults] = useState<NaturalLanguageToQueryOutput['results'] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleRunQuery = () => {
-    if (!query.trim()) {
+  const handleRunQuery = async () => {
+    if (!question.trim()) {
       toast({
         variant: 'destructive',
-        title: 'Empty Query',
-        description: 'Please enter a query to run.',
+        title: 'Empty Question',
+        description: 'Please enter a question to generate a query.',
       });
       return;
     }
     setIsLoading(true);
-    // Simulate network delay
-    setTimeout(() => {
-      setResults(mockResults);
-      setIsLoading(false);
+    setResults(null);
+    setGeneratedQuery('');
+    
+    try {
+      const output = await naturalLanguageToQuery({ question });
+      setGeneratedQuery(output.query);
+      setResults(output.results);
       toast({
-        title: 'Query Executed Successfully',
-        description: `Returned ${mockResults.rows.length} rows.`,
+        title: 'Query Generated Successfully',
+        description: `Returned ${output.results.rows.length} rows.`,
       });
-    }, 1500);
+    } catch (error) {
+      console.error('Error generating query:', error);
+      toast({
+        variant: 'destructive',
+        title: 'AI Error',
+        description: 'Could not generate query. Please try again.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-headline text-3xl font-bold">Data Query Editor</h1>
+        <h1 className="font-headline text-3xl font-bold">Natural Language Querying</h1>
         <p className="text-muted-foreground">
-          Write and execute SQL-like queries against the health data warehouse.
+          Ask a question in plain English, and AI will generate the query and results for you.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>New Query</CardTitle>
+          <CardTitle>Ask a Question</CardTitle>
+          <CardDescription>
+            For example: "Show me the average age of patients in Rampur."
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Textarea
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="SELECT * FROM patients WHERE region = 'Aligarh'..."
-            className="h-64 font-mono text-sm"
-          />
-          <Button onClick={handleRunQuery} disabled={isLoading} className="mt-4">
-            {isLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <PlayCircle className="mr-2 h-4 w-4" />
-            )}
-            Run Query
-          </Button>
+          <div className="flex w-full max-w-xl items-center space-x-2">
+             <Input
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder="Type your question here..."
+              />
+              <Button onClick={handleRunQuery} disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="mr-2 h-4 w-4" />
+                )}
+                Generate
+              </Button>
+          </div>
         </CardContent>
       </Card>
+      
+       {generatedQuery && (
+         <Card>
+            <CardHeader>
+                <CardTitle>Generated Query</CardTitle>
+                <CardDescription>This is the SQL-like query the AI generated from your question.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Textarea
+                    value={generatedQuery}
+                    readOnly
+                    className="h-40 font-mono text-sm bg-secondary/50"
+                />
+            </CardContent>
+         </Card>
+      )}
       
       {results && (
          <Card>
             <CardHeader>
                 <CardTitle>Query Results</CardTitle>
                 <CardDescription>
-                    Displaying the output of your query.
+                    Displaying the mock output of your query.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
                 <TableHeader>
                     <TableRow>
-                    {results.columns.map(col => <TableHead key={col}>{col}</TableHead>)}
+                    {results.columns.map(col => <TableHead key={col}>{col.replace(/_/g, ' ')}</TableHead>)}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {results.rows.map((row, rowIndex) => (
                         <TableRow key={rowIndex}>
-                            {results.columns.map(col => <TableCell key={col}>{row[col]}</TableCell>)}
+                            {results.columns.map(col => <TableCell key={col}>{String(row[col])}</TableCell>)}
                         </TableRow>
                     ))}
                 </TableBody>
