@@ -56,7 +56,6 @@ const resourceData = [
 
 const alertData = [
     { id: 'alert-1', title: 'High incidence of Flu in Aligarh', priority: 'High', status: 'Active', date: '2024-07-20' },
-    { id: 'alert-2', title: 'Vaccination drive for Measles in Rampur', priority: 'Medium', status: 'Active', date: '2024-07-18' },
     { id: 'alert-3', title: 'Heatwave advisory for all districts', priority: 'Low', status: 'Ongoing', date: '2024-07-15' },
 ];
 
@@ -106,7 +105,7 @@ export default function HealthOfficialDashboardPage() {
             <Siren className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">2</div>
             <p className="text-xs text-muted-foreground">
               1 new alert this week
             </p>
