@@ -1,11 +1,16 @@
+
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { format } from 'date-fns';
+
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -19,124 +24,232 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
-  Download,
-  Eye,
-  FileWarning,
-  Hospital,
-} from 'lucide-react';
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Download, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-type Report = {
-  id: string;
-  title: string;
-  description: string;
-  content: string;
-  icon: React.ElementType;
+const reportTypes = {
+  'disease-summary': 'Weekly Disease Summary',
+  'resource-utilization': 'Monthly Resource Utilization',
 };
 
-const availableReports: Report[] = [
-  {
-    id: 'disease-summary',
-    title: 'Weekly Disease Summary',
-    description: 'A summary of communicable disease trends over the last 7 days.',
-    content:
-      'Flu cases have increased by 15% in Aligarh, while Dengue cases remain stable across all districts. No other significant outbreaks were reported. Recommend monitoring Aligarh closely.',
-    icon: FileWarning,
-  },
-  {
-    id: 'resource-utilization',
-    title: 'Monthly Resource Utilization',
-    description: 'An overview of hospital bed and staff allocation for the past month.',
-    content:
-      'Overall bed occupancy remained at 78%. Aligarh General Hospital experienced peak occupancy at 95% during the second week. Staffing levels were adequate across all regions.',
-    icon: Hospital,
-  },
-];
+const regions = ['all', 'rampur', 'sitapur', 'aligarh', 'bareilly', 'meerut'];
+
+const reportSchema = z.object({
+  reportType: z.string().min(1, 'Please select a report type.'),
+  region: z.string().min(1, 'Please select a region.'),
+  startDate: z.string().min(1, 'Please select a start date.'),
+  endDate: z.string().min(1, 'Please select an end date.'),
+}).refine(data => new Date(data.startDate) <= new Date(data.endDate), {
+    message: 'Start date cannot be after end date.',
+    path: ['startDate'],
+});
+
+type ReportFormValues = z.infer<typeof reportSchema>;
+type GeneratedReport = {
+  title: string;
+  parameters: string;
+  content: string;
+};
 
 export default function ReportsPage() {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [generatedReport, setGeneratedReport] = useState<GeneratedReport | null>(null);
   const { toast } = useToast();
 
-  const handleViewDetails = (report: Report) => {
-    setSelectedReport(report);
-    setIsDetailDialogOpen(true);
+  const form = useForm<ReportFormValues>({
+    resolver: zodResolver(reportSchema),
+    defaultValues: {
+      reportType: 'disease-summary',
+      region: 'all',
+      startDate: format(new Date(new Date().setDate(new Date().getDate() - 7)), 'yyyy-MM-dd'),
+      endDate: format(new Date(), 'yyyy-MM-dd'),
+    },
+  });
+
+  const generateReportContent = (data: ReportFormValues) => {
+    const regionName = data.region === 'all' ? 'All Regions' : data.region.charAt(0).toUpperCase() + data.region.slice(1);
+    const startDate = format(new Date(data.startDate), 'PPP');
+    const endDate = format(new Date(data.endDate), 'PPP');
+
+    let content = '';
+    if (data.reportType === 'disease-summary') {
+      const cases = Math.floor(Math.random() * 500) + 50;
+      const trend = Math.random() > 0.5 ? 'increased' : 'decreased';
+      const percentage = (Math.random() * 25 + 5).toFixed(1);
+      content = `Between ${startDate} and ${endDate}, a total of ${cases} communicable disease cases were reported in ${regionName}. The overall trend has ${trend} by ${percentage}% compared to the previous period. The most prevalent illness was the Flu, particularly in the Aligarh district if 'All Regions' is selected.`;
+    } else if (data.reportType === 'resource-utilization') {
+      const occupancy = (Math.random() * 40 + 50).toFixed(1);
+      const criticalDistrict = regions[Math.floor(Math.random() * (regions.length - 1)) + 1];
+      content = `For the period of ${startDate} to ${endDate} in ${regionName}, the average hospital bed occupancy was ${occupancy}%. The ${criticalDistrict} district experienced the highest strain with occupancy peaking at 95%. Staffing levels remained adequate, but ambulance deployment times saw a minor increase of 5%.`;
+    }
+    
+    return {
+      title: reportTypes[data.reportType as keyof typeof reportTypes],
+      parameters: `Region: ${regionName} | Period: ${startDate} to ${endDate}`,
+      content: content,
+    };
   };
 
-  const handleDownload = (report: Report) => {
-    const fileContent = `Report Title: ${report.title}\n\n${report.content}`;
+  const onSubmit = (data: ReportFormValues) => {
+    const report = generateReportContent(data);
+    setGeneratedReport(report);
+    setIsDetailDialogOpen(true);
+  };
+  
+  const handleDownload = () => {
+    if (!generatedReport) return;
+    
+    const fileContent = `Report Title: ${generatedReport.title}\nParameters: ${generatedReport.parameters}\n\n${generatedReport.content}`;
     const blob = new Blob([fileContent], { type: 'text/plain' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${report.id}_report.txt`;
+    a.download = `${generatedReport.title.toLowerCase().replace(/\s/g, '_')}_${format(new Date(), 'yyyyMMdd')}.txt`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
     toast({
       title: 'Report Downloaded',
-      description: `${report.title} has been downloaded.`,
+      description: `${generatedReport.title} has been downloaded.`,
     });
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-headline text-3xl font-bold">Health Reports</h1>
+        <h1 className="font-headline text-3xl font-bold">Generate Health Reports</h1>
         <p className="text-muted-foreground">
-          Generate and view periodic reports on public health metrics.
+          Create custom, dynamic reports on public health metrics.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {availableReports.map((report) => (
-          <Card key={report.id} className="flex flex-col">
-            <CardHeader className="flex-row items-start gap-4">
-              <div className="rounded-lg bg-primary/10 p-3">
-                <report.icon className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <CardTitle>{report.title}</CardTitle>
-                <CardDescription>{report.description}</CardDescription>
-              </div>
-            </CardHeader>
-            <CardFooter className="mt-auto flex gap-2">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => handleViewDetails(report)}
-              >
-                <Eye className="mr-2 h-4 w-4" /> View Details
-              </Button>
-              <Button className="w-full" onClick={() => handleDownload(report)}>
-                <Download className="mr-2 h-4 w-4" /> Download
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+       <Card>
+        <CardHeader>
+            <CardTitle>Report Parameters</CardTitle>
+            <CardDescription>Select the criteria for your report.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                    <FormField
+                        control={form.control}
+                        name="reportType"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Report Type</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Select a report type" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {Object.entries(reportTypes).map(([key, value]) => (
+                                    <SelectItem key={key} value={key}>{value}</SelectItem>
+                                ))}
+                            </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="region"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Region</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Select a region" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {regions.map(region => (
+                                    <SelectItem key={region} value={region} className="capitalize">
+                                        {region === 'all' ? 'All Regions' : region}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="startDate"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Start Date</FormLabel>
+                            <FormControl>
+                            <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="endDate"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>End Date</FormLabel>
+                            <FormControl>
+                            <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
+                <Button type="submit">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Generate Report
+                </Button>
+                </form>
+            </Form>
+        </CardContent>
+       </Card>
 
       {/* Report Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{selectedReport?.title}</DialogTitle>
+            <DialogTitle>{generatedReport?.title}</DialogTitle>
             <DialogDescription>
-              A detailed summary of the report.
+              {generatedReport?.parameters}
             </DialogDescription>
           </DialogHeader>
-          {selectedReport && (
+          {generatedReport && (
             <div className="prose prose-sm max-w-none rounded-lg border bg-secondary/50 p-4">
-              <p>{selectedReport.content}</p>
+              <p>{generatedReport.content}</p>
             </div>
           )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDetailDialogOpen(false)}
-            >
+          <DialogFooter className="sm:justify-between">
+            <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
               Close
+            </Button>
+             <Button onClick={handleDownload}>
+                <Download className="mr-2 h-4 w-4" /> Download Report
             </Button>
           </DialogFooter>
         </DialogContent>
