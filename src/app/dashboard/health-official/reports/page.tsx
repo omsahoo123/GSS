@@ -23,7 +23,6 @@ import {
   Eye,
   FileWarning,
   Hospital,
-  ShieldCheck,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -51,14 +50,6 @@ const availableReports: Report[] = [
     content:
       'Overall bed occupancy remained at 78%. Aligarh General Hospital experienced peak occupancy at 95% during the second week. Staffing levels were adequate across all regions.',
     icon: Hospital,
-  },
-  {
-    id: 'vaccination-progress',
-    title: 'Vaccination Campaign Progress',
-    description: 'Report on the progress of the ongoing measles vaccination drive.',
-    content:
-      'The measles vaccination campaign has achieved 65% coverage in Rampur and 58% in Sitapur. Bareilly is lagging at 40%. Additional awareness campaigns are recommended for Bareilly.',
-    icon: ShieldCheck,
   },
 ];
 
