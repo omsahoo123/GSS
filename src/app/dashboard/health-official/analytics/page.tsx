@@ -35,7 +35,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { TrendingUp, BedDouble, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, BedDouble, Users, Download } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 
 // --- Expanded Mock Data ---
@@ -139,6 +140,47 @@ export default function HealthAnalyticsPage() {
     return allAgeDemographicsData[selectedRegion] || [];
   }, [selectedRegion]);
 
+  const handleDownload = () => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    
+    // Header
+    csvContent += `Health Analytics Report\n`;
+    csvContent += `Region: ${selectedRegion},Disease: ${selectedDisease}\n`;
+    csvContent += `Generated on: ${format(new Date(), 'yyyy-MM-dd')}\n\n`;
+
+    // Daily Trends
+    csvContent += "Daily Disease Trends (Last 30 Days)\n";
+    csvContent += "Date,Flu Cases,Dengue Cases\n";
+    dailyCaseData.forEach(row => {
+        csvContent += `${row.date},${row.flu},${row.dengue}\n`;
+    });
+    csvContent += "\n";
+
+    // Hospital Occupancy
+    csvContent += "Hospital Bed Occupancy\n";
+    csvContent += "Region,Occupied,Total,Occupancy (%)\n";
+    hospitalOccupancyData.forEach(row => {
+        const occupancy = (row.occupied / row.total) * 100;
+        csvContent += `${row.region},${row.occupied},${row.total},${occupancy.toFixed(1)}\n`;
+    });
+    csvContent += "\n";
+
+    // Age Demographics
+    csvContent += "Patient Demographics by Age\n";
+    csvContent += "Age Group,Value\n";
+    ageDemographicsData.forEach(row => {
+        csvContent += `${row.name},${row.value}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `health_analytics_report_${format(new Date(), 'yyyyMMdd')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -150,7 +192,7 @@ export default function HealthAnalyticsPage() {
         </div>
         <div className="flex gap-4">
           <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-40">
               <SelectValue placeholder="Select Region" />
             </SelectTrigger>
             <SelectContent>
@@ -159,7 +201,7 @@ export default function HealthAnalyticsPage() {
             </SelectContent>
           </Select>
           <Select value={selectedDisease} onValueChange={setSelectedDisease}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-40">
               <SelectValue placeholder="Select Disease" />
             </SelectTrigger>
             <SelectContent>
@@ -167,6 +209,10 @@ export default function HealthAnalyticsPage() {
               {diseases.map(d => <SelectItem key={d} value={d} className="capitalize">{d}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Button onClick={handleDownload} variant="outline">
+            <Download className="mr-2 h-4 w-4" />
+            Download Report
+          </Button>
         </div>
       </div>
 
