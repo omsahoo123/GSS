@@ -92,8 +92,10 @@ export default function HealthOfficialDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">4.5M</div>
-            <p className="text-xs text-muted-foreground">
-              +2.1% from last month
+            <p className="flex items-center text-xs text-muted-foreground">
+              <ArrowUp className="h-4 w-4 text-green-500" />
+              <span className="ml-1 text-green-500">+2.1%</span>
+              <span className="ml-1">from last month</span>
             </p>
           </CardContent>
         </Card>
