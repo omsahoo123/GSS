@@ -43,7 +43,6 @@ import type { RegionalData } from '../../data-entry-operator/page';
 
 
 const regions = ['rampur', 'sitapur', 'aligarh', 'bareilly', 'meerut'];
-const diseases = ['flu_cases', 'dengue_cases'];
 
 const allAgeDemographicsData = regions.reduce((acc, region) => {
     acc[region] = [
@@ -66,22 +65,25 @@ allAgeDemographicsData['all'] = Object.values(allAgeDemographicsData).flat().red
 }, [] as {name: string, value: number}[]);
 
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const PIE_CHART_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const LINE_CHART_COLORS = [
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))',
+];
 
-const diseaseChartConfig = {
-  Flu: { label: 'Flu', color: 'hsl(var(--chart-1))' },
-  Dengue: { label: 'Dengue', color: 'hsl(var(--chart-2))' },
-};
 
 const occupancyChartConfig = {
   occupancy: { label: 'Occupancy', color: 'hsl(var(--destructive))' },
 };
 
 const ageChartConfig = {
-    "0-18": { label: '0-18', color: COLORS[0] },
-    "19-45": { label: '19-45', color: COLORS[1] },
-    "46-65": { label: '46-65', color: COLORS[2] },
-    "65+": { label: '65+', color: COLORS[3] },
+    "0-18": { label: '0-18', color: PIE_CHART_COLORS[0] },
+    "19-45": { label: '19-45', color: PIE_CHART_COLORS[1] },
+    "46-65": { label: '46-65', color: PIE_CHART_COLORS[2] },
+    "65+": { label: '65+', color: PIE_CHART_COLORS[3] },
 };
 
 export default function HealthAnalyticsPage() {
@@ -105,6 +107,21 @@ export default function HealthAnalyticsPage() {
     }
   }, []);
 
+  const availableDiseases = useMemo(() => {
+    const all = new Set(diseaseData.flatMap(d => d.cases.map(c => c.diseaseName)))
+    return Array.from(all);
+  }, [diseaseData]);
+  
+  const diseaseChartConfig = useMemo(() => {
+    return availableDiseases.reduce((config, diseaseName, index) => {
+        config[diseaseName] = {
+            label: diseaseName,
+            color: LINE_CHART_COLORS[index % LINE_CHART_COLORS.length],
+        };
+        return config;
+    }, {} as Record<string, {label: string, color: string}>)
+  }, [availableDiseases]);
+
   const dailyCaseData = useMemo(() => {
     let filtered = diseaseData;
     if (selectedRegion !== 'all') {
@@ -115,20 +132,19 @@ export default function HealthAnalyticsPage() {
         const date = subDays(new Date(), 29 - i);
         const dailyData: {[key: string]: any} = { date: format(date, 'MMM d') };
 
-        const allDiseasesInFilteredData = new Set(filtered.flatMap(d => d.cases.map(c => c.diseaseName)));
-
-        allDiseasesInFilteredData.forEach(diseaseName => {
+        availableDiseases.forEach(diseaseName => {
             const totalCasesForDisease = filtered.reduce((sum, d) => {
                 const diseaseCase = d.cases.find(c => c.diseaseName === diseaseName);
                 return sum + (diseaseCase ? diseaseCase.caseCount : 0);
             }, 0);
 
+            // Simulate daily fluctuations
             dailyData[diseaseName] = Math.floor(totalCasesForDisease / 30 * (Math.random() * 0.4 + 0.8));
         });
 
         return dailyData;
     });
-  }, [selectedRegion, diseaseData]);
+  }, [selectedRegion, diseaseData, availableDiseases]);
 
   const hospitalOccupancyData = useMemo(() => {
      if (selectedRegion !== 'all') {
@@ -140,11 +156,6 @@ export default function HealthAnalyticsPage() {
   const ageDemographicsData = useMemo(() => {
     return allAgeDemographicsData[selectedRegion] || [];
   }, [selectedRegion]);
-  
-  const availableDiseases = useMemo(() => {
-    const all = new Set(diseaseData.flatMap(d => d.cases.map(c => c.diseaseName)))
-    return Array.from(all);
-  }, [diseaseData]);
 
   const handleDownload = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
@@ -240,13 +251,13 @@ export default function HealthAnalyticsPage() {
               <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
               <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
               <Legend />
-              {availableDiseases.map((disease, index) => {
+              {availableDiseases.map((disease) => {
                 if (selectedDisease === 'all' || selectedDisease === disease) {
                    return <Line
                         key={disease}
                         type="monotone"
                         dataKey={disease}
-                        stroke={Object.values(diseaseChartConfig)[index % Object.keys(diseaseChartConfig).length].color}
+                        stroke={`var(--color-${disease})`}
                         strokeWidth={2}
                         dot={false}
                         name={disease}
@@ -331,7 +342,7 @@ export default function HealthAnalyticsPage() {
                       dataKey="value"
                     >
                       {ageDemographicsData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
                       ))}
                     </Pie>
                     <Legend />
