@@ -62,21 +62,6 @@ const recentQueries = [
   { id: 'q3', name: 'Patient demographic breakdown', date: '2024-07-18' },
 ];
 
-const quickActions = [
-  {
-    title: 'New Query',
-    description: 'Start with a blank query editor.',
-    icon: Database,
-    href: '/dashboard/data-analyst/queries',
-  },
-  {
-    title: 'New Report',
-    description: 'Build a report from a template.',
-    icon: FileText,
-    href: '/dashboard/data-analyst/reports',
-  },
-];
-
 export default function DataAnalystDashboardPage() {
   return (
     <div className="space-y-6">
@@ -144,8 +129,8 @@ export default function DataAnalystDashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <Card className="lg:col-span-3">
+      <div className="grid grid-cols-1 gap-6">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart className="h-5 w-5" />
@@ -184,28 +169,6 @@ export default function DataAnalystDashboardPage() {
                 <Bar dataKey="patients" fill="var(--color-patients)" radius={4} />
               </RechartsBarChart>
             </ChartContainer>
-          </CardContent>
-        </Card>
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Jump directly into your tasks.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {quickActions.map((action) => (
-              <Link key={action.title} href={action.href} passHref>
-                <div className="flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground">
-                  <action.icon className="h-6 w-6" />
-                  <div className="flex-1">
-                    <p className="font-semibold">{action.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {action.description}
-                    </p>
-                  </div>
-                  <ArrowRight className="h-5 w-5" />
-                </div>
-              </Link>
-            ))}
           </CardContent>
         </Card>
       </div>
