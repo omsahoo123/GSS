@@ -129,7 +129,8 @@ export default function ResourcesPage() {
                 <TableHead>District</TableHead>
                 <TableHead className="w-[300px]">Bed Occupancy</TableHead>
                 <TableHead>Ambulances</TableHead>
-                <TableHead>Medical Staff</TableHead>
+                <TableHead>Doctors</TableHead>
+                <TableHead>Nurses</TableHead>
                 <TableHead className="text-right">Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -149,7 +150,8 @@ export default function ResourcesPage() {
                       </div>
                     </TableCell>
                     <TableCell>{res.ambulances}</TableCell>
-                    <TableCell>{res.staff.doctors + res.staff.nurses}</TableCell>
+                    <TableCell>{res.staff.doctors}</TableCell>
+                    <TableCell>{res.staff.nurses}</TableCell>
                     <TableCell className="text-right">
                       <Badge variant={status.variant}>{status.text}</Badge>
                     </TableCell>
