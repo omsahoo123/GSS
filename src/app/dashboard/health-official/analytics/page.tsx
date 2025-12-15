@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -68,6 +69,13 @@ const diseaseChartConfig = {
 
 const occupancyChartConfig = {
   occupancy: { label: 'Occupancy', color: 'hsl(var(--destructive))' },
+};
+
+const ageChartConfig = {
+    "0-18": { label: '0-18', color: COLORS[0] },
+    "19-45": { label: '19-45', color: COLORS[1] },
+    "46-65": { label: '46-65', color: COLORS[2] },
+    "65+": { label: '65+', color: COLORS[3] },
 };
 
 export default function HealthAnalyticsPage() {
@@ -200,35 +208,37 @@ export default function HealthAnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={288}>
-              <PieChart>
-                <Pie
-                  data={ageDemographicsData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-                    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-                    return (
-                      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
-                        {`${(percent * 100).toFixed(0)}%`}
-                      </text>
-                    );
-                  }}
-                  outerRadius={110}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {ageDemographicsData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Legend />
-                <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
-              </PieChart>
-            </ResponsiveContainer>
+            <ChartContainer config={ageChartConfig} className="h-72 w-full">
+                <ResponsiveContainer width="100%" height={288}>
+                  <PieChart>
+                    <Pie
+                      data={ageDemographicsData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                        const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                        const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                        return (
+                          <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+                            {`${(percent * 100).toFixed(0)}%`}
+                          </text>
+                        );
+                      }}
+                      outerRadius={110}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {ageDemographicsData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Legend />
+                    <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
+                  </PieChart>
+                </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
         </Card>
       </div>
