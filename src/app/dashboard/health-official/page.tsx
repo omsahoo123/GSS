@@ -29,18 +29,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis } from 'recharts';
 import Link from 'next/link';
 import type { RegionalData } from '../data-entry-operator/page';
 import { REGIONAL_DATA_KEY } from '../data-entry-operator/regional-data/page';
-
-const diseaseData = [
-  { region: 'Rampur', cases: 120 },
-  { region: 'Sitapur', cases: 89 },
-  { region: 'Aligarh', cases: 215 },
-  { region: 'Bareilly', cases: 75 },
-  { region: 'Meerut', cases: 150 },
-];
+import { DISEASE_DATA_KEY, type DiseaseData } from '../data-entry-operator/disease-data/page';
 
 const chartConfig = {
   cases: {
@@ -63,6 +56,7 @@ type Alert = {
 export default function HealthOfficialDashboardPage() {
     const [alertData, setAlertData] = useState<Alert[]>([]);
     const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
+    const [diseaseData, setDiseaseData] = useState<DiseaseData[]>([]);
     
     useEffect(() => {
         try {
@@ -74,10 +68,20 @@ export default function HealthOfficialDashboardPage() {
             if(storedRegionalData) {
                 setRegionalData(JSON.parse(storedRegionalData));
             }
+            const storedDiseaseData = localStorage.getItem(DISEASE_DATA_KEY);
+            if(storedDiseaseData) {
+                setDiseaseData(JSON.parse(storedDiseaseData));
+            }
         } catch (error) {
             console.error("Failed to load data from localStorage", error);
         }
     }, []);
+    
+    const formattedDiseaseData = diseaseData.map(d => ({
+        region: d.district,
+        cases: d.flu_cases + d.dengue_cases,
+    }));
+
 
     const getPriorityVariant = (priority: string) => {
         switch(priority) {
@@ -154,12 +158,11 @@ export default function HealthOfficialDashboardPage() {
         <Card>
             <CardHeader>
                 <CardTitle>Disease Incidence by Region</CardTitle>
-                <CardDescription>Number of reported cases in the last 30 days.</CardDescription>
+                <CardDescription>Total reported communicable disease cases.</CardDescription>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={chartConfig} className="h-[250px] w-full">
-                    <BarChart accessibilityLayer data={diseaseData}>
-                    <CartesianGrid vertical={false} />
+                    <BarChart accessibilityLayer data={formattedDiseaseData}>
                     <XAxis
                         dataKey="region"
                         tickLine={false}
@@ -198,7 +201,7 @@ export default function HealthOfficialDashboardPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {regionalData.map(res => {
+                        {regionalData.length > 0 ? regionalData.map(res => {
                             const occupancy = res.beds.total > 0 ? (res.beds.occupied / res.beds.total) * 100 : 0;
                             const status = occupancy >= 95 ? 'Critical' : 'Stable';
                             return (
@@ -210,7 +213,11 @@ export default function HealthOfficialDashboardPage() {
                                     </TableCell>
                                 </TableRow>
                             );
-                        })}
+                        }) : (
+                            <TableRow>
+                                <TableCell colSpan={3} className="text-center">No data available.</TableCell>
+                            </TableRow>
+                        )}
                     </TableBody>
                 </Table>
             </CardContent>
@@ -235,7 +242,7 @@ export default function HealthOfficialDashboardPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                       {alertData.slice(0, 3).map(alert => (
+                       {alertData.length > 0 ? alertData.slice(0, 3).map(alert => (
                          <TableRow key={alert.id}>
                             <TableCell className="font-medium">{alert.title}</TableCell>
                             <TableCell>
@@ -244,8 +251,7 @@ export default function HealthOfficialDashboardPage() {
                             <TableCell>{alert.date}</TableCell>
                             <TableCell>{alert.status}</TableCell>
                          </TableRow>
-                       ))}
-                       {alertData.length === 0 && (
+                       )) : (
                            <TableRow>
                             <TableCell colSpan={4} className="text-center text-muted-foreground">
                                 No active alerts.

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -24,7 +24,6 @@ import {
   Cell,
   XAxis,
   YAxis,
-  CartesianGrid,
   Legend,
   ResponsiveContainer,
 } from 'recharts';
@@ -38,33 +37,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { TrendingUp, BedDouble, Users, Download } from 'lucide-react';
 import { format, subDays } from 'date-fns';
+import { DISEASE_DATA_KEY, type DiseaseData } from '../../data-entry-operator/disease-data/page';
+import { REGIONAL_DATA_KEY, type RegionalData } from '../../data-entry-operator/page';
 
-// --- Expanded Mock Data ---
 
 const regions = ['rampur', 'sitapur', 'aligarh', 'bareilly', 'meerut'];
-const diseases = ['flu', 'dengue'];
-
-// Generate more detailed mock data
-const generateDailyData = (region: string, disease: string) => {
-    const randomFactor = regions.indexOf(region) + 1 + (disease === 'flu' ? 1.5 : 1);
-    return Array.from({ length: 30 }, (_, i) => ({
-      date: format(subDays(new Date(), 29 - i), 'yyyy-MM-dd'),
-      region,
-      disease,
-      cases: Math.floor(Math.random() * (15 * randomFactor) + (5 * randomFactor)),
-    }));
-};
-
-const allDailyCaseData = regions.flatMap(region => 
-    diseases.flatMap(disease => generateDailyData(region, disease))
-);
-
-
-const allHospitalOccupancyData = regions.map((region, i) => {
-    const total = 80 + i * 20;
-    const occupied = Math.floor(Math.random() * (total * 0.5) + (total * 0.3));
-    return { region, occupied, total };
-});
+const diseases = ['flu_cases', 'dengue_cases'];
 
 const allAgeDemographicsData = regions.reduce((acc, region) => {
     acc[region] = [
@@ -90,8 +68,8 @@ allAgeDemographicsData['all'] = Object.values(allAgeDemographicsData).flat().red
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const diseaseChartConfig = {
-  flu: { label: 'Flu', color: 'hsl(var(--chart-1))' },
-  dengue: { label: 'Dengue', color: 'hsl(var(--chart-2))' },
+  flu_cases: { label: 'Flu', color: 'hsl(var(--chart-1))' },
+  dengue_cases: { label: 'Dengue', color: 'hsl(var(--chart-2))' },
 };
 
 const occupancyChartConfig = {
@@ -108,33 +86,53 @@ const ageChartConfig = {
 export default function HealthAnalyticsPage() {
   const [selectedRegion, setSelectedRegion] = useState('all');
   const [selectedDisease, setSelectedDisease] = useState('all');
+  const [diseaseData, setDiseaseData] = useState<DiseaseData[]>([]);
+  const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
+
+  useEffect(() => {
+    try {
+        const storedDiseaseData = localStorage.getItem(DISEASE_DATA_KEY);
+        if (storedDiseaseData) {
+            setDiseaseData(JSON.parse(storedDiseaseData));
+        }
+        const storedRegionalData = localStorage.getItem(REGIONAL_DATA_KEY);
+        if(storedRegionalData) {
+            setRegionalData(JSON.parse(storedRegionalData));
+        }
+    } catch (error) {
+        console.error("Failed to load data from localStorage", error);
+    }
+  }, []);
 
   const dailyCaseData = useMemo(() => {
-    let filtered = allDailyCaseData;
+    let filtered = diseaseData;
     if (selectedRegion !== 'all') {
-      filtered = filtered.filter(d => d.region === selectedRegion);
-    }
-    if (selectedDisease !== 'all') {
-      filtered = filtered.filter(d => d.disease === selectedDisease);
+      filtered = filtered.filter(d => d.district.toLowerCase() === selectedRegion);
     }
 
-    const aggregatedByDate = filtered.reduce((acc, curr) => {
-      if (!acc[curr.date]) {
-        acc[curr.date] = { date: format(new Date(curr.date), 'MMM d'), flu: 0, dengue: 0 };
-      }
-      acc[curr.date][curr.disease as 'flu' | 'dengue'] += curr.cases;
-      return acc;
-    }, {} as Record<string, {date: string, flu: number, dengue: number}>);
-    
-    return Object.values(aggregatedByDate).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [selectedRegion, selectedDisease]);
+    // This part needs more historical data to be meaningful, so we'll simulate it for now.
+    // In a real app, this would come from a time-series database.
+    const aggregatedByDate = Array.from({ length: 30 }).map((_, i) => {
+        const date = subDays(new Date(), 29 - i);
+        const dailyFlu = filtered.reduce((sum, d) => sum + Math.floor(d.flu_cases / 30 * (Math.random() * 0.4 + 0.8)), 0);
+        const dailyDengue = filtered.reduce((sum, d) => sum + Math.floor(d.dengue_cases / 30 * (Math.random() * 0.4 + 0.8)), 0);
+        return {
+            date: format(date, 'MMM d'),
+            flu_cases: dailyFlu,
+            dengue_cases: dailyDengue,
+        }
+    });
+
+    return aggregatedByDate;
+
+  }, [selectedRegion, diseaseData]);
 
   const hospitalOccupancyData = useMemo(() => {
      if (selectedRegion !== 'all') {
-        return allHospitalOccupancyData.filter(d => d.region === selectedRegion);
+        return regionalData.filter(d => d.district.toLowerCase() === selectedRegion);
      }
-     return allHospitalOccupancyData;
-  }, [selectedRegion]);
+     return regionalData;
+  }, [selectedRegion, regionalData]);
   
   const ageDemographicsData = useMemo(() => {
     return allAgeDemographicsData[selectedRegion] || [];
@@ -149,10 +147,10 @@ export default function HealthAnalyticsPage() {
     csvContent += `Generated on: ${format(new Date(), 'yyyy-MM-dd')}\n\n`;
 
     // Daily Trends
-    csvContent += "Daily Disease Trends (Last 30 Days)\n";
+    csvContent += "Daily Disease Trends (Simulated Last 30 Days)\n";
     csvContent += "Date,Flu Cases,Dengue Cases\n";
     dailyCaseData.forEach(row => {
-        csvContent += `${row.date},${row.flu},${row.dengue}\n`;
+        csvContent += `${row.date},${row.flu_cases},${row.dengue_cases}\n`;
     });
     csvContent += "\n";
 
@@ -160,13 +158,13 @@ export default function HealthAnalyticsPage() {
     csvContent += "Hospital Bed Occupancy\n";
     csvContent += "Region,Occupied,Total,Occupancy (%)\n";
     hospitalOccupancyData.forEach(row => {
-        const occupancy = (row.occupied / row.total) * 100;
-        csvContent += `${row.region},${row.occupied},${row.total},${occupancy.toFixed(1)}\n`;
+        const occupancy = row.beds.total > 0 ? (row.beds.occupied / row.beds.total) * 100 : 0;
+        csvContent += `${row.district},${row.beds.occupied},${row.beds.total},${occupancy.toFixed(1)}\n`;
     });
     csvContent += "\n";
 
     // Age Demographics
-    csvContent += "Patient Demographics by Age\n";
+    csvContent += "Patient Demographics by Age (Sample Data)\n";
     csvContent += "Age Group,Value\n";
     ageDemographicsData.forEach(row => {
         csvContent += `${row.name},${row.value}\n`;
@@ -206,7 +204,7 @@ export default function HealthAnalyticsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Diseases</SelectItem>
-              {diseases.map(d => <SelectItem key={d} value={d} className="capitalize">{d}</SelectItem>)}
+              {Object.entries(diseaseChartConfig).map(([key, config]) => <SelectItem key={key} value={key}>{config.label}</SelectItem>)}
             </SelectContent>
           </Select>
           <Button onClick={handleDownload} variant="outline">
@@ -220,7 +218,7 @@ export default function HealthAnalyticsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Daily Disease Trends (Last 30 Days)
+            Daily Disease Trends (Simulated Last 30 Days)
           </CardTitle>
           <CardDescription>
             Reported cases over time for selected diseases.
@@ -233,27 +231,28 @@ export default function HealthAnalyticsPage() {
               data={dailyCaseData}
               margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
             >
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
               <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+              <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
               <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
               <Legend />
-              {(selectedDisease === 'all' || selectedDisease === 'flu') && (
+              {(selectedDisease === 'all' || selectedDisease === 'flu_cases') && (
                  <Line
                     type="monotone"
-                    dataKey="flu"
-                    stroke="var(--color-flu)"
+                    dataKey="flu_cases"
+                    stroke="var(--color-flu_cases)"
                     strokeWidth={2}
                     dot={false}
+                    name="Flu"
                   />
               )}
-              {(selectedDisease === 'all' || selectedDisease === 'dengue') && (
+              {(selectedDisease === 'all' || selectedDisease === 'dengue_cases') && (
                  <Line
                     type="monotone"
-                    dataKey="dengue"
-                    stroke="var(--color-dengue)"
+                    dataKey="dengue_cases"
+                    stroke="var(--color-dengue_cases)"
                     strokeWidth={2}
                     dot={false}
+                    name="Dengue"
                   />
               )}
             </LineChart>
@@ -276,11 +275,10 @@ export default function HealthAnalyticsPage() {
             <ChartContainer config={occupancyChartConfig} className="h-72 w-full">
               <BarChart
                 accessibilityLayer
-                data={hospitalOccupancyData.map(d => ({...d, occupancy: (d.occupied / d.total) * 100, region: d.region.charAt(0).toUpperCase() + d.region.slice(1)}))}
+                data={hospitalOccupancyData.map(d => ({...d, occupancy: d.beds.total > 0 ? (d.beds.occupied / d.beds.total) * 100 : 0, region: d.district}))}
                 layout="vertical"
                  margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
               >
-                <CartesianGrid horizontal={false} />
                 <YAxis
                   dataKey="region"
                   type="category"
@@ -303,7 +301,7 @@ export default function HealthAnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Patient Demographics by Age
+              Patient Demographics by Age (Sample Data)
             </CardTitle>
             <CardDescription>
               Distribution of cases across different age groups.

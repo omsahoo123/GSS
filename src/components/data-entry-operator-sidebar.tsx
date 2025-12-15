@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { Home, LogOut, Database, PenSquare } from 'lucide-react';
+import { Home, LogOut, Database, PenSquare, Bug } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from './ui/button';
@@ -19,6 +19,7 @@ import { Button } from './ui/button';
 const menuItems = [
   { href: '/dashboard/data-entry-operator', label: 'Dashboard', icon: Home },
   { href: '/dashboard/data-entry-operator/regional-data', label: 'Regional Data', icon: PenSquare },
+  { href: '/dashboard/data-entry-operator/disease-data', label: 'Disease Data', icon: Bug },
 ];
 
 export function DataEntryOperatorSidebar() {
