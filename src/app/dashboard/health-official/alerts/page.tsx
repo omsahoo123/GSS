@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -67,6 +67,8 @@ const initialAlerts = [
   },
 ];
 
+const HEALTH_ALERTS_STORAGE_KEY = 'healthOfficialAlerts';
+
 const alertSchema = z.object({
   title: z.string().min(1, 'Alert title is required.'),
   region: z.string().min(1, 'Please select a region.'),
@@ -78,9 +80,33 @@ type AlertFormValues = z.infer<typeof alertSchema>;
 type Alert = (typeof initialAlerts)[0];
 
 export default function AlertsPage() {
-  const [alerts, setAlerts] = useState(initialAlerts);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+
+  useEffect(() => {
+    try {
+      const storedAlerts = localStorage.getItem(HEALTH_ALERTS_STORAGE_KEY);
+      if (storedAlerts) {
+        setAlerts(JSON.parse(storedAlerts));
+      } else {
+        setAlerts(initialAlerts);
+      }
+    } catch (error) {
+      console.error("Failed to load alerts from localStorage", error);
+      setAlerts(initialAlerts);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (alerts.length > 0) {
+      try {
+        localStorage.setItem(HEALTH_ALERTS_STORAGE_KEY, JSON.stringify(alerts));
+      } catch (error) {
+        console.error("Failed to save alerts to localStorage", error);
+      }
+    }
+  }, [alerts]);
 
   const form = useForm<AlertFormValues>({
     resolver: zodResolver(alertSchema),
@@ -103,7 +129,7 @@ export default function AlertsPage() {
       description: data.description,
     };
 
-    setAlerts([newAlert, ...alerts]);
+    setAlerts(prevAlerts => [newAlert, ...prevAlerts]);
     toast({
       title: 'Alert Issued',
       description: `A new ${data.priority} priority alert has been issued for the ${data.region} region.`,

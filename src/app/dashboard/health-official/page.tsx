@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -31,6 +32,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import Link from 'next/link';
 
 const diseaseData = [
   { region: 'Rampur', cases: 120 },
@@ -54,21 +56,43 @@ const resourceData = [
   { district: 'Bareilly', beds: '70/100', status: 'Stable' },
 ];
 
-const alertData = [
+const initialAlerts = [
     { id: 'alert-1', title: 'High incidence of Flu in Aligarh', priority: 'High', status: 'Active', date: '2024-07-20' },
     { id: 'alert-3', title: 'Heatwave advisory for all districts', priority: 'Low', status: 'Ongoing', date: '2024-07-15' },
 ];
 
+const HEALTH_ALERTS_STORAGE_KEY = 'healthOfficialAlerts';
+
+type Alert = typeof initialAlerts[0];
+
+
 export default function HealthOfficialDashboardPage() {
+    const [alertData, setAlertData] = useState<Alert[]>([]);
+    
+    useEffect(() => {
+        try {
+            const storedAlerts = localStorage.getItem(HEALTH_ALERTS_STORAGE_KEY);
+            if (storedAlerts) {
+                setAlertData(JSON.parse(storedAlerts));
+            } else {
+                setAlertData(initialAlerts);
+            }
+        } catch (error) {
+            console.error("Failed to load alerts from localStorage", error);
+            setAlertData(initialAlerts);
+        }
+    }, []);
 
     const getPriorityVariant = (priority: string) => {
         switch(priority) {
-            case 'High': return 'destructive';
-            case 'Medium': return 'default';
-            case 'Low': return 'secondary';
-            default: return 'outline';
+            case 'High': return 'destructive' as const;
+            case 'Medium': return 'default' as const;
+            case 'Low': return 'secondary' as const;
+            default: return 'outline' as const;
         }
     }
+
+    const activeAlertsCount = alertData.filter(a => a.status === 'Active').length;
 
   return (
     <div className="space-y-6">
@@ -107,11 +131,9 @@ export default function HealthOfficialDashboardPage() {
             <Siren className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2</div>
-            <p className="flex items-center text-xs text-muted-foreground">
-                <ArrowUp className="h-4 w-4 text-red-500" />
-                <span className="ml-1 text-red-500">1 new alert</span>
-                <span className="ml-1">this week</span>
+            <div className="text-2xl font-bold">{activeAlertsCount}</div>
+            <p className="text-xs text-muted-foreground">
+                Total active alerts
             </p>
           </CardContent>
         </Card>
@@ -197,7 +219,9 @@ export default function HealthOfficialDashboardPage() {
        <Card>
             <CardHeader>
                 <CardTitle>Public Health Alerts</CardTitle>
-                <CardDescription>Active alerts and advisories issued.</CardDescription>
+                <CardDescription>
+                    Active alerts and advisories issued. <Link href="/dashboard/health-official/alerts" className="text-primary underline">Manage all alerts</Link>.
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
@@ -210,7 +234,7 @@ export default function HealthOfficialDashboardPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                       {alertData.map(alert => (
+                       {alertData.slice(0, 3).map(alert => (
                          <TableRow key={alert.id}>
                             <TableCell className="font-medium">{alert.title}</TableCell>
                             <TableCell>
@@ -220,6 +244,13 @@ export default function HealthOfficialDashboardPage() {
                             <TableCell>{alert.status}</TableCell>
                          </TableRow>
                        ))}
+                       {alertData.length === 0 && (
+                           <TableRow>
+                            <TableCell colSpan={4} className="text-center text-muted-foreground">
+                                No active alerts.
+                            </TableCell>
+                           </TableRow>
+                       )}
                     </TableBody>
                 </Table>
             </CardContent>
