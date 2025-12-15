@@ -108,8 +108,10 @@ export default function HealthOfficialDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">2</div>
-            <p className="text-xs text-muted-foreground">
-              1 new alert this week
+            <p className="flex items-center text-xs text-muted-foreground">
+                <ArrowUp className="h-4 w-4 text-red-500" />
+                <span className="ml-1 text-red-500">1 new alert</span>
+                <span className="ml-1">this week</span>
             </p>
           </CardContent>
         </Card>
