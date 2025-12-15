@@ -10,6 +10,7 @@ import {
   HeartPulse,
   Hospital,
   Syringe,
+  Database,
 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 
@@ -37,6 +38,12 @@ const roles = [
     icon: Briefcase,
     href: '/dashboard/health-official',
     description: 'Monitor public health analytics and reports.',
+  },
+  {
+    name: 'Data Entry Operator',
+    icon: Database,
+    href: '/dashboard/data-entry-operator',
+    description: 'Input and manage regional health data.',
   },
 ];
 

@@ -1,13 +1,29 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Briefcase, HeartPulse, Hospital, Syringe } from 'lucide-react';
+import {
+  ArrowRight,
+  Briefcase,
+  HeartPulse,
+  Hospital,
+  Syringe,
+  Database,
+} from 'lucide-react';
 
 const roles = [
   { name: 'Patient', href: '/dashboard/patient', icon: HeartPulse },
   { name: 'Doctor', href: '/dashboard/doctor', icon: Hospital },
   { name: 'Pharmacist', href: '/dashboard/pharmacist', icon: Syringe },
-  { name: 'Health Official', href: '/dashboard/health-official', icon: Briefcase },
+  {
+    name: 'Health Official',
+    href: '/dashboard/health-official',
+    icon: Briefcase,
+  },
+  {
+    name: 'Data Entry Operator',
+    href: '/dashboard/data-entry-operator',
+    icon: Database,
+  },
 ];
 
 export default function DashboardHub() {

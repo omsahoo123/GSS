@@ -21,10 +21,8 @@ import { Badge } from '@/components/ui/badge';
 import {
   Users,
   Siren,
-  ShieldCheck,
   Building,
   ArrowUp,
-  ArrowDown,
 } from 'lucide-react';
 import {
   ChartContainer,
@@ -33,6 +31,8 @@ import {
 } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import Link from 'next/link';
+import type { RegionalData } from '../data-entry-operator/page';
+import { REGIONAL_DATA_KEY } from '../data-entry-operator/regional-data/page';
 
 const diseaseData = [
   { region: 'Rampur', cases: 120 },
@@ -49,37 +49,33 @@ const chartConfig = {
   },
 };
 
-const resourceData = [
-  { district: 'Rampur', beds: '85/100', status: 'Stable' },
-  { district: 'Sitapur', beds: '60/80', status: 'Stable' },
-  { district: 'Aligarh', beds: '190/200', status: 'Critical' },
-  { district: 'Bareilly', beds: '70/100', status: 'Stable' },
-];
-
-const initialAlerts = [
-    { id: 'alert-1', title: 'High incidence of Flu in Aligarh', priority: 'High', status: 'Active', date: '2024-07-20' },
-    { id: 'alert-3', title: 'Heatwave advisory for all districts', priority: 'Low', status: 'Ongoing', date: '2024-07-15' },
-];
-
 const HEALTH_ALERTS_STORAGE_KEY = 'healthOfficialAlerts';
 
-type Alert = typeof initialAlerts[0];
+type Alert = {
+    id: string;
+    title: string;
+    priority: 'High' | 'Medium' | 'Low';
+    status: string;
+    date: string;
+};
 
 
 export default function HealthOfficialDashboardPage() {
     const [alertData, setAlertData] = useState<Alert[]>([]);
+    const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
     
     useEffect(() => {
         try {
             const storedAlerts = localStorage.getItem(HEALTH_ALERTS_STORAGE_KEY);
             if (storedAlerts) {
                 setAlertData(JSON.parse(storedAlerts));
-            } else {
-                setAlertData(initialAlerts);
+            }
+            const storedRegionalData = localStorage.getItem(REGIONAL_DATA_KEY);
+            if(storedRegionalData) {
+                setRegionalData(JSON.parse(storedRegionalData));
             }
         } catch (error) {
-            console.error("Failed to load alerts from localStorage", error);
-            setAlertData(initialAlerts);
+            console.error("Failed to load data from localStorage", error);
         }
     }, []);
 
@@ -93,6 +89,9 @@ export default function HealthOfficialDashboardPage() {
     }
 
     const activeAlertsCount = alertData.filter(a => a.status === 'Active').length;
+    const totalPopulation = regionalData.reduce((sum, r) => sum + r.population, 0);
+    const hospitalsAtCapacity = regionalData.filter(r => r.beds.total > 0 && (r.beds.occupied / r.beds.total) >= 0.95).length;
+
 
   return (
     <div className="space-y-6">
@@ -115,11 +114,9 @@ export default function HealthOfficialDashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4.5M</div>
+            <div className="text-2xl font-bold">{(totalPopulation / 1_000_000).toFixed(2)}M</div>
             <p className="flex items-center text-xs text-muted-foreground">
-              <ArrowUp className="h-4 w-4 text-green-500" />
-              <span className="ml-1 text-green-500">+2.1%</span>
-              <span className="ml-1">from last month</span>
+              Across all monitored districts
             </p>
           </CardContent>
         </Card>
@@ -145,9 +142,9 @@ export default function HealthOfficialDashboardPage() {
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1/4</div>
+            <div className="text-2xl font-bold">{hospitalsAtCapacity}/{regionalData.length}</div>
             <p className="text-xs text-muted-foreground">
-              Aligarh district reporting high occupancy
+              Districts with high occupancy
             </p>
           </CardContent>
         </Card>
@@ -201,15 +198,19 @@ export default function HealthOfficialDashboardPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {resourceData.map(res => (
-                            <TableRow key={res.district}>
-                                <TableCell className="font-medium">{res.district}</TableCell>
-                                <TableCell>{res.beds}</TableCell>
-                                <TableCell>
-                                    <Badge variant={res.status === 'Critical' ? 'destructive' : 'secondary'}>{res.status}</Badge>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                        {regionalData.map(res => {
+                            const occupancy = res.beds.total > 0 ? (res.beds.occupied / res.beds.total) * 100 : 0;
+                            const status = occupancy >= 95 ? 'Critical' : 'Stable';
+                            return (
+                                <TableRow key={res.district}>
+                                    <TableCell className="font-medium">{res.district}</TableCell>
+                                    <TableCell>{res.beds.occupied}/{res.beds.total}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={status === 'Critical' ? 'destructive' : 'secondary'}>{status}</Badge>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </CardContent>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -18,39 +19,9 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { BedDouble, Ambulance, Users } from 'lucide-react';
+import type { RegionalData } from '../data-entry-operator/page';
+import { REGIONAL_DATA_KEY } from '../data-entry-operator/regional-data/page';
 
-const resourceData = [
-  {
-    district: 'Rampur',
-    beds: { occupied: 85, total: 100 },
-    ambulances: 15,
-    staff: { doctors: 50, nurses: 120 },
-  },
-  {
-    district: 'Sitapur',
-    beds: { occupied: 60, total: 80 },
-    ambulances: 12,
-    staff: { doctors: 40, nurses: 90 },
-  },
-  {
-    district: 'Aligarh',
-    beds: { occupied: 195, total: 200 },
-    ambulances: 25,
-    staff: { doctors: 80, nurses: 200 },
-  },
-  {
-    district: 'Bareilly',
-    beds: { occupied: 70, total: 100 },
-    ambulances: 18,
-    staff: { doctors: 55, nurses: 130 },
-  },
-  {
-    district: 'Meerut',
-    beds: { occupied: 120, total: 150 },
-    ambulances: 20,
-    staff: { doctors: 70, nurses: 160 },
-  },
-];
 
 const getOccupancyStatus = (occupancy: number) => {
   if (occupancy >= 95) return { text: 'Critical', variant: 'destructive' as const };
@@ -58,11 +29,26 @@ const getOccupancyStatus = (occupancy: number) => {
   return { text: 'Stable', variant: 'secondary' as const };
 };
 
-const totalBeds = resourceData.reduce((sum, r) => sum + r.beds.total, 0);
-const totalAmbulances = resourceData.reduce((sum, r) => sum + r.ambulances, 0);
-const totalStaff = resourceData.reduce((sum, r) => sum + r.staff.doctors + r.staff.nurses, 0);
 
 export default function ResourcesPage() {
+    const [resourceData, setResourceData] = useState<RegionalData[]>([]);
+
+    useEffect(() => {
+        try {
+            const storedData = localStorage.getItem(REGIONAL_DATA_KEY);
+            if (storedData) {
+                setResourceData(JSON.parse(storedData));
+            }
+        } catch (error) {
+            console.error("Failed to load regional data from localStorage", error);
+        }
+    }, []);
+    
+    const totalBeds = resourceData.reduce((sum, r) => sum + r.beds.total, 0);
+    const totalAmbulances = resourceData.reduce((sum, r) => sum + r.ambulances, 0);
+    const totalStaff = resourceData.reduce((sum, r) => sum + r.staff.doctors + r.staff.nurses, 0);
+
+
   return (
     <div className="space-y-6">
       <div>
@@ -136,7 +122,7 @@ export default function ResourcesPage() {
             </TableHeader>
             <TableBody>
               {resourceData.map((res) => {
-                const occupancy = (res.beds.occupied / res.beds.total) * 100;
+                const occupancy = res.beds.total > 0 ? (res.beds.occupied / res.beds.total) * 100 : 0;
                 const status = getOccupancyStatus(occupancy);
                 return (
                   <TableRow key={res.district}>
