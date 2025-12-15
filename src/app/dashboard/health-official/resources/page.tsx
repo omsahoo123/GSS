@@ -19,8 +19,8 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { BedDouble, Ambulance, Users } from 'lucide-react';
-import type { RegionalData } from '../data-entry-operator/page';
-import { REGIONAL_DATA_KEY } from '../data-entry-operator/regional-data/page';
+import type { RegionalData } from '../../data-entry-operator/page';
+import { REGIONAL_DATA_KEY } from '../../data-entry-operator/regional-data/page';
 
 
 const getOccupancyStatus = (occupancy: number) => {
