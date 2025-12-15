@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -38,27 +38,53 @@ import {
 import { TrendingUp, BedDouble, Users } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 
-// Mock data
-const dailyCaseData = Array.from({ length: 30 }, (_, i) => ({
-  date: format(subDays(new Date(), 29 - i), 'MMM d'),
-  flu: Math.floor(Math.random() * 50 + 10),
-  dengue: Math.floor(Math.random() * 30 + 5),
-}));
+// --- Expanded Mock Data ---
 
-const hospitalOccupancyData = [
-  { region: 'Rampur', occupied: 85, total: 100 },
-  { region: 'Sitapur', occupied: 60, total: 80 },
-  { region: 'Aligarh', occupied: 190, total: 200 },
-  { region: 'Bareilly', occupied: 75, total: 100 },
-  { region: 'Meerut', occupied: 150, total: 180 },
-];
+const regions = ['rampur', 'sitapur', 'aligarh', 'bareilly', 'meerut'];
+const diseases = ['flu', 'dengue'];
 
-const ageDemographicsData = [
-  { name: '0-18', value: 400 },
-  { name: '19-45', value: 300 },
-  { name: '46-65', value: 200 },
-  { name: '65+', value: 100 },
-];
+// Generate more detailed mock data
+const generateDailyData = (region: string, disease: string) => {
+    const randomFactor = regions.indexOf(region) + 1 + (disease === 'flu' ? 1.5 : 1);
+    return Array.from({ length: 30 }, (_, i) => ({
+      date: format(subDays(new Date(), 29 - i), 'yyyy-MM-dd'),
+      region,
+      disease,
+      cases: Math.floor(Math.random() * (15 * randomFactor) + (5 * randomFactor)),
+    }));
+};
+
+const allDailyCaseData = regions.flatMap(region => 
+    diseases.flatMap(disease => generateDailyData(region, disease))
+);
+
+
+const allHospitalOccupancyData = regions.map((region, i) => {
+    const total = 80 + i * 20;
+    const occupied = Math.floor(Math.random() * (total * 0.5) + (total * 0.3));
+    return { region, occupied, total };
+});
+
+const allAgeDemographicsData = regions.reduce((acc, region) => {
+    acc[region] = [
+        { name: '0-18', value: Math.floor(Math.random() * 200 + 50) },
+        { name: '19-45', value: Math.floor(Math.random() * 300 + 100) },
+        { name: '46-65', value: Math.floor(Math.random() * 150 + 70) },
+        { name: '65+', value: Math.floor(Math.random() * 80 + 40) },
+    ];
+    return acc;
+}, {} as Record<string, {name: string, value: number}[]>);
+
+allAgeDemographicsData['all'] = Object.values(allAgeDemographicsData).flat().reduce((acc, curr) => {
+    const existing = acc.find(item => item.name === curr.name);
+    if (existing) {
+        existing.value += curr.value;
+    } else {
+        acc.push({ ...curr });
+    }
+    return acc;
+}, [] as {name: string, value: number}[]);
+
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -82,6 +108,37 @@ export default function HealthAnalyticsPage() {
   const [selectedRegion, setSelectedRegion] = useState('all');
   const [selectedDisease, setSelectedDisease] = useState('all');
 
+  const dailyCaseData = useMemo(() => {
+    let filtered = allDailyCaseData;
+    if (selectedRegion !== 'all') {
+      filtered = filtered.filter(d => d.region === selectedRegion);
+    }
+    if (selectedDisease !== 'all') {
+      filtered = filtered.filter(d => d.disease === selectedDisease);
+    }
+
+    const aggregatedByDate = filtered.reduce((acc, curr) => {
+      if (!acc[curr.date]) {
+        acc[curr.date] = { date: format(new Date(curr.date), 'MMM d'), flu: 0, dengue: 0 };
+      }
+      acc[curr.date][curr.disease as 'flu' | 'dengue'] += curr.cases;
+      return acc;
+    }, {} as Record<string, {date: string, flu: number, dengue: number}>);
+    
+    return Object.values(aggregatedByDate).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [selectedRegion, selectedDisease]);
+
+  const hospitalOccupancyData = useMemo(() => {
+     if (selectedRegion !== 'all') {
+        return allHospitalOccupancyData.filter(d => d.region === selectedRegion);
+     }
+     return allHospitalOccupancyData;
+  }, [selectedRegion]);
+  
+  const ageDemographicsData = useMemo(() => {
+    return allAgeDemographicsData[selectedRegion] || [];
+  }, [selectedRegion]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -98,11 +155,7 @@ export default function HealthAnalyticsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Regions</SelectItem>
-              <SelectItem value="rampur">Rampur</SelectItem>
-              <SelectItem value="sitapur">Sitapur</SelectItem>
-              <SelectItem value="aligarh">Aligarh</SelectItem>
-              <SelectItem value="bareilly">Bareilly</SelectItem>
-              <SelectItem value="meerut">Meerut</SelectItem>
+              {regions.map(r => <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={selectedDisease} onValueChange={setSelectedDisease}>
@@ -111,8 +164,7 @@ export default function HealthAnalyticsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Diseases</SelectItem>
-              <SelectItem value="flu">Flu</SelectItem>
-              <SelectItem value="dengue">Dengue</SelectItem>
+              {diseases.map(d => <SelectItem key={d} value={d} className="capitalize">{d}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -125,7 +177,7 @@ export default function HealthAnalyticsPage() {
             Daily Disease Trends (Last 30 Days)
           </CardTitle>
           <CardDescription>
-            Reported cases over time for Flu and Dengue.
+            Reported cases over time for selected diseases.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -140,20 +192,24 @@ export default function HealthAnalyticsPage() {
               <YAxis tickLine={false} axisLine={false} tickMargin={8} />
               <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
               <Legend />
-              <Line
-                type="monotone"
-                dataKey="flu"
-                stroke="var(--color-flu)"
-                strokeWidth={2}
-                dot={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="dengue"
-                stroke="var(--color-dengue)"
-                strokeWidth={2}
-                dot={false}
-              />
+              {(selectedDisease === 'all' || selectedDisease === 'flu') && (
+                 <Line
+                    type="monotone"
+                    dataKey="flu"
+                    stroke="var(--color-flu)"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+              )}
+              {(selectedDisease === 'all' || selectedDisease === 'dengue') && (
+                 <Line
+                    type="monotone"
+                    dataKey="dengue"
+                    stroke="var(--color-dengue)"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+              )}
             </LineChart>
           </ChartContainer>
         </CardContent>
@@ -174,9 +230,9 @@ export default function HealthAnalyticsPage() {
             <ChartContainer config={occupancyChartConfig} className="h-72 w-full">
               <BarChart
                 accessibilityLayer
-                data={hospitalOccupancyData.map(d => ({...d, occupancy: (d.occupied / d.total) * 100}))}
+                data={hospitalOccupancyData.map(d => ({...d, occupancy: (d.occupied / d.total) * 100, region: d.region.charAt(0).toUpperCase() + d.region.slice(1)}))}
                 layout="vertical"
-                 margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                 margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
               >
                 <CartesianGrid horizontal={false} />
                 <YAxis
@@ -208,8 +264,8 @@ export default function HealthAnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={ageChartConfig} className="h-72 w-full">
-                <ResponsiveContainer width="100%" height={288}>
+             <ChartContainer config={ageChartConfig} className="mx-auto aspect-square h-full max-h-[288px]">
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={ageDemographicsData}
@@ -217,11 +273,12 @@ export default function HealthAnalyticsPage() {
                       cy="50%"
                       labelLine={false}
                       label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                        if (percent === 0) return null;
                         const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
                         const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
                         const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
                         return (
-                          <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+                          <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
                             {`${(percent * 100).toFixed(0)}%`}
                           </text>
                         );
