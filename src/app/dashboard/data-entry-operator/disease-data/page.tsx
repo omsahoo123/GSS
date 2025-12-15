@@ -18,30 +18,34 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Save, PlusCircle, Trash2 } from 'lucide-react';
+import { format } from 'date-fns';
 
 export const DISEASE_DATA_KEY = 'healthDiseaseData';
 const initialDistricts = ['Rampur', 'Sitapur', 'Aligarh', 'Bareilly', 'Meerut'];
 
-export type DiseaseData = {
-    district: string;
-    cases: {
-        diseaseName: string;
-        caseCount: number;
-    }[];
+export type DiseaseEntry = {
+    date: string;
+    diseaseName: string;
+    caseCount: number;
 };
 
-const initialData: DiseaseData[] = initialDistricts.map(district => ({
+export type DistrictDiseaseData = {
+    district: string;
+    entries: DiseaseEntry[];
+};
+
+const initialData: DistrictDiseaseData[] = initialDistricts.map(district => ({
     district,
-    cases: [
-        { diseaseName: 'Flu', caseCount: 0 },
-        { diseaseName: 'Dengue', caseCount: 0 },
+    entries: [
+        { date: format(new Date(), 'yyyy-MM-dd'), diseaseName: 'Flu', caseCount: 0 },
     ]
 }));
 
 const diseaseDataSchema = z.object({
     diseaseData: z.array(z.object({
         district: z.string(),
-        cases: z.array(z.object({
+        entries: z.array(z.object({
+            date: z.string().min(1, "Date is required."),
             diseaseName: z.string().min(1, "Disease name is required."),
             caseCount: z.coerce.number().min(0, "Cases cannot be negative."),
         }))
@@ -57,7 +61,7 @@ export default function DiseaseDataPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(diseaseDataSchema),
     defaultValues: {
-      diseaseData: initialData,
+      diseaseData: [],
     },
   });
   
@@ -105,7 +109,7 @@ export default function DiseaseDataPage() {
     }
     append({
         district: newDistrictName,
-        cases: [{ diseaseName: 'Flu', caseCount: 0 }]
+        entries: [{ date: format(new Date(), 'yyyy-MM-dd'), diseaseName: 'Flu', caseCount: 0 }]
     });
     setNewDistrictName('');
   };
@@ -113,9 +117,9 @@ export default function DiseaseDataPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-headline text-3xl font-bold">Manage Disease Data</h1>
+        <h1 className="font-headline text-3xl font-bold">Manage Daily Disease Data</h1>
         <p className="text-muted-foreground">
-          Update reported disease cases and add new districts or diseases as needed.
+          Log daily disease cases for each district.
         </p>
       </div>
 
@@ -159,7 +163,7 @@ export default function DiseaseDataPage() {
 function DistrictCard({ districtIndex, control, removeDistrict }: { districtIndex: number, control: any, removeDistrict: (index: number) => void }) {
     const { fields, append, remove } = useFieldArray({
         control,
-        name: `diseaseData.${districtIndex}.cases`
+        name: `diseaseData.${districtIndex}.entries`
     });
 
     const districtName = useWatch({
@@ -167,8 +171,8 @@ function DistrictCard({ districtIndex, control, removeDistrict }: { districtInde
       name: `diseaseData.${districtIndex}.district`
     });
 
-    const addNewDisease = () => {
-        append({ diseaseName: '', caseCount: 0 });
+    const addNewEntry = () => {
+        append({ date: format(new Date(), 'yyyy-MM-dd'), diseaseName: '', caseCount: 0 });
     };
 
     return (
@@ -176,29 +180,40 @@ function DistrictCard({ districtIndex, control, removeDistrict }: { districtInde
             <CardHeader className="flex-row items-start justify-between">
                 <div>
                     <CardTitle>{districtName}</CardTitle>
-                    <CardDescription>Update the case numbers for this district.</CardDescription>
+                    <CardDescription>Manage daily case entries for this district.</CardDescription>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => removeDistrict(districtIndex)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-                {fields.map((caseField, caseIndex) => (
-                    <div key={caseField.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                {fields.map((entryField, entryIndex) => (
+                    <div key={entryField.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                          <FormField
                             control={control}
-                            name={`diseaseData.${districtIndex}.cases.${caseIndex}.diseaseName`}
+                            name={`diseaseData.${districtIndex}.entries.${entryIndex}.date`}
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Date</FormLabel>
+                                <FormControl><Input type="date" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={control}
+                            name={`diseaseData.${districtIndex}.entries.${entryIndex}.diseaseName`}
                             render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Disease Name</FormLabel>
-                                <FormControl><Input placeholder="e.g., Cholera" {...field} /></FormControl>
+                                <FormControl><Input placeholder="e.g., Dengue" {...field} /></FormControl>
                                 <FormMessage />
                             </FormItem>
                             )}
                         />
                         <FormField
                             control={control}
-                            name={`diseaseData.${districtIndex}.cases.${caseIndex}.caseCount`}
+                            name={`diseaseData.${districtIndex}.entries.${entryIndex}.caseCount`}
                             render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Number of Cases</FormLabel>
@@ -207,15 +222,15 @@ function DistrictCard({ districtIndex, control, removeDistrict }: { districtInde
                             </FormItem>
                             )}
                         />
-                        <Button variant="ghost" size="sm" onClick={() => remove(caseIndex)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Remove
+                        <Button variant="ghost" size="sm" onClick={() => remove(entryIndex)}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Remove Entry
                         </Button>
                     </div>
                 ))}
             </CardContent>
             <CardFooter>
-                <Button variant="secondary" onClick={addNewDisease}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Disease
+                <Button variant="secondary" onClick={addNewEntry}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Entry
                 </Button>
             </CardFooter>
         </Card>

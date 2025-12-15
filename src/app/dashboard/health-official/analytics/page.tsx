@@ -36,10 +36,11 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, BedDouble, Users, Download } from 'lucide-react';
-import { format, subDays } from 'date-fns';
-import { DISEASE_DATA_KEY, type DiseaseData } from '../../data-entry-operator/disease-data/page';
+import { format, subDays, parseISO, eachDayOfInterval, isWithinInterval } from 'date-fns';
+import { DISEASE_DATA_KEY, type DistrictDiseaseData } from '../../data-entry-operator/disease-data/page';
 import { REGIONAL_DATA_KEY } from '../../data-entry-operator/regional-data/page';
 import type { RegionalData } from '../../data-entry-operator/page';
+import { Input } from '@/components/ui/input';
 
 
 const regions = ['rampur', 'sitapur', 'aligarh', 'bareilly', 'meerut'];
@@ -88,9 +89,12 @@ const ageChartConfig = {
 
 export default function HealthAnalyticsPage() {
   const [selectedRegion, setSelectedRegion] = useState('all');
-  const [selectedDisease, setSelectedDisease] = useState('all');
-  const [diseaseData, setDiseaseData] = useState<DiseaseData[]>([]);
+  const [diseaseData, setDiseaseData] = useState<DistrictDiseaseData[]>([]);
   const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
+  const [dateRange, setDateRange] = useState({
+    from: subDays(new Date(), 29),
+    to: new Date()
+  });
 
   useEffect(() => {
     try {
@@ -108,13 +112,14 @@ export default function HealthAnalyticsPage() {
   }, []);
 
   const availableDiseases = useMemo(() => {
-    const all = new Set(diseaseData.flatMap(d => d.cases.map(c => c.diseaseName)))
-    return Array.from(all);
+    const all = new Set(diseaseData.flatMap(d => d.entries.map(e => e.diseaseName)))
+    return Array.from(all).filter(Boolean); // Filter out empty strings
   }, [diseaseData]);
   
   const diseaseChartConfig = useMemo(() => {
     return availableDiseases.reduce((config, diseaseName, index) => {
-        config[diseaseName] = {
+        const key = diseaseName.replace(/\s+/g, '-').toLowerCase();
+        config[key] = {
             label: diseaseName,
             color: LINE_CHART_COLORS[index % LINE_CHART_COLORS.length],
         };
@@ -123,28 +128,32 @@ export default function HealthAnalyticsPage() {
   }, [availableDiseases]);
 
   const dailyCaseData = useMemo(() => {
-    let filtered = diseaseData;
+    if (!dateRange.from || !dateRange.to) return [];
+
+    let filteredByRegion = diseaseData;
     if (selectedRegion !== 'all') {
-      filtered = filtered.filter(d => d.district.toLowerCase() === selectedRegion);
+      filteredByRegion = filteredByRegion.filter(d => d.district.toLowerCase() === selectedRegion);
     }
 
-    return Array.from({ length: 30 }).map((_, i) => {
-        const date = subDays(new Date(), 29 - i);
+    const intervalDays = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
+
+    return intervalDays.map(date => {
         const dailyData: {[key: string]: any} = { date: format(date, 'MMM d') };
 
         availableDiseases.forEach(diseaseName => {
-            const totalCasesForDisease = filtered.reduce((sum, d) => {
-                const diseaseCase = d.cases.find(c => c.diseaseName === diseaseName);
-                return sum + (diseaseCase ? diseaseCase.caseCount : 0);
+            const key = diseaseName.replace(/\s+/g, '-').toLowerCase();
+            const totalCasesForDay = filteredByRegion.reduce((sum, district) => {
+                const dayEntries = district.entries.filter(e => 
+                    e.diseaseName === diseaseName &&
+                    format(parseISO(e.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+                );
+                return sum + dayEntries.reduce((entrySum, entry) => entrySum + entry.caseCount, 0);
             }, 0);
-
-            // Simulate daily fluctuations
-            dailyData[diseaseName] = Math.floor(totalCasesForDisease / 30 * (Math.random() * 0.4 + 0.8));
+            dailyData[key] = totalCasesForDay;
         });
-
         return dailyData;
     });
-  }, [selectedRegion, diseaseData, availableDiseases]);
+  }, [selectedRegion, diseaseData, availableDiseases, dateRange]);
 
   const hospitalOccupancyData = useMemo(() => {
      if (selectedRegion !== 'all') {
@@ -161,13 +170,14 @@ export default function HealthAnalyticsPage() {
     let csvContent = "data:text/csv;charset=utf-8,";
     
     csvContent += `Health Analytics Report\n`;
-    csvContent += `Region: ${selectedRegion},Disease: ${selectedDisease}\n`;
+    csvContent += `Region: ${selectedRegion}\n`;
+    csvContent += `Period: ${format(dateRange.from, 'yyyy-MM-dd')} to ${format(dateRange.to, 'yyyy-MM-dd')}\n`;
     csvContent += `Generated on: ${format(new Date(), 'yyyy-MM-dd')}\n\n`;
 
-    csvContent += "Daily Disease Trends (Simulated Last 30 Days)\n";
+    csvContent += "Daily Disease Trends\n";
     csvContent += "Date," + availableDiseases.join(',') + '\n';
     dailyCaseData.forEach(row => {
-        const rowData = [row.date, ...availableDiseases.map(d => row[d] || 0)];
+        const rowData = [row.date, ...availableDiseases.map(d => row[d.replace(/\s+/g, '-').toLowerCase()] || 0)];
         csvContent += rowData.join(',') + '\n';
     });
     csvContent += "\n";
@@ -194,6 +204,11 @@ export default function HealthAnalyticsPage() {
     link.click();
     document.body.removeChild(link);
   };
+  
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'from' | 'to') => {
+      const newDate = e.target.value ? parseISO(e.target.value) : (field === 'from' ? subDays(new Date(), 29) : new Date());
+      setDateRange(prev => ({ ...prev, [field]: newDate }));
+  };
 
   return (
     <div className="space-y-6">
@@ -204,7 +219,7 @@ export default function HealthAnalyticsPage() {
             In-depth analysis of public health data and trends.
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <Select value={selectedRegion} onValueChange={setSelectedRegion}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Select Region" />
@@ -214,18 +229,14 @@ export default function HealthAnalyticsPage() {
               {regions.map(r => <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={selectedDisease} onValueChange={setSelectedDisease}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Select Disease" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Diseases</SelectItem>
-              {availableDiseases.map((disease) => <SelectItem key={disease} value={disease}>{disease}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Input type="date" value={format(dateRange.from, 'yyyy-MM-dd')} onChange={(e) => handleDateChange(e, 'from')} />
+             <span className="text-muted-foreground">to</span>
+            <Input type="date" value={format(dateRange.to, 'yyyy-MM-dd')} onChange={(e) => handleDateChange(e, 'to')} />
+          </div>
           <Button onClick={handleDownload} variant="outline">
             <Download className="mr-2 h-4 w-4" />
-            Download Report
+            Report
           </Button>
         </div>
       </div>
@@ -234,10 +245,10 @@ export default function HealthAnalyticsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Daily Disease Trends (Simulated Last 30 Days)
+            Daily Disease Trends
           </CardTitle>
           <CardDescription>
-            Reported cases over time for selected diseases.
+            Reported cases over the selected date range.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -247,23 +258,21 @@ export default function HealthAnalyticsPage() {
               data={dailyCaseData}
               margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
             >
-              <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+              <YAxis tickLine={false} axisLine={false} tickMargin={8} allowDecimals={false} />
               <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
               <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
               <Legend />
               {availableDiseases.map((disease) => {
-                if (selectedDisease === 'all' || selectedDisease === disease) {
-                   return <Line
-                        key={disease}
-                        type="monotone"
-                        dataKey={disease}
-                        stroke={`var(--color-${disease})`}
-                        strokeWidth={2}
-                        dot={false}
-                        name={disease}
-                    />
-                }
-                return null;
+                const key = disease.replace(/\s+/g, '-').toLowerCase();
+                return <Line
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    stroke={`var(--color-${key})`}
+                    strokeWidth={2}
+                    dot={false}
+                    name={disease}
+                />
               })}
             </LineChart>
           </ChartContainer>
