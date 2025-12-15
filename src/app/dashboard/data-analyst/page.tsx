@@ -34,7 +34,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis } from 'recharts';
+import {
+  BarChart as RechartsBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from 'recharts';
 
 const patientDataByRegion = [
   { region: 'Rampur', patients: 1250 },
