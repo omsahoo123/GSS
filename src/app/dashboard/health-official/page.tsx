@@ -33,7 +33,7 @@ import { BarChart, Bar, XAxis, YAxis } from 'recharts';
 import Link from 'next/link';
 import type { RegionalData } from '../data-entry-operator/page';
 import { REGIONAL_DATA_KEY } from '../data-entry-operator/regional-data/page';
-import { DISEASE_DATA_KEY, type DiseaseData } from '../data-entry-operator/disease-data/page';
+import { DISEASE_DATA_KEY, type DistrictDiseaseData } from '../data-entry-operator/disease-data/page';
 
 const chartConfig = {
   cases: {
@@ -56,7 +56,7 @@ type Alert = {
 export default function HealthOfficialDashboardPage() {
     const [alertData, setAlertData] = useState<Alert[]>([]);
     const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
-    const [diseaseData, setDiseaseData] = useState<DiseaseData[]>([]);
+    const [diseaseData, setDiseaseData] = useState<DistrictDiseaseData[]>([]);
     
     useEffect(() => {
         try {
@@ -79,7 +79,7 @@ export default function HealthOfficialDashboardPage() {
     
     const formattedDiseaseData = diseaseData.map(d => ({
         region: d.district,
-        cases: d.cases.reduce((total, current) => total + current.caseCount, 0),
+        cases: d.entries.reduce((total, current) => total + current.caseCount, 0),
     }));
 
 
