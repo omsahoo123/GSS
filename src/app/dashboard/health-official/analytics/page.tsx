@@ -38,7 +38,8 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, BedDouble, Users, Download } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { DISEASE_DATA_KEY, type DiseaseData } from '../../data-entry-operator/disease-data/page';
-import { REGIONAL_DATA_KEY, type RegionalData } from '../../data-entry-operator/page';
+import { REGIONAL_DATA_KEY } from '../../data-entry-operator/regional-data/page';
+import type { RegionalData } from '../../data-entry-operator/page';
 
 
 const regions = ['rampur', 'sitapur', 'aligarh', 'bareilly', 'meerut'];
@@ -306,7 +307,7 @@ export default function HealthAnalyticsPage() {
             <CardDescription>
               Distribution of cases across different age groups.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
              <ChartContainer config={ageChartConfig} className="mx-auto aspect-square h-full max-h-[288px]">
                 <ResponsiveContainer width="100%" height="100%">
