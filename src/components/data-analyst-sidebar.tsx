@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -10,7 +11,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import {
   Home,
@@ -18,7 +18,6 @@ import {
   Database,
   PieChart,
   FileText,
-  BrainCircuit,
 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -29,7 +28,6 @@ const menuItems = [
   { href: '/dashboard/data-analyst/queries', label: 'Data Queries', icon: Database },
   { href: '/dashboard/data-analyst/visualizations', label: 'Visualizations', icon: PieChart },
   { href: '/dashboard/data-analyst/reports', label: 'Reporting', icon: FileText },
-  { href: '/dashboard/data-analyst/insights', label: 'AI Insights', icon: BrainCircuit },
 ];
 
 export function DataAnalystSidebar() {

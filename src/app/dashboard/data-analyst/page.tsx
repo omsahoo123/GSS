@@ -26,7 +26,6 @@ import {
   Search,
   FileText,
   BarChart,
-  BrainCircuit,
   ArrowRight,
 } from 'lucide-react';
 import {
@@ -75,12 +74,6 @@ const quickActions = [
     description: 'Build a report from a template.',
     icon: FileText,
     href: '/dashboard/data-analyst/reports',
-  },
-  {
-    title: 'AI Insights',
-    description: 'Use AI to find data correlations.',
-    icon: BrainCircuit,
-    href: '/dashboard/data-analyst/insights',
   },
 ];
 
