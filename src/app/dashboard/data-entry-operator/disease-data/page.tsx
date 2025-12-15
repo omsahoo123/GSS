@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -161,7 +162,10 @@ function DistrictCard({ districtIndex, control, removeDistrict }: { districtInde
         name: `diseaseData.${districtIndex}.cases`
     });
 
-    const districtName = control.getValues(`diseaseData.${districtIndex}.district`);
+    const districtName = useWatch({
+      control,
+      name: `diseaseData.${districtIndex}.district`
+    });
 
     const addNewDisease = () => {
         append({ diseaseName: '', caseCount: 0 });
