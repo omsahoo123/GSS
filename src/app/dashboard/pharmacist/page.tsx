@@ -25,6 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { LOGGED_IN_USER_KEY } from '@/app/page';
 
 export const PHARMACY_LOCATION_KEY = 'pharmacistLocation';
 const INVENTORY_STORAGE_KEY = 'pharmacistInventory';
@@ -45,7 +46,6 @@ const locationSchema = z.object({
 
 type LocationFormValues = z.infer<typeof locationSchema>;
 
-// Helper function to safely get data from localStorage on the client
 const getInitialLocation = () => {
     if (typeof window === 'undefined') {
         return { name: '', address: '' };
@@ -62,6 +62,7 @@ const getInitialLocation = () => {
 export default function PharmacistDashboardPage() {
   const { toast } = useToast();
   const [inventory, setInventory] = useState<Medicine[]>([]);
+  const [userName, setUserName] = useState('Pharmacist');
 
   const form = useForm<LocationFormValues>({
     resolver: zodResolver(locationSchema),
@@ -69,14 +70,17 @@ export default function PharmacistDashboardPage() {
   });
 
   useEffect(() => {
-    // This effect is now only for loading inventory data
     try {
+      const userData = localStorage.getItem(LOGGED_IN_USER_KEY);
+      if (userData) {
+          setUserName(JSON.parse(userData).name);
+      }
       const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
       if (storedInventory) {
         setInventory(JSON.parse(storedInventory));
       }
     } catch (error) {
-      console.error("Failed to load inventory from localStorage", error);
+      console.error("Failed to load data from localStorage", error);
     }
   }, []);
 
@@ -109,7 +113,7 @@ export default function PharmacistDashboardPage() {
           Pharmacist Dashboard
         </h1>
         <p className="text-muted-foreground">
-          Welcome, Ramesh. Manage your pharmacy inventory and prescriptions.
+          Welcome, {userName}. Manage your pharmacy inventory and prescriptions.
         </p>
       </div>
 

@@ -2,7 +2,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   Sidebar,
@@ -25,10 +24,10 @@ import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from './ui/button';
 import React, { useEffect, useState } from 'react';
-import { LOGGED_IN_PATIENT_KEY } from '@/app/signup/patient/page';
+import { LOGGED_IN_USER_KEY } from '@/app/page';
 
 const menuItems = [
-  { href: '/dashboard/patient', label: 'Dashboard', icon: Home },
+  { href: '/dashboard/patient', label: 'Dashboard', icon: Home, exact: true },
   { href: '/dashboard/patient/appointments', label: 'Appointments', icon: Calendar },
   { href: '/dashboard/patient/records', label: 'Health Records', icon: HeartPulse },
   { href: '/dashboard/patient/pharmacy-stock', label: 'Pharmacy Stock', icon: Pill },
@@ -36,7 +35,7 @@ const menuItems = [
 ];
 
 type PatientData = {
-  fullName: string;
+  name: string;
   photo?: string;
 };
 
@@ -46,9 +45,15 @@ export function PatientSidebar() {
 
   useEffect(() => {
     try {
-      const storedData = localStorage.getItem(LOGGED_IN_PATIENT_KEY);
+      const storedData = localStorage.getItem(LOGGED_IN_USER_KEY);
       if (storedData) {
-        setPatientData(JSON.parse(storedData));
+          const userData = JSON.parse(storedData);
+          const patientAccount = localStorage.getItem(`patientAccount_${userData.name}`);
+          if (patientAccount) {
+              setPatientData(JSON.parse(patientAccount));
+          } else {
+              setPatientData({ name: userData.name });
+          }
       }
     } catch (error) {
       console.error("Failed to load patient data from localStorage", error);
@@ -73,7 +78,7 @@ export function PatientSidebar() {
             <SidebarMenuItem key={item.label}>
               <Link href={item.href} passHref>
                 <SidebarMenuButton
-                  isActive={pathname.startsWith(item.href)}
+                  isActive={item.exact ? pathname === item.href : pathname.startsWith(item.href)}
                   tooltip={item.label}
                 >
                   <item.icon />
@@ -88,14 +93,14 @@ export function PatientSidebar() {
         <div className="flex items-center gap-3 p-2">
           <Avatar className="h-10 w-10">
             {patientData?.photo && (
-              <AvatarImage src={patientData.photo} alt={patientData.fullName} />
+              <AvatarImage src={patientData.photo} alt={patientData.name} />
             )}
             <AvatarFallback>
-              {patientData ? getInitials(patientData.fullName) : 'P'}
+              {patientData ? getInitials(patientData.name) : 'P'}
             </AvatarFallback>
           </Avatar>
           <div className="overflow-hidden">
-            <p className="truncate font-semibold">{patientData?.fullName || 'Patient'}</p>
+            <p className="truncate font-semibold">{patientData?.name || 'Patient'}</p>
             <p className="truncate text-xs text-muted-foreground">Patient</p>
           </div>
           <Link href="/" className="ml-auto" passHref>

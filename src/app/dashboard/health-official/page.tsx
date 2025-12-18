@@ -22,7 +22,6 @@ import {
   Users,
   Siren,
   Building,
-  ArrowUp,
 } from 'lucide-react';
 import {
   ChartContainer,
@@ -31,9 +30,10 @@ import {
 } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis } from 'recharts';
 import Link from 'next/link';
-import type { RegionalData } from '../data-entry-operator/page';
+import type { RegionalData } from '../data-entry-operator/regional-data/page';
 import { REGIONAL_DATA_KEY } from '../data-entry-operator/regional-data/page';
 import { DISEASE_DATA_KEY, type DistrictDiseaseData } from '../data-entry-operator/disease-data/page';
+import { LOGGED_IN_USER_KEY } from '@/app/page';
 
 const chartConfig = {
   cases: {
@@ -57,9 +57,14 @@ export default function HealthOfficialDashboardPage() {
     const [alertData, setAlertData] = useState<Alert[]>([]);
     const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
     const [diseaseData, setDiseaseData] = useState<DistrictDiseaseData[]>([]);
+    const [userName, setUserName] = useState('Official');
     
     useEffect(() => {
         try {
+            const userData = localStorage.getItem(LOGGED_IN_USER_KEY);
+            if (userData) {
+                setUserName(JSON.parse(userData).name);
+            }
             const storedAlerts = localStorage.getItem(HEALTH_ALERTS_STORAGE_KEY);
             if (storedAlerts) {
                 setAlertData(JSON.parse(storedAlerts));
@@ -93,7 +98,7 @@ export default function HealthOfficialDashboardPage() {
     }
 
     const activeAlertsCount = alertData.filter(a => a.status === 'Active').length;
-    const totalPopulation = regionalData.reduce((sum, r) => sum + r.population, 0);
+    const totalPopulation = regionalData.reduce((sum, r) => sum + (r.population || 0), 0);
     const hospitalsAtCapacity = regionalData.filter(r => r.beds.total > 0 && (r.beds.occupied / r.beds.total) >= 0.95).length;
 
 
@@ -104,7 +109,7 @@ export default function HealthOfficialDashboardPage() {
           Public Health Dashboard
         </h1>
         <p className="text-muted-foreground">
-          Welcome, Ms. Verma. Monitor regional health trends and resource
+          Welcome, {userName}. Monitor regional health trends and resource
           allocation.
         </p>
       </div>

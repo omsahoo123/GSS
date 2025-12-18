@@ -15,6 +15,8 @@ import { Home, LogOut, Database, PenSquare, Bug } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from './ui/button';
+import { useEffect, useState } from 'react';
+import { LOGGED_IN_USER_KEY } from '@/app/page';
 
 const menuItems = [
   { href: '/dashboard/data-entry-operator', label: 'Dashboard', icon: Home },
@@ -24,6 +26,18 @@ const menuItems = [
 
 export function DataEntryOperatorSidebar() {
   const pathname = usePathname();
+  const [userName, setUserName] = useState('Operator');
+
+  useEffect(() => {
+      try {
+        const userData = localStorage.getItem(LOGGED_IN_USER_KEY);
+        if (userData) {
+            setUserName(JSON.parse(userData).name);
+        }
+      } catch (e) {
+          console.error("Could not load user data", e);
+      }
+  }, []);
 
   return (
     <Sidebar>
@@ -53,10 +67,10 @@ export function DataEntryOperatorSidebar() {
       <SidebarFooter className="border-t">
         <div className="flex items-center gap-3 p-2">
           <Avatar className="h-10 w-10">
-            <AvatarFallback>AK</AvatarFallback>
+            <AvatarFallback>{userName.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
           </Avatar>
           <div className="overflow-hidden">
-            <p className="truncate font-semibold">Anil Kumar</p>
+            <p className="truncate font-semibold">{userName}</p>
             <p className="truncate text-xs text-muted-foreground">Data Entry Operator</p>
           </div>
           <Link href="/" className="ml-auto" passHref>

@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Download, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
-import { LOGGED_IN_PATIENT_KEY } from '@/app/signup/patient/page';
+import { LOGGED_IN_USER_KEY } from '@/app/page';
 import { format, parseISO } from 'date-fns';
 import { type Appointment } from '../../doctor/appointments/page';
 import { type LabReport } from '../../doctor/lab-reports/page';
@@ -40,8 +40,8 @@ export default function HealthRecordsPage() {
 
   useEffect(() => {
     try {
-      const patientAccount = JSON.parse(localStorage.getItem(LOGGED_IN_PATIENT_KEY) || '{}');
-      const name = patientAccount.fullName;
+      const patientAccount = JSON.parse(localStorage.getItem(LOGGED_IN_USER_KEY) || '{}');
+      const name = patientAccount.name;
       if (name) {
         setPatientName(name);
 

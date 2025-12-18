@@ -1,54 +1,101 @@
 
-import Image from 'next/image';
-import Link from 'next/link';
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
-  ArrowRight,
-  Briefcase,
-  HeartPulse,
-  Hospital,
-  Syringe,
-  Database,
-} from 'lucide-react';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/icons';
+import Image from 'next/image';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
-const roles = [
-  {
-    name: 'Patient',
-    icon: HeartPulse,
-    href: '/login/patient',
-    description: 'Access your health records and consult with doctors.',
-  },
-  {
-    name: 'Doctor',
-    icon: Hospital,
-    href: '/dashboard/doctor',
-    description: 'Manage patient consultations and records.',
-  },
-  {
-    name: 'Pharmacist',
-    icon: Syringe,
-    href: '/dashboard/pharmacist',
-    description: 'Manage medicine inventory and prescriptions.',
-  },
-  {
-    name: 'Health Official',
-    icon: Briefcase,
-    href: '/dashboard/health-official',
-    description: 'Monitor public health analytics and reports.',
-  },
-  {
-    name: 'Data Entry Operator',
-    icon: Database,
-    href: '/dashboard/data-entry-operator',
-    description: 'Input and manage regional health data.',
-  },
-];
+export const LOGGED_IN_USER_KEY = 'loggedInUser';
 
-export default function Home() {
+const loginSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters.'),
+  role: z.string().min(1, 'Please select a role.'),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
+const roles = {
+  patient: '/dashboard/patient',
+  doctor: '/dashboard/doctor',
+  pharmacist: '/dashboard/pharmacist',
+  'health-official': '/dashboard/health-official',
+  'data-entry-operator': '/dashboard/data-entry-operator',
+};
+
+export default function LoginPage() {
+  const router = useRouter();
+  const { toast } = useToast();
   const heroImage = PlaceHolderImages.find((img) => img.id === 'hero');
+
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      name: '',
+      role: '',
+    },
+  });
+
+  const onSubmit = (data: LoginFormValues) => {
+    try {
+      localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(data));
+      
+      // If patient, create a separate patient account record
+      if (data.role === 'patient') {
+        const patientAccount = {
+          fullName: data.name,
+          age: 30, // Mock age
+          gender: 'other',
+          phone: '1234567890', // Mock phone
+          address: '123, Mock Street', // Mock address
+          photo: '', // Mock photo
+        }
+        localStorage.setItem(`patientAccount_${data.name}`, JSON.stringify(patientAccount));
+      }
+
+      toast({
+        title: 'Login Successful',
+        description: `Welcome, ${data.name}! Redirecting to your dashboard...`,
+      });
+      const path = roles[data.role as keyof typeof roles];
+      router.push(path);
+    } catch (error) {
+      console.error('Login failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: 'Could not log you in. Please try again.',
+      });
+    }
+  };
 
   return (
     <div className="relative min-h-screen w-full">
@@ -75,40 +122,60 @@ export default function Home() {
           </p>
         </div>
 
-        <Card className="mt-12 w-full max-w-2xl animate-fade-in-up shadow-2xl">
+        <Card className="mt-12 w-full max-w-md animate-fade-in-up shadow-2xl">
           <CardHeader>
             <CardTitle className="text-center text-2xl font-semibold">
-              Choose Your Role
+              Select Role and Login
             </CardTitle>
+            <CardDescription className="text-center">
+              Enter your name and choose your role to continue.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 gap-4">
-              {roles.map((role) => (
-                <div key={role.name}>
-                  <Link href={role.href} passHref>
-                    <Button
-                      variant="outline"
-                      className="h-auto w-full justify-start p-4 text-left transition-transform hover:scale-105 hover:bg-accent/50"
-                    >
-                      <div className="flex w-full items-center gap-4">
-                        <div className="rounded-lg bg-primary/20 p-3">
-                          <role.icon className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-foreground">
-                            {role.name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {role.description}
-                          </p>
-                        </div>
-                        <ArrowRight className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                    </Button>
-                  </Link>
-                </div>
-              ))}
-            </div>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Your Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Sunita Devi" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Your Role</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.keys(roles).map((role) => (
+                            <SelectItem key={role} value={role} className="capitalize">
+                              {role.replace(/-/g, ' ')}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full">
+                  Login to Dashboard
+                </Button>
+              </form>
+            </Form>
           </CardContent>
         </Card>
       </div>

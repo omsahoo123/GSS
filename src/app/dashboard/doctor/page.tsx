@@ -49,29 +49,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { type Appointment } from './appointments/page';
 import { format, parseISO, isToday } from 'date-fns';
-
-const initialPendingTasks = [
-  {
-    id: 'task-1',
-    description: 'Review new lab results for Sunita Devi',
-    completed: false,
-  },
-  {
-    id: 'task-2',
-    description: 'Follow up with Rohan Verma about his medication',
-    completed: true,
-  },
-  {
-    id: 'task-3',
-    description: 'Sign prescription renewal for Aarav Sharma',
-    completed: false,
-  },
-];
-
-const loggedInDoctorName = 'Dr. Priya Singh';
+import { LOGGED_IN_USER_KEY } from '@/app/page';
 
 export default function DoctorDashboardPage() {
-  const [tasks, setTasks] = useState(initialPendingTasks);
+  const [tasks, setTasks] = useState<{ id: string, description: string, completed: boolean }[]>([]);
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTaskText, setEditingTaskText] = useState('');
@@ -79,14 +60,17 @@ export default function DoctorDashboardPage() {
   const router = useRouter();
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [userName, setUserName] = useState('Doctor');
 
   useEffect(() => {
     try {
-      const storedTasks = localStorage.getItem('doctorTasks');
+      const doctorName = JSON.parse(localStorage.getItem(LOGGED_IN_USER_KEY) || '{}').name || 'Doctor';
+      setUserName(doctorName);
+
+      const doctorTasksKey = `doctorTasks_${doctorName}`;
+      const storedTasks = localStorage.getItem(doctorTasksKey);
       if (storedTasks) {
         setTasks(JSON.parse(storedTasks));
-      } else {
-        setTasks(initialPendingTasks);
       }
 
       const storedAppointments = localStorage.getItem('allAppointmentsData');
@@ -104,17 +88,18 @@ export default function DoctorDashboardPage() {
 
   useEffect(() => {
     try {
-        localStorage.setItem('doctorTasks', JSON.stringify(tasks));
+        const doctorTasksKey = `doctorTasks_${userName}`;
+        localStorage.setItem(doctorTasksKey, JSON.stringify(tasks));
     } catch (error) {
         console.error("Failed to save tasks to localStorage", error);
     }
-  }, [tasks]);
+  }, [tasks, userName]);
 
   const todaysAppointments = appointments.filter(
-    (appt) => appt.doctor === loggedInDoctorName && isToday(appt.date) && appt.status === 'Upcoming'
+    (appt) => appt.doctor === userName && isToday(appt.date) && appt.status === 'Upcoming'
   );
   
-  const totalPatients = new Set(appointments.map(a => a.patient)).size;
+  const totalPatients = new Set(appointments.filter(a => a.doctor === userName).map(a => a.patient)).size;
 
 
   const handleAddTask = (e: React.FormEvent) => {
@@ -172,7 +157,7 @@ export default function DoctorDashboardPage() {
         <div>
           <h1 className="font-headline text-3xl font-bold">Doctor Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome, {loggedInDoctorName}. Here is your daily overview.
+            Welcome, {userName}. Here is your daily overview.
           </p>
         </div>
         <form onSubmit={handleSearchSubmit} className="relative w-full max-w-sm">
@@ -341,6 +326,7 @@ export default function DoctorDashboardPage() {
                   </div>
                 </div>
               ))}
+               {tasks.length === 0 && <p className="text-sm text-center text-muted-foreground pt-4">No tasks yet. Add one above.</p>}
             </div>
           </CardContent>
         </Card>
@@ -381,7 +367,7 @@ export default function DoctorDashboardPage() {
                             />
                           )}
                           <AvatarFallback>
-                            {appt.patient.charAt(0)}
+                            {appt.patient.split(' ').map(n=>n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
                         <div className="font-medium">{appt.patient}</div>

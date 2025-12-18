@@ -12,7 +12,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, Calendar } from 'lucide-react';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
   Table,
   TableBody,
@@ -56,10 +55,11 @@ export default function PatientHistoryPage() {
             const patientName = patientAppointments[0].patient;
             const patientLabReports = allLabReports.filter(r => r.patientName === patientName);
             const lastVisit = patientAppointments.sort((a,b) => b.date.getTime() - a.date.getTime())[0];
-            const age = (patientName.length * 3) % 40 + 20; // Generate a mock age based on name
+            const age = (patientName.length * 3) % 40 + 20;
 
-            const patientAccount = JSON.parse(localStorage.getItem('patientAccountData') || '{}');
-            const avatarUrl = patientAccount.fullName === patientName ? patientAccount.photo : undefined;
+            const patientAccountKey = `patientAccount_${patientName}`;
+            const patientAccount = JSON.parse(localStorage.getItem(patientAccountKey) || '{}');
+            const avatarUrl = patientAccount.photo;
 
             setPatient({
                 id: patientId,
@@ -82,7 +82,7 @@ export default function PatientHistoryPage() {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center">
         <h1 className="text-2xl font-bold">Patient not found</h1>
-        <p>The requested patient record could not be found or has no history.</p>
+        <p className="text-muted-foreground">The requested patient record could not be found or has no history.</p>
         <Link href="/dashboard/doctor/patients">
             <Button variant="outline" className="mt-4">Back to Patients List</Button>
         </Link>

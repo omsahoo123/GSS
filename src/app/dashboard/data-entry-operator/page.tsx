@@ -17,20 +17,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Users, Building, Truck, Server, AlertCircle } from 'lucide-react';
+import { Users, Building, Truck, Server } from 'lucide-react';
 import Link from 'next/link';
-import { REGIONAL_DATA_KEY } from './regional-data/page';
-
-export type RegionalData = {
-  district: string;
-  population: number;
-  beds: { occupied: number, total: number };
-  ambulances: number;
-  staff: { doctors: number, nurses: number };
-};
+import { REGIONAL_DATA_KEY, type RegionalData } from './regional-data/page';
+import { LOGGED_IN_USER_KEY } from '@/app/page';
 
 export default function DataEntryOperatorDashboardPage() {
   const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
+  const [userName, setUserName] = useState('Operator');
 
   useEffect(() => {
     try {
@@ -38,15 +32,19 @@ export default function DataEntryOperatorDashboardPage() {
       if (storedData) {
         setRegionalData(JSON.parse(storedData));
       }
+      const userData = localStorage.getItem(LOGGED_IN_USER_KEY);
+      if (userData) {
+        setUserName(JSON.parse(userData).name);
+      }
     } catch (error) {
-      console.error("Failed to load regional data from localStorage", error);
+      console.error("Failed to load data from localStorage", error);
     }
   }, []);
 
-  const totalPopulation = regionalData.reduce((sum, r) => sum + r.population, 0);
+  const totalPopulation = regionalData.reduce((sum, r) => sum + (r.population || 0), 0);
   const totalHospitals = regionalData.length;
-  const totalAmbulances = regionalData.reduce((sum, r) => sum + r.ambulances, 0);
-  const districtsWithMissingData = regionalData.filter(r => r.population === 0 || r.beds.total === 0).length;
+  const totalAmbulances = regionalData.reduce((sum, r) => sum + (r.ambulances || 0), 0);
+  const districtsWithMissingData = regionalData.filter(r => !r.population || !r.beds.total).length;
 
   const getOccupancyStatus = (occupancy: number) => {
     if (occupancy >= 95) return { text: 'Critical', variant: 'destructive' as const };
@@ -61,7 +59,7 @@ export default function DataEntryOperatorDashboardPage() {
           Data Entry Operator Dashboard
         </h1>
         <p className="text-muted-foreground">
-          Welcome, Anil. Manage and update regional health metrics.
+          Welcome, {userName}. Manage and update regional health metrics.
         </p>
       </div>
 

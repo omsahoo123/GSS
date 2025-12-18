@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   Sidebar,
@@ -11,7 +10,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import {
   Calendar,
@@ -26,9 +24,11 @@ import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from './ui/button';
+import { useEffect, useState } from 'react';
+import { LOGGED_IN_USER_KEY } from '@/app/page';
 
 const menuItems = [
-  { href: '/dashboard/doctor', label: 'Dashboard', icon: Home },
+  { href: '/dashboard/doctor', label: 'Dashboard', icon: Home, exact: true },
   {
     href: '/dashboard/doctor/appointments',
     label: 'Appointments',
@@ -57,6 +57,18 @@ export function DoctorSidebar() {
   const doctorAvatar = PlaceHolderImages.find(
     (img) => img.id === 'avatar-doctor'
   );
+  const [userName, setUserName] = useState('Doctor');
+
+  useEffect(() => {
+    try {
+      const userData = localStorage.getItem(LOGGED_IN_USER_KEY);
+      if (userData) {
+          setUserName(JSON.parse(userData).name);
+      }
+    } catch (e) {
+        console.error("Could not load user data", e);
+    }
+  }, []);
 
   return (
     <Sidebar>
@@ -72,7 +84,7 @@ export function DoctorSidebar() {
             <SidebarMenuItem key={item.label}>
               <Link href={item.href} passHref>
                 <SidebarMenuButton
-                  isActive={pathname.startsWith(item.href)}
+                  isActive={item.exact ? pathname === item.href : pathname.startsWith(item.href)}
                   tooltip={item.label}
                 >
                   <item.icon />
@@ -89,14 +101,14 @@ export function DoctorSidebar() {
             {doctorAvatar && (
               <AvatarImage
                 src={doctorAvatar.imageUrl}
-                alt="Dr. Priya Singh"
+                alt={userName}
                 data-ai-hint={doctorAvatar.imageHint}
               />
             )}
-            <AvatarFallback>PS</AvatarFallback>
+            <AvatarFallback>{userName.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
           </Avatar>
           <div className="overflow-hidden">
-            <p className="truncate font-semibold">Dr. Priya Singh</p>
+            <p className="truncate font-semibold">{userName}</p>
             <p className="truncate text-xs text-muted-foreground">Doctor</p>
           </div>
           <Link href="/" className="ml-auto" passHref>

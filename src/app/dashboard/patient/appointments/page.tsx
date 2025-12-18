@@ -17,7 +17,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Video, Building } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { LOGGED_IN_PATIENT_KEY } from '@/app/signup/patient/page';
+import { LOGGED_IN_USER_KEY } from '@/app/page';
 import { type Appointment } from '../../doctor/appointments/page';
 
 const doctors = [
@@ -50,9 +50,9 @@ export default function AppointmentsPage() {
 
   useEffect(() => {
       try {
-        const patientAccount = JSON.parse(localStorage.getItem(LOGGED_IN_PATIENT_KEY) || '{}');
-        if(patientAccount.fullName) {
-            setPatientName(patientAccount.fullName);
+        const patientAccount = JSON.parse(localStorage.getItem(LOGGED_IN_USER_KEY) || '{}');
+        if(patientAccount.name) {
+            setPatientName(patientAccount.name);
         }
       } catch(e) {
           console.error("Could not load patient data", e);
@@ -84,7 +84,6 @@ export default function AppointmentsPage() {
         notes: '',
     };
 
-    // Simulate API call
     setTimeout(() => {
       try {
         const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]').map((appt: any) => ({
@@ -134,7 +133,6 @@ export default function AppointmentsPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="grid gap-8 md:grid-cols-2">
-                {/* Column 1: Department, Doctor and Type */}
                 <div className="space-y-8">
                    <FormField
                     control={form.control}
@@ -145,7 +143,7 @@ export default function AppointmentsPage() {
                         <Select onValueChange={(value) => {
                           field.onChange(value);
                           setSelectedDepartment(value);
-                          form.setValue('doctorId', ''); // Reset doctor when department changes
+                          form.setValue('doctorId', '');
                         }} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -179,7 +177,7 @@ export default function AppointmentsPage() {
                           </FormControl>
                           <SelectContent>
                             {filteredDoctors.map(doctor => (
-                              <SelectItem key={doctor.id} value={doctor.id}>
+                              <SelectItem key={doctor.id} value={doctor.name}>
                                 {doctor.name} - {doctor.specialty}
                               </SelectItem>
                             ))}
@@ -201,7 +199,6 @@ export default function AppointmentsPage() {
                    )}
                 </div>
 
-                {/* Column 2: Consultation, Date and Time */}
                 <div className="space-y-8">
                    <FormField
                     control={form.control}

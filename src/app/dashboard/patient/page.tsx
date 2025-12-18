@@ -21,23 +21,26 @@ import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { LOGGED_IN_PATIENT_KEY } from '@/app/signup/patient/page';
+import { LOGGED_IN_USER_KEY } from '@/app/page';
 import { type Appointment } from '../doctor/appointments/page';
 import { format, parseISO } from 'date-fns';
 
 export default function PatientDashboardPage() {
+  const [userName, setUserName] = useState('Patient');
   const [upcomingAppointment, setUpcomingAppointment] = useState<Appointment | null>(null);
   const [canJoin, setCanJoin] = useState(false);
   const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
     try {
+      const userData = JSON.parse(localStorage.getItem(LOGGED_IN_USER_KEY) || '{}');
+      const patientName = userData.name || 'Patient';
+      setUserName(patientName);
+
       const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]').map((appt: any) => ({
         ...appt,
         date: parseISO(appt.date)
       }));
-      const patientAccount = JSON.parse(localStorage.getItem(LOGGED_IN_PATIENT_KEY) || '{}');
-      const patientName = patientAccount.fullName;
 
       const now = new Date();
       const nextAppointment = allAppointments
@@ -46,7 +49,7 @@ export default function PatientDashboardPage() {
       
       setUpcomingAppointment(nextAppointment || null);
     } catch(e) {
-      console.error("Error loading appointment data", e);
+      console.error("Error loading data", e);
     }
   }, []);
 
@@ -97,7 +100,7 @@ export default function PatientDashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="font-headline text-3xl font-bold">Welcome back, Aarav!</h1>
+        <h1 className="font-headline text-3xl font-bold">Welcome back, {userName}!</h1>
         <p className="text-muted-foreground">
           Here's a summary of your health dashboard.
         </p>

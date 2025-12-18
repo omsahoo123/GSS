@@ -10,7 +10,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import {
   Home,
@@ -23,9 +22,11 @@ import {
 import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from './ui/button';
+import { useEffect, useState } from 'react';
+import { LOGGED_IN_USER_KEY } from '@/app/page';
 
 const menuItems = [
-  { href: '/dashboard/health-official', label: 'Dashboard', icon: Home },
+  { href: '/dashboard/health-official', label: 'Dashboard', icon: Home, exact: true },
   { href: '/dashboard/health-official/analytics', label: 'Analytics', icon: BarChart },
   { href: '/dashboard/health-official/resources', label: 'Resources', icon: Truck },
   { href: '/dashboard/health-official/reports', label: 'Reports', icon: ClipboardList },
@@ -34,6 +35,18 @@ const menuItems = [
 
 export function HealthOfficialSidebar() {
   const pathname = usePathname();
+  const [userName, setUserName] = useState('Official');
+
+  useEffect(() => {
+    try {
+      const userData = localStorage.getItem(LOGGED_IN_USER_KEY);
+      if (userData) {
+          setUserName(JSON.parse(userData).name);
+      }
+    } catch (e) {
+        console.error("Could not load user data", e);
+    }
+  }, []);
 
   return (
     <Sidebar>
@@ -49,7 +62,7 @@ export function HealthOfficialSidebar() {
             <SidebarMenuItem key={item.label}>
               <Link href={item.href} passHref>
                 <SidebarMenuButton
-                  isActive={pathname.startsWith(item.href)}
+                  isActive={item.exact ? pathname === item.href : pathname.startsWith(item.href)}
                   tooltip={item.label}
                 >
                   <item.icon />
@@ -63,10 +76,10 @@ export function HealthOfficialSidebar() {
       <SidebarFooter className="border-t">
         <div className="flex items-center gap-3 p-2">
           <Avatar className="h-10 w-10">
-            <AvatarFallback>SV</AvatarFallback>
+            <AvatarFallback>{userName.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
           </Avatar>
           <div className="overflow-hidden">
-            <p className="truncate font-semibold">Sunita Verma</p>
+            <p className="truncate font-semibold">{userName}</p>
             <p className="truncate text-xs text-muted-foreground">Health Official</p>
           </div>
           <Link href="/" className="ml-auto" passHref>
