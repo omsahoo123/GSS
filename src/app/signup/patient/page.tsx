@@ -31,6 +31,8 @@ import { Logo } from '@/components/icons';
 import Image from 'next/image';
 import { User } from 'lucide-react';
 
+export const PATIENT_ACCOUNT_KEY = 'patientAccountData';
+
 const signupSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters.'),
   age: z.coerce.number().min(1, 'Age must be at least 1.').max(120, 'Age seems unlikely.'),
@@ -64,7 +66,7 @@ export default function PatientSignupPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string);
-        form.setValue('photo', file);
+        form.setValue('photo', reader.result as string); // Save as base64 string
       };
       reader.readAsDataURL(file);
     }
@@ -76,12 +78,23 @@ export default function PatientSignupPage() {
     
     // Simulate API call for signup
     setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: 'Account Created Successfully!',
-        description: 'You can now log in with your phone number.',
-      });
-      router.push('/login/patient');
+      try {
+        localStorage.setItem(PATIENT_ACCOUNT_KEY, JSON.stringify(data));
+        setIsLoading(false);
+        toast({
+          title: 'Account Created Successfully!',
+          description: 'You can now log in with your phone number.',
+        });
+        router.push('/login/patient');
+      } catch (error) {
+        console.error("Failed to save to localStorage", error);
+        toast({
+          variant: 'destructive',
+          title: 'Signup Failed',
+          description: 'Could not create your account. Please try again.',
+        });
+        setIsLoading(false);
+      }
     }, 1500);
   };
 

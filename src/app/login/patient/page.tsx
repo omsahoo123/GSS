@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowRight, KeyRound } from 'lucide-react';
 import { Logo } from '@/components/icons';
+import { PATIENT_ACCOUNT_KEY } from '../signup/patient/page';
 
 export default function PatientLoginPage() {
   const [phone, setPhone] = useState('');
@@ -39,6 +40,33 @@ export default function PatientLoginPage() {
     }
     
     setIsLoading(true);
+    
+    // Check if phone number is registered
+    try {
+        const storedAccount = localStorage.getItem(PATIENT_ACCOUNT_KEY);
+        const account = storedAccount ? JSON.parse(storedAccount) : null;
+
+        if (!account || account.phone !== phone) {
+            toast({
+                variant: 'destructive',
+                title: 'Unregistered Number',
+                description: 'This phone number is not registered. Please sign up first.',
+            });
+            setIsLoading(false);
+            return;
+        }
+
+    } catch (error) {
+        console.error("Failed to read from localStorage", error);
+        toast({
+            variant: 'destructive',
+            title: 'An Error Occurred',
+            description: 'Could not verify your phone number. Please try again.',
+        });
+        setIsLoading(false);
+        return;
+    }
+
     // Simulate sending OTP
     setTimeout(() => {
       setOtpSent(true);
