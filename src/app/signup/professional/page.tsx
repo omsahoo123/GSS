@@ -22,6 +22,7 @@ const signupSchema = z.object({
   userId: z.string().min(3, 'User ID must be at least 3 characters.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
   licenseNumber: z.string().optional(),
+  specialization: z.string().optional(),
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
@@ -48,6 +49,7 @@ export default function ProfessionalSignupPage() {
       userId: '',
       password: '',
       licenseNumber: '',
+      specialization: '',
     },
   });
 
@@ -69,6 +71,7 @@ export default function ProfessionalSignupPage() {
         userId: data.userId,
         password: data.password, // In a real app, this should be hashed
         licenseNumber: data.licenseNumber,
+        specialization: data.specialization,
         role: role,
       };
 
@@ -124,6 +127,19 @@ export default function ProfessionalSignupPage() {
                       <FormItem>
                         <FormLabel>License/Registration Number</FormLabel>
                         <FormControl><Input placeholder="Your official license number" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+              )}
+               {role === 'doctor' && (
+                  <FormField
+                    control={form.control}
+                    name="specialization"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Specialization</FormLabel>
+                        <FormControl><Input placeholder="e.g., Cardiology" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

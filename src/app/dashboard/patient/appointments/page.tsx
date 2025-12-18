@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,12 +18,15 @@ import { Video, Building } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 import { type Appointment } from '../../doctor/appointments/page';
+import { PROFESSIONAL_ACCOUNT_KEY } from '@/app/signup/professional/page';
 
-const doctors = [
-  { id: 'dr-anjali-sharma', name: 'Dr. Anjali Sharma', specialty: 'Cardiologist', imageId: 'doctor-1', department: 'Cardiology' },
-  { id: 'dr-priya-singh', name: 'Dr. Priya Singh', specialty: 'General Physician', imageId: 'avatar-doctor', department: 'General Medicine' },
-  { id: 'dr-arun-verma', name: 'Dr. Arun Verma', specialty: 'Dermatologist', imageId: 'doctor-2', department: 'Dermatology' },
-];
+type Doctor = {
+  id: string;
+  name: string;
+  specialty: string;
+  department: string;
+  imageId: string;
+}
 
 const departments = ['Cardiology', 'General Medicine', 'Dermatology'];
 
@@ -47,16 +49,37 @@ export default function AppointmentsPage() {
   const [isBooking, setIsBooking] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [patientName, setPatientName] = useState('');
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
 
   useEffect(() => {
-      try {
-        const patientAccount = JSON.parse(localStorage.getItem(LOGGED_IN_USER_KEY) || '{}');
-        if(patientAccount.name) {
-            setPatientName(patientAccount.name);
-        }
-      } catch(e) {
-          console.error("Could not load patient data", e);
+    try {
+      const patientAccount = JSON.parse(localStorage.getItem(LOGGED_IN_USER_KEY) || '{}');
+      if (patientAccount.name) {
+        setPatientName(patientAccount.name);
       }
+
+      // Dynamically load doctors from localStorage
+      const allKeys = Object.keys(localStorage);
+      const doctorKeys = allKeys.filter(key => key.startsWith(PROFESSIONAL_ACCOUNT_KEY));
+      const availableDoctors = doctorKeys.map(key => {
+        const docData = JSON.parse(localStorage.getItem(key)!);
+        if (docData.role === 'doctor') {
+          return {
+            id: docData.userId,
+            name: docData.name,
+            specialty: docData.specialization || 'Doctor',
+            department: docData.specialization || 'General Medicine', // Assuming specialization can map to department
+            imageId: 'avatar-doctor' // Default image
+          };
+        }
+        return null;
+      }).filter(Boolean) as Doctor[];
+
+      setDoctors(availableDoctors);
+      
+    } catch (e) {
+      console.error("Could not load initial data", e);
+    }
   }, []);
 
   const form = useForm<AppointmentFormValues>({
@@ -74,14 +97,14 @@ export default function AppointmentsPage() {
     setIsBooking(true);
     
     const newAppointment: Appointment = {
-        id: `appt-${Date.now()}`,
-        doctor: doctors.find(d => d.name === data.doctorId)?.name || 'Unknown Doctor',
-        patient: patientName,
-        date: new Date(data.appointmentDate),
-        time: data.appointmentTime,
-        type: data.consultationType,
-        status: 'Upcoming',
-        notes: '',
+      id: `appt-${Date.now()}`,
+      doctor: doctors.find(d => d.name === data.doctorId)?.name || 'Unknown Doctor',
+      patient: patientName,
+      date: new Date(data.appointmentDate),
+      time: data.appointmentTime,
+      type: data.consultationType,
+      status: 'Upcoming',
+      notes: '',
     };
 
     setTimeout(() => {
@@ -114,7 +137,8 @@ export default function AppointmentsPage() {
   const selectedDoctor = doctors.find(d => d.name === selectedDoctorId);
   const doctorImage = PlaceHolderImages.find(p => p.id === selectedDoctor?.imageId);
 
-  const filteredDoctors = selectedDepartment ? doctors.filter(d => d.department === selectedDepartment) : [];
+  const filteredDoctors = selectedDepartment ? doctors.filter(d => d.department.toLowerCase().includes(selectedDepartment.toLowerCase())) : [];
+  const uniqueDepartments = [...new Set(doctors.map(d => d.department))];
 
   return (
     <div className="space-y-6">
@@ -139,7 +163,7 @@ export default function AppointmentsPage() {
                     name="department"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Select Department</FormLabel>
+                        <FormLabel>Select Department/Specialization</FormLabel>
                         <Select onValueChange={(value) => {
                           field.onChange(value);
                           setSelectedDepartment(value);
@@ -147,11 +171,11 @@ export default function AppointmentsPage() {
                         }} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Choose a department..." />
+                              <SelectValue placeholder="Choose a specialization..." />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {departments.map(dept => (
+                            {uniqueDepartments.map(dept => (
                               <SelectItem key={dept} value={dept}>
                                 {dept}
                               </SelectItem>
@@ -172,7 +196,7 @@ export default function AppointmentsPage() {
                         <Select onValueChange={field.onChange} value={field.value} disabled={!selectedDepartment}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder={selectedDepartment ? "Choose a doctor..." : "Select a department first"} />
+                              <SelectValue placeholder={selectedDepartment ? "Choose a doctor..." : "Select a specialization first"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>

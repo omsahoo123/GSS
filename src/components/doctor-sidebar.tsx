@@ -59,12 +59,15 @@ export function DoctorSidebar() {
     (img) => img.id === 'avatar-doctor'
   );
   const [userName, setUserName] = useState('Doctor');
+  const [specialization, setSpecialization] = useState('Doctor');
 
   useEffect(() => {
     try {
       const userData = localStorage.getItem(LOGGED_IN_USER_KEY);
       if (userData) {
-          setUserName(JSON.parse(userData).name);
+          const parsedData = JSON.parse(userData);
+          setUserName(parsedData.name);
+          setSpecialization(parsedData.specialization || 'Doctor');
       }
     } catch (e) {
         console.error("Could not load user data", e);
@@ -115,7 +118,7 @@ export function DoctorSidebar() {
           </Avatar>
           <div className="overflow-hidden">
             <p className="truncate font-semibold">{userName}</p>
-            <p className="truncate text-xs text-muted-foreground">Doctor</p>
+            <p className="truncate text-xs text-muted-foreground capitalize">{specialization}</p>
           </div>
           <Button variant="ghost" size="icon" aria-label="Log out" onClick={handleLogout}>
             <LogOut />

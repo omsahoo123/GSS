@@ -62,9 +62,7 @@ export default function ProfessionalLoginPage() {
     }
 
     localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify({
-      role: accountData.role,
-      name: accountData.name,
-      userId: accountData.userId,
+      ...accountData,
     }));
 
     toast({ title: 'Login Successful!', description: `Welcome back, ${accountData.name}!` });
