@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowRight, KeyRound } from 'lucide-react';
 import { Logo } from '@/components/icons';
-import { PATIENT_ACCOUNT_KEY } from '../signup/patient/page';
+import { PATIENT_ACCOUNT_KEY } from '@/app/signup/patient/page';
 
 export default function PatientLoginPage() {
   const [phone, setPhone] = useState('');
