@@ -144,7 +144,7 @@ export default function PharmacyStockPage() {
               {isLoading ? 'Searching...' : <><Search className="mr-2 h-4 w-4" /> Search</>}
             </Button>
           </form>
-           {!pharmacyLocation && <p className="mt-4 text-sm text-destructive">The pharmacy has not set their location yet. Please check back later.</p>}
+           {!pharmacyLocation?.address && <p className="mt-4 text-sm text-destructive">The pharmacy has not set their location yet. Please check back later.</p>}
         </CardContent>
       </Card>
 
@@ -179,7 +179,7 @@ export default function PharmacyStockPage() {
                       <TableCell className="font-medium">{result.name}</TableCell>
                        <TableCell>
                          <Badge variant={getStockVariant(result.stockStatus)}>
-                           <CheckCircle2 className="mr-1 h-3 w-3"/>
+                           {result.stockStatus !== 'not-available' && <CheckCircle2 className="mr-1 h-3 w-3"/>}
                            {getStockText(result.stockStatus)}
                          </Badge>
                        </TableCell>
@@ -200,7 +200,7 @@ export default function PharmacyStockPage() {
               </Table>
             ) : (
                <div className="text-center py-10">
-                 <p className="text-muted-foreground">This medicine is not in stock, or the pharmacy has not listed it. Try another medicine or check back later.</p>
+                 <p className="text-muted-foreground">This medicine is not in stock at the registered pharmacy, or the pharmacy has not listed it. Try another medicine or check back later.</p>
                </div>
             )}
           </CardContent>

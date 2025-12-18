@@ -41,7 +41,7 @@ type Medicine = {
 
 const locationSchema = z.object({
   name: z.string().min(1, 'Pharmacy name is required.'),
-  address: z.string().min(1, 'Pharmacy address is required.'),
+  address: z.string().min(5, 'A valid address is required to appear in patient searches.'),
 });
 
 type LocationFormValues = z.infer<typeof locationSchema>;
@@ -89,7 +89,7 @@ export default function PharmacistDashboardPage() {
       localStorage.setItem(PHARMACY_LOCATION_KEY, JSON.stringify(data));
       toast({
         title: 'Location Saved!',
-        description: 'Your pharmacy location has been updated.',
+        description: 'Your pharmacy location has been updated and is now visible to patients.',
       });
     } catch (error) {
       console.error("Failed to save location to localStorage", error);
@@ -113,7 +113,7 @@ export default function PharmacistDashboardPage() {
           Pharmacist Dashboard
         </h1>
         <p className="text-muted-foreground">
-          Welcome, {userName}. Manage your pharmacy inventory and prescriptions.
+          Welcome, {userName}. Manage your pharmacy inventory and public information.
         </p>
       </div>
 
@@ -152,7 +152,7 @@ export default function PharmacistDashboardPage() {
               <CardHeader>
                 <CardTitle>Pharmacy Location</CardTitle>
                 <CardDescription>
-                  Set your pharmacy name and address for patients to see.
+                  Set your public name and address. This will be used to show your location to patients on Google Maps.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -174,9 +174,9 @@ export default function PharmacistDashboardPage() {
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Pharmacy Address</FormLabel>
+                        <FormLabel>Full Address for Google Maps</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., 123, Village Market Rd, Rampur" {...field} />
+                          <Input placeholder="e.g., 123, Village Market Rd, Rampur, Uttar Pradesh" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
