@@ -98,6 +98,11 @@ export default function ProfessionalLoginPage() {
           <Button onClick={handleLogin} className="w-full">
             Login <KeyRound className="ml-2 h-4 w-4" />
           </Button>
+          <div className="text-center text-sm text-muted-foreground">
+              <Link href="/login/forgot-password" className="text-primary underline">
+                Forgot Password?
+              </Link>
+            </div>
           <div className="text-center text-sm text-muted-foreground pt-4">
             Don't have an account?{' '}
             <Link href={`/signup/professional?role=${role}`} className="text-primary underline">
