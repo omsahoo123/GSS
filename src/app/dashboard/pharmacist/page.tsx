@@ -45,34 +45,40 @@ const locationSchema = z.object({
 
 type LocationFormValues = z.infer<typeof locationSchema>;
 
+// Helper function to safely get data from localStorage on the client
+const getInitialLocation = () => {
+    if (typeof window === 'undefined') {
+        return { name: '', address: '' };
+    }
+    try {
+        const storedLocation = localStorage.getItem(PHARMACY_LOCATION_KEY);
+        return storedLocation ? JSON.parse(storedLocation) : { name: '', address: '' };
+    } catch (error) {
+        console.error("Failed to parse location from localStorage", error);
+        return { name: '', address: '' };
+    }
+};
+
 export default function PharmacistDashboardPage() {
   const { toast } = useToast();
   const [inventory, setInventory] = useState<Medicine[]>([]);
 
   const form = useForm<LocationFormValues>({
     resolver: zodResolver(locationSchema),
-    defaultValues: {
-      name: '',
-      address: '',
-    },
+    defaultValues: getInitialLocation(),
   });
 
   useEffect(() => {
+    // This effect is now only for loading inventory data
     try {
-      const storedLocation = localStorage.getItem(PHARMACY_LOCATION_KEY);
-      if (storedLocation) {
-        const location = JSON.parse(storedLocation);
-        form.reset(location);
-      }
-      
       const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
       if (storedInventory) {
         setInventory(JSON.parse(storedInventory));
       }
     } catch (error) {
-      console.error("Failed to load data from localStorage", error);
+      console.error("Failed to load inventory from localStorage", error);
     }
-  }, [form]);
+  }, []);
 
   const onSubmit = (data: LocationFormValues) => {
      try {
