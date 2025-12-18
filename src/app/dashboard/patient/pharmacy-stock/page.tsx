@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, MapPin, CheckCircle2 } from 'lucide-react';
+import { Search, MapPin, CheckCircle2, Navigation } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -188,10 +188,10 @@ export default function PharmacyStockPage() {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(result.address)}`, '_blank')}
+                          onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(result.address)}`, '_blank')}
                         >
-                          <MapPin className="mr-2 h-4 w-4" />
-                          View on Map
+                          <Navigation className="mr-2 h-4 w-4" />
+                          Get Directions
                         </Button>
                       </TableCell>
                     </TableRow>

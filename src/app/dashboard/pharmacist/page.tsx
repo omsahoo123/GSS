@@ -41,7 +41,7 @@ type Medicine = {
 
 const locationSchema = z.object({
   name: z.string().min(1, 'Pharmacy name is required.'),
-  address: z.string().min(5, 'A valid address is required to appear in patient searches.'),
+  address: z.string().min(10, 'A precise, searchable address is required for directions.'),
 });
 
 type LocationFormValues = z.infer<typeof locationSchema>;
@@ -152,7 +152,7 @@ export default function PharmacistDashboardPage() {
               <CardHeader>
                 <CardTitle>Pharmacy Location</CardTitle>
                 <CardDescription>
-                  Set your public name and address. This will be used to show your location to patients on Google Maps.
+                  Enter a precise address. Patients will use this to get directions on Google Maps.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
