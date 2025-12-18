@@ -18,7 +18,7 @@ const roles = [
   {
     name: 'Patient',
     icon: HeartPulse,
-    href: '/dashboard/patient',
+    href: '/login/patient',
     description: 'Access your health records and consult with doctors.',
   },
   {

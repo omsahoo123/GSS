@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +12,7 @@ import {
 } from 'lucide-react';
 
 const roles = [
-  { name: 'Patient', href: '/dashboard/patient', icon: HeartPulse },
+  { name: 'Patient', href: '/login/patient', icon: HeartPulse },
   { name: 'Doctor', href: '/dashboard/doctor', icon: Hospital },
   { name: 'Pharmacist', href: '/dashboard/pharmacist', icon: Syringe },
   {
