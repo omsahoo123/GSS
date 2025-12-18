@@ -44,7 +44,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Upload, Download, FileSearch } from 'lucide-react';
 import type { Appointment } from '../appointments/page';
 
-const LAB_REPORTS_KEY = 'initialLabReports';
+const LAB_REPORTS_KEY = 'allLabReports';
 
 const labReportSchema = z.object({
   patientName: z.string().min(1, 'Please select a patient.'),
@@ -116,6 +116,7 @@ export default function LabReportsPage() {
       description: `A new report for ${data.patientName} has been added.`,
     });
     form.reset();
+    (document.getElementById('reportFile') as HTMLInputElement).value = '';
   };
   
   const handleDownload = (report: LabReport) => {
@@ -201,7 +202,7 @@ export default function LabReportsPage() {
                       <FormItem>
                         <FormLabel>Report File</FormLabel>
                         <FormControl>
-                            <Input type="file" onChange={(e) => field.onChange(e.target.files)} />
+                            <Input id="reportFile" type="file" onChange={(e) => field.onChange(e.target.files)} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -247,7 +248,7 @@ export default function LabReportsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredReports.map((report) => (
+                {filteredReports.length > 0 ? filteredReports.map((report) => (
                   <TableRow key={report.id}>
                     <TableCell className="font-medium">{report.patientName}</TableCell>
                     <TableCell>{report.reportName}</TableCell>
@@ -261,8 +262,7 @@ export default function LabReportsPage() {
                         </Button>
                     </TableCell>
                   </TableRow>
-                ))}
-                 {filteredReports.length === 0 && (
+                )) : (
                     <TableRow>
                         <TableCell colSpan={5} className="text-center text-muted-foreground h-24">No lab reports found.</TableCell>
                     </TableRow>

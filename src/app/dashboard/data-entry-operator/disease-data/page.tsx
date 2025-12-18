@@ -17,10 +17,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Save, PlusCircle, Trash2 } from 'lucide-react';
-import { format, subDays } from 'date-fns';
+import { format } from 'date-fns';
 
 export const DISEASE_DATA_KEY = 'healthDiseaseData';
-const initialDistricts = ['Rampur', 'Sitapur', 'Aligarh', 'Bareilly', 'Meerut'];
 
 export type DiseaseEntry = {
     date: string;
@@ -32,43 +31,6 @@ export type DistrictDiseaseData = {
     district: string;
     entries: DiseaseEntry[];
 };
-
-const initialData: DistrictDiseaseData[] = [
-    {
-        district: 'Rampur',
-        entries: [
-            { date: format(subDays(new Date(), 2), 'yyyy-MM-dd'), diseaseName: 'Flu', caseCount: 15 },
-            { date: format(subDays(new Date(), 1), 'yyyy-MM-dd'), diseaseName: 'Dengue', caseCount: 5 },
-        ]
-    },
-    {
-        district: 'Sitapur',
-        entries: [
-            { date: format(subDays(new Date(), 1), 'yyyy-MM-dd'), diseaseName: 'Flu', caseCount: 22 },
-        ]
-    },
-    {
-        district: 'Aligarh',
-        entries: [
-            { date: format(subDays(new Date(), 3), 'yyyy-MM-dd'), diseaseName: 'Flu', caseCount: 40 },
-            { date: format(subDays(new Date(), 2), 'yyyy-MM-dd'), diseaseName: 'Flu', caseCount: 45 },
-            { date: format(subDays(new Date(), 1), 'yyyy-MM-dd'), diseaseName: 'Cholera', caseCount: 3 },
-        ]
-    },
-    {
-        district: 'Bareilly',
-        entries: [
-            { date: format(subDays(new Date(), 1), 'yyyy-MM-dd'), diseaseName: 'Dengue', caseCount: 12 },
-        ]
-    },
-    {
-        district: 'Meerut',
-        entries: [
-            { date: format(subDays(new Date(), 2), 'yyyy-MM-dd'), diseaseName: 'Flu', caseCount: 18 },
-        ]
-    }
-];
-
 
 const diseaseDataSchema = z.object({
     diseaseData: z.array(z.object({
@@ -104,12 +66,9 @@ export default function DiseaseDataPage() {
       const storedData = localStorage.getItem(DISEASE_DATA_KEY);
       if (storedData) {
         form.reset({ diseaseData: JSON.parse(storedData) });
-      } else {
-        form.reset({ diseaseData: initialData });
       }
     } catch (error) {
       console.error("Failed to load disease data from localStorage", error);
-      form.reset({ diseaseData: initialData });
     }
   }, [form]);
   
@@ -177,12 +136,14 @@ export default function DiseaseDataPage() {
                  <DistrictCard key={field.id} districtIndex={index} control={form.control} removeDistrict={remove} />
             ))}
 
-            <div className="flex justify-end">
-                <Button type="submit">
-                    <Save className="mr-2 h-4 w-4" />
-                    Save All Changes
-                </Button>
-            </div>
+            {fields.length > 0 && (
+                <div className="flex justify-end">
+                    <Button type="submit">
+                        <Save className="mr-2 h-4 w-4" />
+                        Save All Changes
+                    </Button>
+                </div>
+            )}
         </form>
       </Form>
     </div>
@@ -256,6 +217,7 @@ function DistrictCard({ districtIndex, control, removeDistrict }: { districtInde
                         </Button>
                     </div>
                 ))}
+                 {fields.length === 0 && <p className="text-muted-foreground text-center">No entries for this district yet. Add one to begin.</p>}
             </CardContent>
             <CardFooter>
                 <Button variant="secondary" onClick={addNewEntry}>

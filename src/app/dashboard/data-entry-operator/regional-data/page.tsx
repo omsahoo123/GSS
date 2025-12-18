@@ -15,25 +15,14 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Trash2 } from 'lucide-react';
+import { Save } from 'lucide-react';
 import type { RegionalData } from '../page';
 
 export const REGIONAL_DATA_KEY = 'healthRegionalData';
 
-const initialDistricts = ['Rampur', 'Sitapur', 'Aligarh', 'Bareilly', 'Meerut'];
-
-const initialData: RegionalData[] = [
-    { district: 'Rampur', population: 950000, beds: { occupied: 95, total: 120 }, ambulances: 15, staff: { doctors: 50, nurses: 120 } },
-    { district: 'Sitapur', population: 800000, beds: { occupied: 70, total: 100 }, ambulances: 12, staff: { doctors: 40, nurses: 90 } },
-    { district: 'Aligarh', population: 1200000, beds: { occupied: 140, total: 150 }, ambulances: 25, staff: { doctors: 70, nurses: 160 } },
-    { district: 'Bareilly', population: 1100000, beds: { occupied: 100, total: 130 }, ambulances: 20, staff: { doctors: 60, nurses: 140 } },
-    { district: 'Meerut', population: 1300000, beds: { occupied: 110, total: 140 }, ambulances: 22, staff: { doctors: 65, nurses: 150 } },
-];
-
-
 const regionalDataSchema = z.object({
     regionalData: z.array(z.object({
-        district: z.string(),
+        district: z.string().min(1, 'District name is required.'),
         population: z.coerce.number().min(0),
         beds: z.object({
             occupied: z.coerce.number().min(0),
@@ -62,7 +51,7 @@ export default function RegionalDataPage() {
     },
   });
   
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append } = useFieldArray({
     control: form.control,
     name: "regionalData",
   });
@@ -70,14 +59,25 @@ export default function RegionalDataPage() {
   useEffect(() => {
     try {
       const storedData = localStorage.getItem(REGIONAL_DATA_KEY);
+      const diseaseDataStored = localStorage.getItem('healthDiseaseData');
+
       if (storedData) {
         form.reset({ regionalData: JSON.parse(storedData) });
-      } else {
-        form.reset({ regionalData: initialData });
+      } else if (diseaseDataStored) {
+        // If regional data is empty but disease data exists, create entries for those districts
+        const diseaseData = JSON.parse(diseaseDataStored);
+        const newRegionalData = diseaseData.map((d: { district: string; }) => ({
+             district: d.district,
+             population: 0,
+             beds: { occupied: 0, total: 0 },
+             ambulances: 0,
+             staff: { doctors: 0, nurses: 0 },
+        }));
+        form.reset({ regionalData: newRegionalData });
       }
+
     } catch (error) {
       console.error("Failed to load regional data from localStorage", error);
-      form.reset({ regionalData: initialData });
     }
   }, [form]);
   
@@ -104,7 +104,7 @@ export default function RegionalDataPage() {
       <div>
         <h1 className="font-headline text-3xl font-bold">Manage Regional Data</h1>
         <p className="text-muted-foreground">
-          Update the core health and resource metrics for each district.
+          Update the core health and resource metrics for each district. Add districts in the 'Disease Data' page first.
         </p>
       </div>
 
@@ -189,12 +189,22 @@ export default function RegionalDataPage() {
                  </Card>
             ))}
 
-            <div className="flex justify-end">
-                <Button type="submit">
-                    <Save className="mr-2 h-4 w-4" />
-                    Save All Changes
-                </Button>
-            </div>
+            {fields.length === 0 && (
+                 <Card>
+                    <CardContent className="pt-6">
+                        <p className="text-center text-muted-foreground">No districts found. Please add a district on the "Disease Data" page to begin entering regional metrics.</p>
+                    </CardContent>
+                </Card>
+            )}
+
+            {fields.length > 0 && (
+              <div className="flex justify-end">
+                  <Button type="submit">
+                      <Save className="mr-2 h-4 w-4" />
+                      Save All Changes
+                  </Button>
+              </div>
+            )}
         </form>
       </Form>
     </div>

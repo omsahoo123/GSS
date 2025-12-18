@@ -43,29 +43,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Megaphone, FileSearch } from 'lucide-react';
-
-const regions = ['all', 'rampur', 'sitapur', 'aligarh', 'bareilly', 'meerut'];
-
-const initialAlerts = [
-  {
-    id: 'alert-1',
-    title: 'High incidence of Flu in Aligarh',
-    priority: 'High',
-    region: 'aligarh',
-    status: 'Active',
-    date: '2024-07-20',
-    description: 'A rapid increase in flu cases has been reported in the Aligarh district over the past 48 hours. Hospitals are advised to prepare for a surge in patients. Public is advised to wear masks and avoid large gatherings.'
-  },
-  {
-    id: 'alert-2',
-    title: 'Heatwave advisory for all districts',
-    priority: 'Medium',
-    region: 'all',
-    status: 'Active',
-    date: '2024-07-18',
-    description: 'Temperatures are expected to exceed 40°C. All citizens are advised to stay hydrated and avoid direct sun exposure between 11 AM and 4 PM.'
-  },
-];
+import { REGIONAL_DATA_KEY } from '../../data-entry-operator/regional-data/page';
 
 const HEALTH_ALERTS_STORAGE_KEY = 'healthOfficialAlerts';
 
@@ -77,11 +55,20 @@ const alertSchema = z.object({
 });
 
 type AlertFormValues = z.infer<typeof alertSchema>;
-type Alert = (typeof initialAlerts)[0];
+type Alert = {
+    id: string;
+    title: string;
+    priority: 'Low' | 'Medium' | 'High';
+    region: string;
+    status: string;
+    date: string;
+    description: string;
+};
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [regions, setRegions] = useState<string[]>(['all']);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -89,22 +76,25 @@ export default function AlertsPage() {
       const storedAlerts = localStorage.getItem(HEALTH_ALERTS_STORAGE_KEY);
       if (storedAlerts) {
         setAlerts(JSON.parse(storedAlerts));
-      } else {
-        setAlerts(initialAlerts);
       }
+
+      const storedRegionalData = localStorage.getItem(REGIONAL_DATA_KEY);
+      if(storedRegionalData) {
+        const regionalData = JSON.parse(storedRegionalData);
+        const districtNames = regionalData.map((d: {district: string}) => d.district.toLowerCase());
+        setRegions(['all', ...districtNames]);
+      }
+
     } catch (error) {
-      console.error("Failed to load alerts from localStorage", error);
-      setAlerts(initialAlerts);
+      console.error("Failed to load data from localStorage", error);
     }
   }, []);
 
   useEffect(() => {
-    if (alerts.length > 0) {
-      try {
-        localStorage.setItem(HEALTH_ALERTS_STORAGE_KEY, JSON.stringify(alerts));
-      } catch (error) {
-        console.error("Failed to save alerts to localStorage", error);
-      }
+    try {
+      localStorage.setItem(HEALTH_ALERTS_STORAGE_KEY, JSON.stringify(alerts));
+    } catch (error) {
+      console.error("Failed to save alerts to localStorage", error);
     }
   }, [alerts]);
 
@@ -301,7 +291,7 @@ export default function AlertsPage() {
                 ))}
                  {filteredAlerts.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">No alerts found.</TableCell>
+                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No alerts found.</TableCell>
                     </TableRow>
                  )}
               </TableBody>

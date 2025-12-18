@@ -45,15 +45,15 @@ export default function HealthRecordsPage() {
       if (name) {
         setPatientName(name);
 
-        const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]');
+        const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]').map((a:any) => ({...a, date: parseISO(a.date)}));
         const patientAppointments = allAppointments.filter(a => a.patient === name && a.status !== 'Upcoming');
         setConsultations(patientAppointments);
 
-        const allLabReports: LabReport[] = JSON.parse(localStorage.getItem('initialLabReports') || '[]');
+        const allLabReports: LabReport[] = JSON.parse(localStorage.getItem('allLabReports') || '[]');
         const patientLabReports = allLabReports.filter(r => r.patientName === name);
         setLabReports(patientLabReports);
         
-        const allPrescriptions: Prescription[] = JSON.parse(localStorage.getItem('initialPrescriptions') || '[]');
+        const allPrescriptions: Prescription[] = JSON.parse(localStorage.getItem('allPrescriptions') || '[]');
         const patientPrescriptions = allPrescriptions.filter(p => p.patientName === name);
         setPrescriptions(patientPrescriptions);
       }
@@ -74,6 +74,10 @@ export default function HealthRecordsPage() {
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   };
+
+  const getPrescriptionForConsultation = (consultation: Appointment) => {
+      return prescriptions.find(p => p.patientName === consultation.patient && format(parseISO(p.date), 'yyyy-MM-dd') === format(consultation.date, 'yyyy-MM-dd'))
+  }
 
   return (
     <div className="space-y-6">
@@ -115,26 +119,33 @@ export default function HealthRecordsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {prescriptions.length > 0 ? prescriptions.map((prescription) => (
-                    <TableRow key={prescription.id}>
-                      <TableCell className="font-medium">{consultations.find(c => c.date.toString() === prescription.date)?.doctor || 'N/A'}</TableCell>
-                      <TableCell>{format(parseISO(prescription.date), 'PPP')}</TableCell>
-                      <TableCell>{consultations.find(c => c.date.toString() === prescription.date)?.type || 'N/A'}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleDownload(`${prescription.medication}_Prescription.txt`, `Doctor: ${consultations.find(c => c.date.toString() === prescription.date)?.doctor}\nDate: ${prescription.date}\nMedication: ${prescription.medication}\nDosage: ${prescription.dosage}\nInstructions: ${prescription.instructions}`)}
-                        >
-                          <Download className="mr-2 h-4 w-4" />
-                          Prescription
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )) : (
+                  {consultations.length > 0 ? consultations.map((consult) => {
+                    const prescription = getPrescriptionForConsultation(consult);
+                    return (
+                        <TableRow key={consult.id}>
+                          <TableCell className="font-medium">{consult.doctor}</TableCell>
+                          <TableCell>{format(consult.date, 'PPP')}</TableCell>
+                          <TableCell>{consult.type}</TableCell>
+                          <TableCell className="text-right space-x-2">
+                            {prescription ? (
+                                <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleDownload(`${prescription.medication}_Prescription.txt`, `Doctor: ${consult.doctor}\nDate: ${prescription.date}\nMedication: ${prescription.medication}\nDosage: ${prescription.dosage}\nInstructions: ${prescription.instructions}`)}
+                                >
+                                <Download className="mr-2 h-4 w-4" />
+                                Prescription
+                                </Button>
+                            ) : (
+                                <span className="text-xs text-muted-foreground">No Prescription</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                    )
+                  }) : (
                     <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center">
-                            No past prescriptions found.
+                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                            No past consultations found.
                         </TableCell>
                     </TableRow>
                   )}
@@ -186,7 +197,7 @@ export default function HealthRecordsPage() {
                     </TableRow>
                   )) : (
                      <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center">
+                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
                             No lab reports found.
                         </TableCell>
                     </TableRow>

@@ -36,49 +36,6 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, PackageSearch, Edit, Save, XCircle } from 'lucide-react';
 
-const initialInventory = [
-  {
-    id: 'med-1',
-    name: 'Paracetamol',
-    quantity: 250,
-    price: 1.5,
-    supplier: 'Geno Pharmaceuticals',
-    status: 'In Stock',
-  },
-  {
-    id: 'med-2',
-    name: 'Amoxicillin',
-    quantity: 45,
-    price: 5.0,
-    supplier: 'Cipla',
-    status: 'Low Stock',
-  },
-  {
-    id: 'med-3',
-    name: 'Metformin',
-    quantity: 150,
-    price: 3.2,
-    supplier: 'Sun Pharma',
-    status: 'In Stock',
-  },
-  {
-    id: 'med-4',
-    name: 'Ibuprofen',
-    quantity: 0,
-    price: 2.0,
-    supplier: 'Mankind Pharma',
-    status: 'Out of Stock',
-  },
-   {
-    id: 'med-5',
-    name: 'Lisinopril',
-    quantity: 80,
-    price: 7.8,
-    supplier: 'Cipla',
-    status: 'In Stock',
-  },
-];
-
 const inventorySchema = z.object({
   medicineId: z.string().optional(),
   medicineName: z.string().min(1, 'Medicine name is required.'),
@@ -88,7 +45,14 @@ const inventorySchema = z.object({
 });
 
 type InventoryFormValues = z.infer<typeof inventorySchema>;
-type Medicine = (typeof initialInventory)[0];
+type Medicine = {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  supplier: string;
+  status: 'In Stock' | 'Low Stock' | 'Out of Stock';
+};
 
 const INVENTORY_STORAGE_KEY = 'pharmacistInventory';
 
@@ -104,22 +68,17 @@ export default function InventoryPage() {
       const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
       if (storedInventory) {
         setInventory(JSON.parse(storedInventory));
-      } else {
-        setInventory(initialInventory);
       }
     } catch (error) {
       console.error("Failed to load inventory from localStorage", error);
-      setInventory(initialInventory);
     }
   }, []);
 
   useEffect(() => {
-    if (inventory.length > 0) {
-      try {
-        localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
-      } catch (error) {
-        console.error("Failed to save inventory to localStorage", error);
-      }
+    try {
+      localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+    } catch (error) {
+      console.error("Failed to save inventory to localStorage", error);
     }
   }, [inventory]);
 
@@ -329,7 +288,7 @@ export default function InventoryPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInventory.map((med) => (
+                {filteredInventory.length > 0 ? filteredInventory.map((med) => (
                   <TableRow key={med.id}>
                     <TableCell className="font-medium">{med.name}</TableCell>
                     <TableCell>
@@ -378,11 +337,10 @@ export default function InventoryPage() {
                       )}
                     </TableCell>
                   </TableRow>
-                ))}
-                 {filteredInventory.length === 0 && (
+                )) : (
                     <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground">
-                            No medicines found.
+                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                            No medicines found. Add one to get started.
                         </TableCell>
                     </TableRow>
                  )}

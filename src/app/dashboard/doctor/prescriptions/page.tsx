@@ -52,7 +52,7 @@ import {
 } from '@/components/ui/dialog';
 import type { Appointment } from '../appointments/page';
 
-const PRESCRIPTIONS_KEY = 'initialPrescriptions';
+const PRESCRIPTIONS_KEY = 'allPrescriptions';
 
 const prescriptionSchema = z.object({
   patientName: z.string().min(1, 'Please select a patient.'),
@@ -286,7 +286,7 @@ export default function PrescriptionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPrescriptions.map((presc) => (
+                {filteredPrescriptions.length > 0 ? filteredPrescriptions.map((presc) => (
                   <TableRow key={presc.id}>
                     <TableCell className="font-medium">
                       {presc.patientName}
@@ -304,10 +304,9 @@ export default function PrescriptionsPage() {
                         </Button>
                     </TableCell>
                   </TableRow>
-                ))}
-                 {filteredPrescriptions.length === 0 && (
+                )) : (
                     <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
+                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                             No prescriptions found.
                         </TableCell>
                     </TableRow>

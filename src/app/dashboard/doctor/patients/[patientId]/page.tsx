@@ -32,7 +32,7 @@ type PatientDetails = {
     name: string;
     age: number;
     lastVisit: string;
-    avatarId: string;
+    avatarUrl?: string;
     history: {
         consultations: Appointment[];
         labReports: LabReport[];
@@ -48,7 +48,7 @@ export default function PatientHistoryPage() {
     if (!patientId) return;
     try {
         const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]').map((a:any) => ({...a, date: parseISO(a.date)}));
-        const allLabReports: LabReport[] = JSON.parse(localStorage.getItem('initialLabReports') || '[]');
+        const allLabReports: LabReport[] = JSON.parse(localStorage.getItem('allLabReports') || '[]');
         
         const patientAppointments = allAppointments.filter(a => `pat-${a.patient.replace(/\s+/g, '-').toLowerCase()}` === patientId);
 
@@ -58,12 +58,15 @@ export default function PatientHistoryPage() {
             const lastVisit = patientAppointments.sort((a,b) => b.date.getTime() - a.date.getTime())[0];
             const age = (patientName.length * 3) % 40 + 20; // Generate a mock age based on name
 
+            const patientAccount = JSON.parse(localStorage.getItem('patientAccountData') || '{}');
+            const avatarUrl = patientAccount.fullName === patientName ? patientAccount.photo : undefined;
+
             setPatient({
                 id: patientId,
                 name: patientName,
                 age: age,
                 lastVisit: format(lastVisit.date, 'PPP'),
-                avatarId: 'avatar-patient',
+                avatarUrl: avatarUrl,
                 history: {
                     consultations: patientAppointments.filter(a => a.status !== 'Upcoming'),
                     labReports: patientLabReports
@@ -75,8 +78,6 @@ export default function PatientHistoryPage() {
     }
   }, [patientId]);
   
-  const patientAvatar = PlaceHolderImages.find((img) => img.id === patient?.avatarId);
-
   if (!patient) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center">
@@ -107,11 +108,10 @@ export default function PatientHistoryPage() {
       <Card>
         <CardHeader className="flex flex-col items-start gap-4 sm:flex-row">
             <Avatar className="h-20 w-20">
-            {patientAvatar && (
+            {patient.avatarUrl && (
                 <AvatarImage
-                src={patientAvatar.imageUrl}
+                src={patient.avatarUrl}
                 alt={patient.name}
-                data-ai-hint={patientAvatar.imageHint}
                 />
             )}
             <AvatarFallback className="text-3xl">
@@ -147,7 +147,7 @@ export default function PatientHistoryPage() {
                         <p className="text-xs text-muted-foreground">{new Date(consult.date).getFullYear()}</p>
                     </div>
                     <div className="border-l pl-4">
-                        <p className="font-semibold">{consult.type} Consultation</p>
+                        <p className="font-semibold">{consult.type} Consultation with {consult.doctor}</p>
                         <p className="text-sm">{consult.notes || "No notes for this consultation."}</p>
                     </div>
                 </div>

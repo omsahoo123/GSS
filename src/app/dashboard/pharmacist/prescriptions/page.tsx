@@ -61,32 +61,6 @@ type Transaction = {
     date: string;
 }
 
-const initialRecordedPrescriptions = [
-  {
-    id: 'rec-presc-1',
-    patientName: 'Aarav Sharma',
-    doctorName: 'Dr. Priya Singh',
-    date: format(new Date(), 'yyyy-MM-dd'),
-    medication: 'Amoxicillin',
-    dosage: '500mg',
-    instructions: 'Take one tablet twice a day for 7 days.',
-    status: 'Filled',
-  },
-  {
-    id: 'rec-presc-2',
-    patientName: 'Neha Gupta',
-    doctorName: 'Dr. Anjali Sharma',
-    date: format(
-      new Date(new Date().setDate(new Date().getDate() - 2)),
-      'yyyy-MM-dd'
-    ),
-    medication: 'Ibuprofen',
-    dosage: '200mg',
-    instructions: 'Take as needed for pain, up to 3 times a day.',
-    status: 'Filled',
-  },
-];
-
 const prescriptionSchema = z.object({
   patientName: z.string().min(1, 'Patient name is required.'),
   doctorName: z.string().min(1, 'Doctor name is required.'),
@@ -97,17 +71,38 @@ const prescriptionSchema = z.object({
 });
 
 type PrescriptionFormValues = z.infer<typeof prescriptionSchema>;
-type RecordedPrescription = (typeof initialRecordedPrescriptions)[0];
+type RecordedPrescription = {
+    id: string;
+    patientName: string;
+    doctorName: string;
+    date: string;
+    medication: string;
+    dosage: string;
+    instructions: string;
+    status: 'Filled';
+};
 
 const INVENTORY_STORAGE_KEY = 'pharmacistInventory';
 const TRANSACTIONS_STORAGE_KEY = 'pharmacistTransactions';
+const RECORDED_PRESCRIPTIONS_KEY = 'pharmacistRecordedPrescriptions';
 
 export default function PharmacistPrescriptionsPage() {
-  const [recordedPrescriptions, setRecordedPrescriptions] = useState(initialRecordedPrescriptions);
+  const [recordedPrescriptions, setRecordedPrescriptions] = useState<RecordedPrescription[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedPrescription, setSelectedPrescription] = useState<RecordedPrescription | null>(null);
+
+  useEffect(() => {
+    try {
+        const storedPrescriptions = localStorage.getItem(RECORDED_PRESCRIPTIONS_KEY);
+        if (storedPrescriptions) {
+            setRecordedPrescriptions(JSON.parse(storedPrescriptions));
+        }
+    } catch (e) {
+        console.error("Failed to load recorded prescriptions", e);
+    }
+  }, []);
 
   const form = useForm<PrescriptionFormValues>({
     resolver: zodResolver(prescriptionSchema),
@@ -133,7 +128,10 @@ export default function PharmacistPrescriptionsPage() {
       status: 'Filled',
     };
 
-    setRecordedPrescriptions([newPrescription, ...recordedPrescriptions]);
+    const updatedPrescriptions = [newPrescription, ...recordedPrescriptions];
+    setRecordedPrescriptions(updatedPrescriptions);
+    localStorage.setItem(RECORDED_PRESCRIPTIONS_KEY, JSON.stringify(updatedPrescriptions));
+
     toast({
       title: 'Prescription Recorded',
       description: `A new prescription for ${data.patientName} has been recorded as filled.`,
@@ -341,7 +339,7 @@ export default function PharmacistPrescriptionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPrescriptions.map((presc) => (
+                {filteredPrescriptions.length > 0 ? filteredPrescriptions.map((presc) => (
                   <TableRow key={presc.id}>
                     <TableCell className="font-medium">
                       {presc.patientName}
@@ -359,10 +357,9 @@ export default function PharmacistPrescriptionsPage() {
                         </Button>
                     </TableCell>
                   </TableRow>
-                ))}
-                 {filteredPrescriptions.length === 0 && (
+                )) : (
                     <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                             No prescriptions recorded.
                         </TableCell>
                     </TableRow>
