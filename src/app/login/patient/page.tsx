@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowRight, KeyRound } from 'lucide-react';
 import { Logo } from '@/components/icons';
-import { PATIENT_ACCOUNT_KEY } from '@/app/signup/patient/page';
+import { PATIENT_ACCOUNT_KEY, LOGGED_IN_PATIENT_KEY } from '@/app/signup/patient/page';
 
 export default function PatientLoginPage() {
   const [phone, setPhone] = useState('');
@@ -92,6 +92,16 @@ export default function PatientLoginPage() {
     setIsLoading(true);
     // Simulate successful login
     setTimeout(() => {
+        try {
+            // Set the logged in user data to be used by the dashboard
+            const storedAccount = localStorage.getItem(PATIENT_ACCOUNT_KEY);
+            if(storedAccount) {
+                localStorage.setItem(LOGGED_IN_PATIENT_KEY, storedAccount);
+            }
+        } catch (error) {
+            console.error("Failed to save session data to localStorage", error);
+        }
+
         toast({
             title: 'Login Successful',
             description: 'Redirecting to your dashboard...',

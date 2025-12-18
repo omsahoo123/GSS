@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -11,7 +12,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import {
   Calendar,
@@ -19,13 +19,13 @@ import {
   Home,
   LogOut,
   Pill,
-  Stethoscope,
   Video,
 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from './ui/button';
+import React, { useEffect, useState } from 'react';
+import { LOGGED_IN_PATIENT_KEY } from '@/app/signup/patient/page';
 
 const menuItems = [
   { href: '/dashboard/patient', label: 'Dashboard', icon: Home },
@@ -35,9 +35,29 @@ const menuItems = [
   { href: '/dashboard/patient/consultation', label: 'Video Consultation', icon: Video },
 ];
 
+type PatientData = {
+  fullName: string;
+  photo?: string;
+};
+
 export function PatientSidebar() {
   const pathname = usePathname();
-  const patientAvatar = PlaceHolderImages.find((img) => img.id === 'avatar-patient');
+  const [patientData, setPatientData] = useState<PatientData | null>(null);
+
+  useEffect(() => {
+    try {
+      const storedData = localStorage.getItem(LOGGED_IN_PATIENT_KEY);
+      if (storedData) {
+        setPatientData(JSON.parse(storedData));
+      }
+    } catch (error) {
+      console.error("Failed to load patient data from localStorage", error);
+    }
+  }, []);
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
 
   return (
     <Sidebar>
@@ -67,13 +87,15 @@ export function PatientSidebar() {
       <SidebarFooter className="border-t">
         <div className="flex items-center gap-3 p-2">
           <Avatar className="h-10 w-10">
-            {patientAvatar && (
-              <AvatarImage src={patientAvatar.imageUrl} alt="Aarav Sharma" data-ai-hint={patientAvatar.imageHint} />
+            {patientData?.photo && (
+              <AvatarImage src={patientData.photo} alt={patientData.fullName} />
             )}
-            <AvatarFallback>AS</AvatarFallback>
+            <AvatarFallback>
+              {patientData ? getInitials(patientData.fullName) : 'P'}
+            </AvatarFallback>
           </Avatar>
           <div className="overflow-hidden">
-            <p className="truncate font-semibold">Aarav Sharma</p>
+            <p className="truncate font-semibold">{patientData?.fullName || 'Patient'}</p>
             <p className="truncate text-xs text-muted-foreground">Patient</p>
           </div>
           <Link href="/" className="ml-auto" passHref>

@@ -32,6 +32,8 @@ import Image from 'next/image';
 import { User } from 'lucide-react';
 
 export const PATIENT_ACCOUNT_KEY = 'patientAccountData';
+export const LOGGED_IN_PATIENT_KEY = 'loggedInPatientData';
+
 
 const signupSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters.'),
