@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -55,11 +56,12 @@ export default function PatientHistoryPage() {
             const patientName = patientAppointments[0].patient;
             const patientLabReports = allLabReports.filter(r => r.patientName === patientName);
             const lastVisit = patientAppointments.sort((a,b) => b.date.getTime() - a.date.getTime())[0];
+            const age = (patientName.length * 3) % 40 + 20; // Generate a mock age based on name
 
             setPatient({
                 id: patientId,
                 name: patientName,
-                age: 30, // Placeholder
+                age: age,
                 lastVisit: format(lastVisit.date, 'PPP'),
                 avatarId: 'avatar-patient',
                 history: {

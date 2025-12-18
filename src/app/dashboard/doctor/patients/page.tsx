@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
@@ -31,7 +32,7 @@ type PatientSummary = {
     name: string;
     age: number;
     lastVisit: string;
-    type: 'Remote' | 'In-Clinic';
+    type: 'Video' | 'In-Person';
     avatarId: string;
 }
 
@@ -43,18 +44,19 @@ function PatientsPageComponent() {
 
     useEffect(() => {
         try {
-            const storedAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]');
+            const storedAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]').map((appt: any) => ({...appt, date: parseISO(appt.date)}));
             const uniquePatients = new Map<string, PatientSummary>();
 
             storedAppointments.forEach(appt => {
                 const lastVisit = format(appt.date, 'yyyy-MM-dd');
+                const age = (appt.patient.length * 3) % 40 + 20; // Generate a mock age based on name
                 
                 const existingPatient = uniquePatients.get(appt.patient);
                 if (!existingPatient || lastVisit > existingPatient.lastVisit) {
                      uniquePatients.set(appt.patient, {
                         id: `pat-${appt.patient.replace(/\s+/g, '-').toLowerCase()}`,
                         name: appt.patient,
-                        age: 30, // Default age, since we don't have it from appointments
+                        age: age,
                         lastVisit: lastVisit,
                         type: appt.type,
                         avatarId: 'avatar-patient', // Default avatar
@@ -126,7 +128,7 @@ function PatientsPageComponent() {
                       <div className="flex items-center gap-3">
                           <Avatar className="h-9 w-9">
                             {patientAvatar && <AvatarImage src={patientAvatar.imageUrl} alt={patient.name} data-ai-hint={patientAvatar.imageHint}/>}
-                            <AvatarFallback>{patient.name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback>{patient.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                           </Avatar>
                           <div className="font-medium">{patient.name}</div>
                       </div>
@@ -179,7 +181,7 @@ function PatientsPageComponent() {
                       <div className="flex items-center gap-3">
                           <Avatar className="h-9 w-9">
                             {patientAvatar && <AvatarImage src={patientAvatar.imageUrl} alt={patient.name} data-ai-hint={patientAvatar.imageHint}/>}
-                            <AvatarFallback>{patient.name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback>{patient.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                           </Avatar>
                           <div className="font-medium">{patient.name}</div>
                       </div>

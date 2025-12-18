@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -86,7 +87,10 @@ export default function AppointmentsPage() {
     // Simulate API call
     setTimeout(() => {
       try {
-        const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]');
+        const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]').map((appt: any) => ({
+            ...appt,
+            date: parseISO(appt.date)
+        }));
         allAppointments.push(newAppointment);
         localStorage.setItem('allAppointmentsData', JSON.stringify(allAppointments));
 
