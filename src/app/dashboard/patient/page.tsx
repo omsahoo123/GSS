@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -16,7 +17,18 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { HeartPulse, Pill, Video } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { HeartPulse, Pill, Video, X } from 'lucide-react';
 import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
@@ -24,15 +36,17 @@ import { useState, useEffect } from 'react';
 import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 import { type Appointment } from '../doctor/appointments/page';
 import { format, parseISO } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PatientDashboardPage() {
   const [userName, setUserName] = useState('Patient');
   const [upcomingAppointment, setUpcomingAppointment] = useState<Appointment | null>(null);
   const [canJoin, setCanJoin] = useState(false);
   const [countdown, setCountdown] = useState('');
+  const { toast } = useToast();
 
-  useEffect(() => {
-    try {
+  const fetchUpcomingAppointment = () => {
+     try {
       const userData = JSON.parse(localStorage.getItem(LOGGED_IN_USER_KEY) || '{}');
       const patientName = userData.name || 'Patient';
       setUserName(patientName);
@@ -51,6 +65,10 @@ export default function PatientDashboardPage() {
     } catch(e) {
       console.error("Error loading data", e);
     }
+  }
+
+  useEffect(() => {
+    fetchUpcomingAppointment();
   }, []);
 
   useEffect(() => {
@@ -90,6 +108,38 @@ export default function PatientDashboardPage() {
     return () => clearInterval(interval);
 
   }, [upcomingAppointment]);
+
+  const handleCancelAppointment = () => {
+    if (!upcomingAppointment) return;
+
+    try {
+        const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]').map((appt: any) => ({
+            ...appt,
+            date: parseISO(appt.date)
+        }));
+
+        const updatedAppointments = allAppointments.map(appt => 
+            appt.id === upcomingAppointment.id ? { ...appt, status: 'Cancelled' as const } : appt
+        );
+
+        localStorage.setItem('allAppointmentsData', JSON.stringify(updatedAppointments));
+        
+        toast({
+            title: 'Appointment Cancelled',
+            description: 'Your appointment has been successfully cancelled.',
+        });
+
+        fetchUpcomingAppointment(); // Refetch to update UI
+
+    } catch (e) {
+        console.error('Failed to cancel appointment', e);
+        toast({
+            variant: 'destructive',
+            title: 'Cancellation Failed',
+            description: 'Could not update your appointment status.',
+        });
+    }
+  };
 
 
   const doctorImage = PlaceHolderImages.find((img) => img.id === 'doctor-1');
@@ -174,13 +224,34 @@ export default function PatientDashboardPage() {
                       {format(upcomingAppointment.date, 'PPP')} at {upcomingAppointment.time}
                       </p>
                   </div>
-                   {upcomingAppointment.type === 'Video' && (
-                      <Link href={`/dashboard/patient/consultation?doctor=${encodeURIComponent(upcomingAppointment.doctor)}&time=${encodeURIComponent(upcomingAppointment.time)}`} passHref>
-                          <Button disabled={!canJoin}>
-                          <Video className="mr-2 h-4 w-4" /> Join Call
-                          </Button>
-                      </Link>
-                   )}
+                   <div className="flex gap-2">
+                     {upcomingAppointment.type === 'Video' && (
+                        <Link href={`/dashboard/patient/consultation?doctor=${encodeURIComponent(upcomingAppointment.doctor)}&time=${encodeURIComponent(upcomingAppointment.time)}`} passHref>
+                            <Button disabled={!canJoin}>
+                            <Video className="mr-2 h-4 w-4" /> Join Call
+                            </Button>
+                        </Link>
+                     )}
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive">
+                                <X className="mr-2 h-4 w-4" /> Cancel
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently cancel your appointment. You will need to book a new one.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Keep Appointment</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleCancelAppointment}>Confirm Cancellation</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                   </div>
                 </div>
                 {upcomingAppointment.type === 'Video' && (
                   <div className="text-center text-sm font-medium text-primary">
@@ -235,3 +306,5 @@ export default function PatientDashboardPage() {
     </div>
   );
 }
+
+    
