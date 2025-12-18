@@ -32,14 +32,17 @@ export default function PatientDashboardPage() {
 
   useEffect(() => {
     try {
-      const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]');
+      const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]').map((appt: any) => ({
+        ...appt,
+        date: parseISO(appt.date)
+      }));
       const patientAccount = JSON.parse(localStorage.getItem(LOGGED_IN_PATIENT_KEY) || '{}');
       const patientName = patientAccount.fullName;
 
       const now = new Date();
       const nextAppointment = allAppointments
-        .filter(appt => appt.patient === patientName && appt.status === 'Upcoming' && new Date(`${appt.date}T${appt.time.replace(/ /g, '')}`) > now)
-        .sort((a, b) => new Date(`${a.date}T${a.time.replace(/ /g, '')}`).getTime() - new Date(`${b.date}T${b.time.replace(/ /g, '')}`).getTime())[0];
+        .filter(appt => appt.patient === patientName && appt.status === 'Upcoming' && new Date(appt.date).setHours(0,0,0,0) >= now.setHours(0,0,0,0))
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
       
       setUpcomingAppointment(nextAppointment || null);
     } catch(e) {
@@ -50,7 +53,7 @@ export default function PatientDashboardPage() {
   useEffect(() => {
     if (!upcomingAppointment) return;
 
-    const appointmentTime = new Date(`${upcomingAppointment.date}T${upcomingAppointment.time.replace(/(AM|PM)/, ' $1')}`);
+    const appointmentTime = new Date(`${format(upcomingAppointment.date, 'yyyy-MM-dd')}T${upcomingAppointment.time.replace(/(AM|PM)/, ' $1')}`);
 
     const updateCountdown = () => {
       const now = new Date();
@@ -165,7 +168,7 @@ export default function PatientDashboardPage() {
                       {upcomingAppointment.type} Consultation
                       </p>
                       <p className="text-sm text-muted-foreground">
-                      {format(new Date(`${upcomingAppointment.date}T00:00:00`), 'PPP')} at {upcomingAppointment.time}
+                      {format(upcomingAppointment.date, 'PPP')} at {upcomingAppointment.time}
                       </p>
                   </div>
                    {upcomingAppointment.type === 'Video' && (
