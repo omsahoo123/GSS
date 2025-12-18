@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 import {
   Card,
@@ -40,72 +40,80 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { allPatients } from '@/lib/patients-data';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, Download, FileSearch } from 'lucide-react';
+import type { Appointment } from '../appointments/page';
 
-const initialLabReports = [
-  {
-    id: 'lab-1',
-    patientId: 'pat-1',
-    patientName: 'Aarav Sharma',
-    reportName: 'Lipid Profile',
-    date: '2024-05-01',
-    status: 'Available',
-    fileName: 'lab_lipid_pat1_20240501.pdf'
-  },
-  {
-    id: 'lab-2',
-    patientId: 'pat-2',
-    patientName: 'Sunita Devi',
-    reportName: 'Complete Blood Count (CBC)',
-    date: '2024-07-10',
-    status: 'Available',
-    fileName: 'lab_cbc_pat2_20240710.pdf'
-  },
-];
+const LAB_REPORTS_KEY = 'initialLabReports';
 
 const labReportSchema = z.object({
-  patientId: z.string().min(1, 'Please select a patient.'),
+  patientName: z.string().min(1, 'Please select a patient.'),
   reportName: z.string().min(1, 'Report name is required.'),
   reportFile: z.any().refine(files => files?.length > 0, 'Report file is required.'),
 });
 
+export type LabReport = {
+    id: string;
+    patientId: string;
+    patientName: string;
+    reportName: string;
+    date: string;
+    status: 'Available' | 'Pending';
+    fileName: string;
+};
+
 type LabReportFormValues = z.infer<typeof labReportSchema>;
-type LabReport = (typeof initialLabReports)[0];
 
 export default function LabReportsPage() {
-  const [labReports, setLabReports] = useState(initialLabReports);
+  const [labReports, setLabReports] = useState<LabReport[]>([]);
+  const [allPatients, setAllPatients] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+
+  useEffect(() => {
+    try {
+        const storedReports = localStorage.getItem(LAB_REPORTS_KEY);
+        if (storedReports) {
+            setLabReports(JSON.parse(storedReports));
+        }
+
+        const storedAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]');
+        const patientNames = [...new Set(storedAppointments.map(a => a.patient))];
+        setAllPatients(patientNames);
+    } catch(e) {
+        console.error("Failed to load data", e);
+    }
+  }, []);
+
+  const saveReports = (updatedReports: LabReport[]) => {
+      setLabReports(updatedReports);
+      localStorage.setItem(LAB_REPORTS_KEY, JSON.stringify(updatedReports));
+  }
 
   const form = useForm<LabReportFormValues>({
     resolver: zodResolver(labReportSchema),
     defaultValues: {
-      patientId: '',
+      patientName: '',
       reportName: '',
       reportFile: undefined,
     },
   });
 
   const onSubmit = (data: LabReportFormValues) => {
-    const patient = allPatients.find(p => p.id === data.patientId);
-    if (!patient) return;
-
     const newReport: LabReport = {
       id: `lab-${Date.now()}`,
-      patientId: patient.id,
-      patientName: patient.name,
+      patientId: `pat-${data.patientName.replace(' ', '').toLowerCase()}`,
+      patientName: data.patientName,
       reportName: data.reportName,
       date: format(new Date(), 'yyyy-MM-dd'),
       status: 'Available',
       fileName: data.reportFile[0].name,
     };
 
-    setLabReports([newReport, ...labReports]);
+    saveReports([newReport, ...labReports]);
     toast({
       title: 'Lab Report Uploaded',
-      description: `A new report for ${patient.name} has been added.`,
+      description: `A new report for ${data.patientName} has been added.`,
     });
     form.reset();
   };
@@ -151,7 +159,7 @@ export default function LabReportsPage() {
                 <div className="grid gap-6 md:grid-cols-2">
                   <FormField
                     control={form.control}
-                    name="patientId"
+                    name="patientName"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Patient</FormLabel>
@@ -162,9 +170,9 @@ export default function LabReportsPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {allPatients.map(patient => (
-                              <SelectItem key={patient.id} value={patient.id}>
-                                {patient.name} (ID: {patient.id})
+                            {allPatients.map(patientName => (
+                              <SelectItem key={patientName} value={patientName}>
+                                {patientName}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -243,7 +251,7 @@ export default function LabReportsPage() {
                   <TableRow key={report.id}>
                     <TableCell className="font-medium">{report.patientName}</TableCell>
                     <TableCell>{report.reportName}</TableCell>
-                    <TableCell>{report.date}</TableCell>
+                    <TableCell>{format(parseISO(report.date), 'PPP')}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                     </TableCell>
@@ -256,7 +264,7 @@ export default function LabReportsPage() {
                 ))}
                  {filteredReports.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">No lab reports found.</TableCell>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground h-24">No lab reports found.</TableCell>
                     </TableRow>
                  )}
               </TableBody>

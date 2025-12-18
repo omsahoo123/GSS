@@ -47,30 +47,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-
-const upcomingAppointments = [
-  {
-    id: 'appt-1',
-    patient: 'Aarav Sharma',
-    time: '10:30 AM',
-    type: 'Video',
-    avatarId: 'avatar-patient',
-  },
-  {
-    id: 'appt-2',
-    patient: 'Sunita Devi',
-    time: '11:00 AM',
-    type: 'In-Person',
-    avatarId: 'doctor-1', // Using a placeholder for another patient
-  },
-  {
-    id: 'appt-3',
-    patient: 'Rohan Verma',
-    time: '11:30 AM',
-    type: 'Video',
-    avatarId: 'doctor-2', // Using a placeholder for another patient
-  },
-];
+import { type Appointment } from './appointments/page';
+import { format, parseISO, isToday } from 'date-fns';
 
 const initialPendingTasks = [
   {
@@ -90,21 +68,19 @@ const initialPendingTasks = [
   },
 ];
 
+const loggedInDoctorName = 'Dr. Priya Singh';
+
 export default function DoctorDashboardPage() {
-  const [tasks, setTasks] = useState(() => {
-    // This function now runs only on the client, avoiding SSR issues.
-    // It's safe to access localStorage here.
-    return [];
-  });
+  const [tasks, setTasks] = useState(initialPendingTasks);
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTaskText, setEditingTaskText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   useEffect(() => {
-    // This effect runs once on mount on the client side.
     try {
       const storedTasks = localStorage.getItem('doctorTasks');
       if (storedTasks) {
@@ -112,23 +88,33 @@ export default function DoctorDashboardPage() {
       } else {
         setTasks(initialPendingTasks);
       }
+
+      const storedAppointments = localStorage.getItem('allAppointmentsData');
+       if (storedAppointments) {
+        const parsedData: Appointment[] = JSON.parse(storedAppointments).map((appt: any) => ({
+            ...appt,
+            date: parseISO(appt.date)
+        }));
+        setAppointments(parsedData);
+      }
     } catch (error) {
-      console.error("Failed to load tasks from localStorage", error);
-      setTasks(initialPendingTasks);
+      console.error("Failed to load data from localStorage", error);
     }
   }, []);
 
   useEffect(() => {
-    // This effect runs whenever 'tasks' state changes.
-    // It's client-side only, so localStorage is safe.
-    if (tasks.length > 0) {
-        try {
-            localStorage.setItem('doctorTasks', JSON.stringify(tasks));
-        } catch (error) {
-            console.error("Failed to save tasks to localStorage", error);
-        }
+    try {
+        localStorage.setItem('doctorTasks', JSON.stringify(tasks));
+    } catch (error) {
+        console.error("Failed to save tasks to localStorage", error);
     }
   }, [tasks]);
+
+  const todaysAppointments = appointments.filter(
+    (appt) => appt.doctor === loggedInDoctorName && isToday(appt.date) && appt.status === 'Upcoming'
+  );
+  
+  const totalPatients = new Set(appointments.map(a => a.patient)).size;
 
 
   const handleAddTask = (e: React.FormEvent) => {
@@ -186,7 +172,7 @@ export default function DoctorDashboardPage() {
         <div>
           <h1 className="font-headline text-3xl font-bold">Doctor Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome, Dr. Priya Singh. Here is your daily overview.
+            Welcome, {loggedInDoctorName}. Here is your daily overview.
           </p>
         </div>
         <form onSubmit={handleSearchSubmit} className="relative w-full max-w-sm">
@@ -211,11 +197,11 @@ export default function DoctorDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {upcomingAppointments.length}
+              {todaysAppointments.length}
             </div>
             <p className="text-xs text-muted-foreground">
               {
-                upcomingAppointments.filter((a) => a.type === 'Video').length
+                todaysAppointments.filter((a) => a.type === 'Video').length
               }{' '}
               video consultations
             </p>
@@ -227,8 +213,8 @@ export default function DoctorDashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">124</div>
-            <p className="text-xs text-muted-foreground">+5 new this month</p>
+            <div className="text-2xl font-bold">{totalPatients}</div>
+            <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
         </Card>
         <Card>
@@ -378,9 +364,9 @@ export default function DoctorDashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {upcomingAppointments.map((appt) => {
+              {todaysAppointments.length > 0 ? todaysAppointments.map((appt) => {
                 const patientAvatar = PlaceHolderImages.find(
-                  (img) => img.id === appt.avatarId
+                  (img) => img.id === 'avatar-patient'
                 );
                 return (
                   <TableRow key={appt.id}>
@@ -425,7 +411,13 @@ export default function DoctorDashboardPage() {
                     </TableCell>
                   </TableRow>
                 );
-              })}
+              }) : (
+                 <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                        No upcoming appointments today.
+                    </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -433,5 +425,3 @@ export default function DoctorDashboardPage() {
     </div>
   );
 }
-
-    

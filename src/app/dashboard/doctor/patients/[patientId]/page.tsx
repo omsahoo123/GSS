@@ -11,7 +11,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, Calendar } from 'lucide-react';
-import { allPatients } from '@/lib/patients-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
   Table,
@@ -21,20 +20,66 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { type Appointment } from '../../appointments/page';
+import { type LabReport } from '../../lab-reports/page';
+import { format, parseISO } from 'date-fns';
+
+type PatientDetails = {
+    id: string;
+    name: string;
+    age: number;
+    lastVisit: string;
+    avatarId: string;
+    history: {
+        consultations: Appointment[];
+        labReports: LabReport[];
+    }
+}
 
 export default function PatientHistoryPage() {
   const params = useParams();
   const patientId = params.patientId as string;
-  const patient = allPatients.find((p) => p.id === patientId);
+  const [patient, setPatient] = useState<PatientDetails | null>(null);
+
+  useEffect(() => {
+    if (!patientId) return;
+    try {
+        const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]').map((a:any) => ({...a, date: parseISO(a.date)}));
+        const allLabReports: LabReport[] = JSON.parse(localStorage.getItem('initialLabReports') || '[]');
+        
+        const patientAppointments = allAppointments.filter(a => `pat-${a.patient.replace(/\s+/g, '-').toLowerCase()}` === patientId);
+
+        if (patientAppointments.length > 0) {
+            const patientName = patientAppointments[0].patient;
+            const patientLabReports = allLabReports.filter(r => r.patientName === patientName);
+            const lastVisit = patientAppointments.sort((a,b) => b.date.getTime() - a.date.getTime())[0];
+
+            setPatient({
+                id: patientId,
+                name: patientName,
+                age: 30, // Placeholder
+                lastVisit: format(lastVisit.date, 'PPP'),
+                avatarId: 'avatar-patient',
+                history: {
+                    consultations: patientAppointments.filter(a => a.status !== 'Upcoming'),
+                    labReports: patientLabReports
+                }
+            });
+        }
+    } catch(e) {
+        console.error("Error loading patient history", e);
+    }
+  }, [patientId]);
+  
   const patientAvatar = PlaceHolderImages.find((img) => img.id === patient?.avatarId);
 
   if (!patient) {
     return (
-      <div>
+      <div className="flex flex-col items-center justify-center h-full text-center">
         <h1 className="text-2xl font-bold">Patient not found</h1>
-        <p>The requested patient record could not be found.</p>
+        <p>The requested patient record could not be found or has no history.</p>
         <Link href="/dashboard/doctor/patients">
             <Button variant="outline" className="mt-4">Back to Patients List</Button>
         </Link>
@@ -100,12 +145,13 @@ export default function PatientHistoryPage() {
                         <p className="text-xs text-muted-foreground">{new Date(consult.date).getFullYear()}</p>
                     </div>
                     <div className="border-l pl-4">
-                        <p className="text-sm">{consult.note}</p>
+                        <p className="font-semibold">{consult.type} Consultation</p>
+                        <p className="text-sm">{consult.notes || "No notes for this consultation."}</p>
                     </div>
                 </div>
             ))}
              {patient.history.consultations.length === 0 && (
-                 <p className="text-center text-muted-foreground">No consultation history available.</p>
+                 <p className="text-center text-muted-foreground h-24 flex items-center justify-center">No consultation history available.</p>
              )}
             </div>
         </CardContent>
@@ -133,8 +179,8 @@ export default function PatientHistoryPage() {
             <TableBody>
               {patient.history.labReports.map((report) => (
                 <TableRow key={report.id}>
-                  <TableCell className="font-medium">{report.name}</TableCell>
-                  <TableCell>{report.date}</TableCell>
+                  <TableCell className="font-medium">{report.reportName}</TableCell>
+                  <TableCell>{format(parseISO(report.date), 'PPP')}</TableCell>
                   <TableCell className="text-right">
                     <Button 
                         variant="outline" 
@@ -149,7 +195,7 @@ export default function PatientHistoryPage() {
               ))}
               {patient.history.labReports.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                    <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
                         No lab reports available for this patient.
                     </TableCell>
                 </TableRow>

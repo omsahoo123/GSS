@@ -23,25 +23,61 @@ import { FileText, UserSearch } from 'lucide-react';
 import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
-import { allPatients } from '@/lib/patients-data';
+import { format, parseISO } from 'date-fns';
+import { type Appointment } from '../appointments/page';
 
-
-const remotePatients = allPatients.filter((p) => p.type === 'Remote');
-const inClinicPatients = allPatients.filter((p) => p.type === 'In-Clinic');
+type PatientSummary = {
+    id: string;
+    name: string;
+    age: number;
+    lastVisit: string;
+    type: 'Remote' | 'In-Clinic';
+    avatarId: string;
+}
 
 function PatientsPageComponent() {
     const searchParams = useSearchParams();
     const initialSearch = searchParams.get('search') || '';
     const [searchTerm, setSearchTerm] = useState(initialSearch);
+    const [allPatients, setAllPatients] = useState<PatientSummary[]>([]);
+
+    useEffect(() => {
+        try {
+            const storedAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]');
+            const uniquePatients = new Map<string, PatientSummary>();
+
+            storedAppointments.forEach(appt => {
+                const lastVisit = format(appt.date, 'yyyy-MM-dd');
+                
+                const existingPatient = uniquePatients.get(appt.patient);
+                if (!existingPatient || lastVisit > existingPatient.lastVisit) {
+                     uniquePatients.set(appt.patient, {
+                        id: `pat-${appt.patient.replace(/\s+/g, '-').toLowerCase()}`,
+                        name: appt.patient,
+                        age: 30, // Default age, since we don't have it from appointments
+                        lastVisit: lastVisit,
+                        type: appt.type,
+                        avatarId: 'avatar-patient', // Default avatar
+                     });
+                }
+            });
+            setAllPatients(Array.from(uniquePatients.values()));
+        } catch (e) {
+            console.error("Failed to load patient data", e);
+        }
+    }, []);
 
     useEffect(() => {
       setSearchTerm(initialSearch);
     }, [initialSearch]);
 
-    const filterPatients = (patients: typeof allPatients) => {
+    const filterPatients = (patients: PatientSummary[]) => {
         if (!searchTerm) return patients;
         return patients.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     };
+    
+    const remotePatients = allPatients.filter((p) => p.type === 'Video');
+    const inClinicPatients = allPatients.filter((p) => p.type === 'In-Person');
 
   return (
     <div className="space-y-6">
@@ -96,7 +132,7 @@ function PatientsPageComponent() {
                       </div>
                     </TableCell>
                     <TableCell>{patient.age}</TableCell>
-                    <TableCell>{patient.lastVisit}</TableCell>
+                    <TableCell>{format(parseISO(patient.lastVisit), 'PPP')}</TableCell>
                     <TableCell className="text-right">
                        <Link href={`/dashboard/doctor/patients/${patient.id}`} passHref>
                         <Button variant="outline" size="sm">
@@ -107,6 +143,11 @@ function PatientsPageComponent() {
                   </TableRow>
                 );
               })}
+              {filterPatients(remotePatients).length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={4} className="text-center h-24">No remote patients found.</TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -144,7 +185,7 @@ function PatientsPageComponent() {
                       </div>
                     </TableCell>
                     <TableCell>{patient.age}</TableCell>
-                    <TableCell>{patient.lastVisit}</TableCell>
+                    <TableCell>{format(parseISO(patient.lastVisit), 'PPP')}</TableCell>
                     <TableCell className="text-right">
                       <Link href={`/dashboard/doctor/patients/${patient.id}`} passHref>
                         <Button variant="outline" size="sm">
@@ -155,6 +196,11 @@ function PatientsPageComponent() {
                   </TableRow>
                 );
               })}
+               {filterPatients(inClinicPatients).length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={4} className="text-center h-24">No in-clinic patients found.</TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -170,5 +216,3 @@ export default function PatientsPage() {
     </Suspense>
   )
 }
-
-    

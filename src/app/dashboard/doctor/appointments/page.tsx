@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -33,92 +33,58 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
-import { Video, Calendar as CalendarIcon, FileText } from 'lucide-react';
+import { Video, FileText } from 'lucide-react';
 import Link from 'next/link';
 
-// Mock data for all appointments in the system
-const allAppointmentsData = [
-  {
-    id: 'appt-1',
-    doctor: 'Dr. Priya Singh',
-    patient: 'Aarav Sharma',
-    date: new Date(),
-    time: '10:30 AM',
-    type: 'Video',
-    status: 'Upcoming',
-    notes: 'Patient reported mild headaches. Wants to discuss potential causes.',
-  },
-  {
-    id: 'appt-2',
-    doctor: 'Dr. Anjali Sharma',
-    patient: 'Riya Patel',
-    date: new Date(),
-    time: '10:45 AM',
-    type: 'Video',
-    status: 'Upcoming',
-    notes: '',
-  },
-  {
-    id: 'appt-3',
-    doctor: 'Dr. Priya Singh',
-    patient: 'Sunita Devi',
-    date: new Date(),
-    time: '11:00 AM',
-    type: 'In-Person',
-    status: 'Upcoming',
-    notes: '',
-  },
-  {
-    id: 'appt-4',
-    doctor: 'Dr. Priya Singh',
-    patient: 'Rohan Verma',
-    date: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d; })(),
-    time: '11:30 AM',
-    type: 'Video',
-    status: 'Upcoming',
-    notes: '',
-  },
-   {
-    id: 'appt-5',
-    doctor: 'Dr. Arun Verma',
-    patient: 'Amit Kumar',
-    date: new Date(),
-    time: '12:00 PM',
-    type: 'In-Person',
-    status: 'Completed',
-    notes: 'Routine check-up. All vitals are normal.',
-  },
-  {
-    id: 'appt-6',
-    doctor: 'Dr. Priya Singh',
-    patient: 'Neha Gupta',
-    date: new Date(),
-    time: '12:30 PM',
-    type: 'In-Person',
-    status: 'Cancelled',
-    notes: 'Patient rescheduled for next week.',
-  },
-];
+const APPOINTMENTS_KEY = 'allAppointmentsData';
+
+export type Appointment = {
+    id: string;
+    doctor: string;
+    patient: string;
+    date: Date;
+    time: string;
+    type: 'Video' | 'In-Person';
+    status: 'Upcoming' | 'Completed' | 'Cancelled';
+    notes: string;
+};
+
 
 const loggedInDoctorName = 'Dr. Priya Singh';
 
-type Appointment = typeof allAppointmentsData[0];
-
 export default function DoctorAppointmentsPage() {
-  const [appointments, setAppointments] = useState(allAppointmentsData);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [currentAppointment, setCurrentAppointment] = useState<Appointment | null>(null);
   const [noteText, setNoteText] = useState('');
+
+  useEffect(() => {
+    try {
+      const storedData = localStorage.getItem(APPOINTMENTS_KEY);
+      if (storedData) {
+        const parsedData: Appointment[] = JSON.parse(storedData).map((appt: any) => ({
+            ...appt,
+            date: parseISO(appt.date)
+        }));
+        setAppointments(parsedData);
+      }
+    } catch (e) {
+      console.error("Error loading appointments", e);
+    }
+  }, []);
+
+  const saveAppointments = (updatedAppointments: Appointment[]) => {
+    setAppointments(updatedAppointments);
+    localStorage.setItem(APPOINTMENTS_KEY, JSON.stringify(updatedAppointments));
+  };
   
   const handleStatusChange = (appointmentId: string, status: string) => {
-    setAppointments(
-      appointments.map((appt) =>
-        appt.id === appointmentId ? { ...appt, status } : appt
-      )
+    const updatedAppointments = appointments.map((appt) =>
+        appt.id === appointmentId ? { ...appt, status: status as Appointment['status'] } : appt
     );
+    saveAppointments(updatedAppointments);
   };
   
   const openNotesDialog = (appointment: Appointment) => {
@@ -129,11 +95,10 @@ export default function DoctorAppointmentsPage() {
   
   const handleSaveNote = () => {
     if (currentAppointment) {
-      setAppointments(
-        appointments.map((appt) =>
+      const updatedAppointments = appointments.map((appt) =>
           appt.id === currentAppointment.id ? { ...appt, notes: noteText } : appt
-        )
-      );
+        );
+      saveAppointments(updatedAppointments);
     }
     setIsNotesDialogOpen(false);
     setCurrentAppointment(null);
@@ -146,16 +111,6 @@ export default function DoctorAppointmentsPage() {
 
   const onlineAppointments = doctorAppointments.filter((appt) => appt.type === 'Video');
   const inPersonAppointments = doctorAppointments.filter((appt) => appt.type === 'In-Person');
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'Upcoming': return 'default';
-      case 'Completed': return 'secondary';
-      case 'Cancelled': return 'destructive';
-      default: return 'outline';
-    }
-  };
-
 
   return (
     <div className="space-y-6">
@@ -228,7 +183,7 @@ export default function DoctorAppointmentsPage() {
                 ))
               ) : (
                  <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
                     No online consultations scheduled for this date.
                   </TableCell>
                 </TableRow>
@@ -284,7 +239,7 @@ export default function DoctorAppointmentsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
                     No in-person appointments scheduled for this date.
                   </TableCell>
                 </TableRow>

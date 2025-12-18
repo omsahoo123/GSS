@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,6 +16,8 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Video, Building } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { LOGGED_IN_PATIENT_KEY } from '@/app/signup/patient/page';
+import { type Appointment } from '../../doctor/appointments/page';
 
 const doctors = [
   { id: 'dr-anjali-sharma', name: 'Dr. Anjali Sharma', specialty: 'Cardiologist', imageId: 'doctor-1', department: 'Cardiology' },
@@ -35,7 +37,7 @@ const appointmentSchema = z.object({
   doctorId: z.string().min(1, 'Please select a doctor.'),
   appointmentDate: z.string().min(1, 'Please select a date.'),
   appointmentTime: z.string().min(1, 'Please select a time slot.'),
-  consultationType: z.enum(['video', 'in-person'], { required_error: 'Please select a consultation type.' }),
+  consultationType: z.enum(['Video', 'In-Person'], { required_error: 'Please select a consultation type.' }),
 });
 
 type AppointmentFormValues = z.infer<typeof appointmentSchema>;
@@ -43,11 +45,23 @@ type AppointmentFormValues = z.infer<typeof appointmentSchema>;
 export default function AppointmentsPage() {
   const [isBooking, setIsBooking] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [patientName, setPatientName] = useState('');
+
+  useEffect(() => {
+      try {
+        const patientAccount = JSON.parse(localStorage.getItem(LOGGED_IN_PATIENT_KEY) || '{}');
+        if(patientAccount.fullName) {
+            setPatientName(patientAccount.fullName);
+        }
+      } catch(e) {
+          console.error("Could not load patient data", e);
+      }
+  }, []);
 
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
-      consultationType: 'video',
+      consultationType: 'Video',
       department: '',
       doctorId: '',
       appointmentDate: format(new Date(), 'yyyy-MM-dd'),
@@ -57,19 +71,39 @@ export default function AppointmentsPage() {
 
   const onSubmit = (data: AppointmentFormValues) => {
     setIsBooking(true);
-    console.log({ ...data });
+    
+    const newAppointment: Appointment = {
+        id: `appt-${Date.now()}`,
+        doctor: doctors.find(d => d.id === data.doctorId)?.name || 'Unknown Doctor',
+        patient: patientName,
+        date: new Date(data.appointmentDate),
+        time: data.appointmentTime,
+        type: data.consultationType,
+        status: 'Upcoming',
+        notes: '',
+    };
 
     // Simulate API call
     setTimeout(() => {
-      toast({
-        title: 'Appointment Booked!',
-        description: `Your ${data.consultationType} consultation with ${doctors.find(d => d.id === data.doctorId)?.name} is confirmed for ${format(new Date(data.appointmentDate), 'PPP')} at ${data.appointmentTime}.`,
-      });
-      form.reset();
-      form.setValue('consultationType', 'video');
-      form.setValue('appointmentDate', format(new Date(), 'yyyy-MM-dd'));
-      setSelectedDepartment('');
-      setIsBooking(false);
+      try {
+        const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]');
+        allAppointments.push(newAppointment);
+        localStorage.setItem('allAppointmentsData', JSON.stringify(allAppointments));
+
+        toast({
+          title: 'Appointment Booked!',
+          description: `Your ${data.consultationType} consultation with ${newAppointment.doctor} is confirmed for ${format(newAppointment.date, 'PPP')} at ${data.appointmentTime}.`,
+        });
+        form.reset();
+        form.setValue('consultationType', 'Video');
+        form.setValue('appointmentDate', format(new Date(), 'yyyy-MM-dd'));
+        setSelectedDepartment('');
+      } catch (e) {
+        console.error("Failed to save appointment", e);
+        toast({ variant: 'destructive', title: "Booking Failed", description: "Could not save your appointment."})
+      } finally {
+        setIsBooking(false);
+      }
     }, 1500);
   };
   
@@ -179,7 +213,7 @@ export default function AppointmentsPage() {
                           >
                             <FormItem className="flex items-center space-x-3 space-y-0">
                               <FormControl>
-                                <RadioGroupItem value="video" />
+                                <RadioGroupItem value="Video" />
                               </FormControl>
                               <FormLabel className="font-normal flex items-center gap-2">
                                 <Video className="h-4 w-4" /> Video Consultation
@@ -187,7 +221,7 @@ export default function AppointmentsPage() {
                             </FormItem>
                             <FormItem className="flex items-center space-x-3 space-y-0">
                               <FormControl>
-                                <RadioGroupItem value="in-person" />
+                                <RadioGroupItem value="In-Person" />
                               </FormControl>
                               <FormLabel className="font-normal flex items-center gap-2">
                                 <Building className="h-4 w-4" /> In-Person Visit
@@ -207,7 +241,7 @@ export default function AppointmentsPage() {
                       <FormItem>
                         <FormLabel>Appointment Date</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input type="date" {...field} min={format(new Date(), 'yyyy-MM-dd')} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -241,7 +275,7 @@ export default function AppointmentsPage() {
                 </div>
               </div>
 
-              <Button type="submit" disabled={isBooking} size="lg">
+              <Button type="submit" disabled={isBooking || !patientName} size="lg">
                 {isBooking ? 'Booking...' : 'Confirm Appointment'}
               </Button>
             </form>

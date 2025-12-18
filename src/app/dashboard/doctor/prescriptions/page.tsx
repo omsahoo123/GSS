@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 import {
   Card,
@@ -40,7 +40,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { allPatients } from '@/lib/patients-data';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, FileSearch } from 'lucide-react';
 import {
@@ -51,51 +50,61 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import type { Appointment } from '../appointments/page';
 
-const initialPrescriptions = [
-  {
-    id: 'presc-1',
-    patientId: 'pat-1',
-    patientName: 'Aarav Sharma',
-    date: format(new Date(), 'yyyy-MM-dd'),
-    medication: 'Amoxicillin',
-    dosage: '500mg',
-    instructions: 'Take one tablet twice a day for 7 days.',
-    status: 'Filled',
-  },
-  {
-    id: 'presc-2',
-    patientId: 'pat-2',
-    patientName: 'Sunita Devi',
-    date: format(new Date(new Date().setDate(new Date().getDate() - 1)), 'yyyy-MM-dd'),
-    medication: 'Metformin',
-    dosage: '1000mg',
-    instructions: 'Take one tablet daily with breakfast.',
-    status: 'Pending',
-  },
-];
+const PRESCRIPTIONS_KEY = 'initialPrescriptions';
 
 const prescriptionSchema = z.object({
-  patientId: z.string().min(1, 'Please select a patient.'),
+  patientName: z.string().min(1, 'Please select a patient.'),
   medication: z.string().min(1, 'Medication name is required.'),
   dosage: z.string().min(1, 'Dosage is required.'),
   instructions: z.string().min(1, 'Instructions are required.'),
 });
 
+export type Prescription = {
+  id: string;
+  patientId: string;
+  patientName: string;
+  date: string;
+  medication: string;
+  dosage: string;
+  instructions: string;
+  status: 'Filled' | 'Pending';
+};
 type PrescriptionFormValues = z.infer<typeof prescriptionSchema>;
-type Prescription = (typeof initialPrescriptions)[0];
 
 export default function PrescriptionsPage() {
-  const [prescriptions, setPrescriptions] = useState(initialPrescriptions);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [allPatients, setAllPatients] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
 
+  useEffect(() => {
+    try {
+        const storedPrescriptions = localStorage.getItem(PRESCRIPTIONS_KEY);
+        if (storedPrescriptions) {
+            setPrescriptions(JSON.parse(storedPrescriptions));
+        }
+
+        const storedAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]');
+        const patientNames = [...new Set(storedAppointments.map(a => a.patient))];
+        setAllPatients(patientNames);
+    } catch(e) {
+        console.error("Failed to load data", e);
+    }
+  }, []);
+
+  const savePrescriptions = (updatedPrescriptions: Prescription[]) => {
+      setPrescriptions(updatedPrescriptions);
+      localStorage.setItem(PRESCRIPTIONS_KEY, JSON.stringify(updatedPrescriptions));
+  }
+
   const form = useForm<PrescriptionFormValues>({
     resolver: zodResolver(prescriptionSchema),
     defaultValues: {
-      patientId: '',
+      patientName: '',
       medication: '',
       dosage: '',
       instructions: '',
@@ -103,13 +112,10 @@ export default function PrescriptionsPage() {
   });
 
   const onSubmit = (data: PrescriptionFormValues) => {
-    const patient = allPatients.find(p => p.id === data.patientId);
-    if (!patient) return;
-
     const newPrescription: Prescription = {
       id: `presc-${Date.now()}`,
-      patientId: patient.id,
-      patientName: patient.name,
+      patientId: `pat-${data.patientName.replace(' ', '').toLowerCase()}`,
+      patientName: data.patientName,
       date: format(new Date(), 'yyyy-MM-dd'),
       medication: data.medication,
       dosage: data.dosage,
@@ -117,10 +123,10 @@ export default function PrescriptionsPage() {
       status: 'Pending',
     };
 
-    setPrescriptions([newPrescription, ...prescriptions]);
+    savePrescriptions([newPrescription, ...prescriptions]);
     toast({
       title: 'Prescription Created',
-      description: `A new prescription for ${patient.name} has been issued.`,
+      description: `A new prescription for ${data.patientName} has been issued.`,
     });
     form.reset();
   };
@@ -174,7 +180,7 @@ export default function PrescriptionsPage() {
                 <div className="grid gap-6 md:grid-cols-2">
                   <FormField
                     control={form.control}
-                    name="patientId"
+                    name="patientName"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Patient</FormLabel>
@@ -185,9 +191,9 @@ export default function PrescriptionsPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {allPatients.map(patient => (
-                              <SelectItem key={patient.id} value={patient.id}>
-                                {patient.name} (ID: {patient.id})
+                            {allPatients.map(patientName => (
+                              <SelectItem key={patientName} value={patientName}>
+                                {patientName}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -286,7 +292,7 @@ export default function PrescriptionsPage() {
                       {presc.patientName}
                     </TableCell>
                     <TableCell>{presc.medication} {presc.dosage}</TableCell>
-                    <TableCell>{presc.date}</TableCell>
+                    <TableCell>{format(parseISO(presc.date), 'PPP')}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(presc.status)}>
                         {presc.status}
@@ -301,7 +307,7 @@ export default function PrescriptionsPage() {
                 ))}
                  {filteredPrescriptions.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
                             No prescriptions found.
                         </TableCell>
                     </TableRow>
@@ -317,7 +323,7 @@ export default function PrescriptionsPage() {
             <DialogHeader>
               <DialogTitle>Prescription Details</DialogTitle>
               <DialogDescription>
-                Viewing prescription for {selectedPrescription?.patientName} issued on {selectedPrescription?.date}.
+                Viewing prescription for {selectedPrescription?.patientName} issued on {selectedPrescription?.date ? format(parseISO(selectedPrescription.date), 'PPP') : ''}.
               </DialogDescription>
             </DialogHeader>
             {selectedPrescription && (

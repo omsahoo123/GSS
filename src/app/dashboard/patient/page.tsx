@@ -21,22 +21,43 @@ import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-
-const appointmentTime = new Date();
-appointmentTime.setDate(appointmentTime.getDate() + 1);
-appointmentTime.setHours(10, 30, 0, 0); // Tomorrow at 10:30 AM
+import { LOGGED_IN_PATIENT_KEY } from '@/app/signup/patient/page';
+import { type Appointment } from '../doctor/appointments/page';
+import { format, parseISO } from 'date-fns';
 
 export default function PatientDashboardPage() {
+  const [upcomingAppointment, setUpcomingAppointment] = useState<Appointment | null>(null);
   const [canJoin, setCanJoin] = useState(false);
   const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
+    try {
+      const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]');
+      const patientAccount = JSON.parse(localStorage.getItem(LOGGED_IN_PATIENT_KEY) || '{}');
+      const patientName = patientAccount.fullName;
+
+      const now = new Date();
+      const nextAppointment = allAppointments
+        .filter(appt => appt.patient === patientName && appt.status === 'Upcoming' && new Date(`${appt.date}T${appt.time.replace(/ /g, '')}`) > now)
+        .sort((a, b) => new Date(`${a.date}T${a.time.replace(/ /g, '')}`).getTime() - new Date(`${b.date}T${b.time.replace(/ /g, '')}`).getTime())[0];
+      
+      setUpcomingAppointment(nextAppointment || null);
+    } catch(e) {
+      console.error("Error loading appointment data", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!upcomingAppointment) return;
+
+    const appointmentTime = new Date(`${upcomingAppointment.date}T${upcomingAppointment.time.replace(/(AM|PM)/, ' $1')}`);
+
     const updateCountdown = () => {
       const now = new Date();
       const diff = appointmentTime.getTime() - now.getTime();
 
-      const joinWindowStart = appointmentTime.getTime() - 15 * 60 * 1000; // 15 mins before
-      const joinWindowEnd = appointmentTime.getTime() + 60 * 60 * 1000; // 1 hour after
+      const joinWindowStart = appointmentTime.getTime() - 15 * 60 * 1000;
+      const joinWindowEnd = appointmentTime.getTime() + 60 * 60 * 1000;
 
       if (now.getTime() >= joinWindowStart && now.getTime() <= joinWindowEnd) {
         setCanJoin(true);
@@ -51,7 +72,7 @@ export default function PatientDashboardPage() {
         const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
         const minutes = Math.floor((diff / 1000 / 60) % 60);
         const seconds = Math.floor((diff / 1000) % 60);
-        setCountdown(`Join in: ${days}d ${hours}h ${minutes}m ${seconds}s`);
+        setCountdown(`Join in: ${days > 0 ? `${days}d ` : ''}${hours}h ${minutes}m ${seconds}s`);
       } else {
         setCountdown('Appointment time has passed.');
       }
@@ -62,7 +83,7 @@ export default function PatientDashboardPage() {
 
     return () => clearInterval(interval);
 
-  }, []);
+  }, [upcomingAppointment]);
 
 
   const doctorImage = PlaceHolderImages.find((img) => img.id === 'doctor-1');
@@ -122,12 +143,12 @@ export default function PatientDashboardPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="space-y-1.5">
             <CardTitle>Upcoming Appointment</CardTitle>
-            <CardDescription>with Dr. Anjali Sharma</CardDescription>
+            <CardDescription>{upcomingAppointment ? `with ${upcomingAppointment.doctor}` : "No upcoming appointments."}</CardDescription>
           </div>
-          {doctorImage && (
+          {upcomingAppointment && doctorImage && (
             <Image
               src={doctorImage.imageUrl}
-              alt="Dr. Anjali Sharma"
+              alt={upcomingAppointment.doctor}
               width={64}
               height={64}
               className="rounded-full border-2 border-primary"
@@ -136,26 +157,39 @@ export default function PatientDashboardPage() {
           )}
         </CardHeader>
         <CardContent>
-          <div className="space-y-4 rounded-md border p-4">
-            <div className="flex flex-1 items-center justify-between">
-              <div>
-                  <p className="text-sm font-medium leading-none">
-                  Video Consultation
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                  Tomorrow, 10:30 AM
-                  </p>
+          {upcomingAppointment ? (
+              <div className="space-y-4 rounded-md border p-4">
+                <div className="flex flex-1 items-center justify-between">
+                  <div>
+                      <p className="text-sm font-medium leading-none">
+                      {upcomingAppointment.type} Consultation
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                      {format(new Date(`${upcomingAppointment.date}T00:00:00`), 'PPP')} at {upcomingAppointment.time}
+                      </p>
+                  </div>
+                   {upcomingAppointment.type === 'Video' && (
+                      <Link href={`/dashboard/patient/consultation?doctor=${encodeURIComponent(upcomingAppointment.doctor)}&time=${encodeURIComponent(upcomingAppointment.time)}`} passHref>
+                          <Button disabled={!canJoin}>
+                          <Video className="mr-2 h-4 w-4" /> Join Call
+                          </Button>
+                      </Link>
+                   )}
+                </div>
+                {upcomingAppointment.type === 'Video' && (
+                  <div className="text-center text-sm font-medium text-primary">
+                    {countdown}
+                  </div>
+                )}
               </div>
-              <Link href="/dashboard/patient/consultation?doctor=Dr.+Anjali+Sharma&time=Tomorrow,+10:30+AM" passHref>
-                  <Button disabled={!canJoin}>
-                  <Video className="mr-2 h-4 w-4" /> Join Call
-                  </Button>
-              </Link>
+          ) : (
+            <div className="text-center text-muted-foreground py-4">
+                <p>You have no appointments scheduled.</p>
+                 <Link href="/dashboard/patient/appointments">
+                    <Button variant="link">Book an Appointment</Button>
+                 </Link>
             </div>
-             <div className="text-center text-sm font-medium text-primary">
-              {countdown}
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
