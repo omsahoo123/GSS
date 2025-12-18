@@ -1,8 +1,7 @@
-
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Sidebar,
   SidebarContent,
@@ -24,7 +23,7 @@ import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from './ui/button';
 import React, { useEffect, useState } from 'react';
-import { LOGGED_IN_USER_KEY } from '@/app/page';
+import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 
 const menuItems = [
   { href: '/dashboard/patient', label: 'Dashboard', icon: Home, exact: true },
@@ -41,24 +40,24 @@ type PatientData = {
 
 export function PatientSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [patientData, setPatientData] = useState<PatientData | null>(null);
 
   useEffect(() => {
     try {
       const storedData = localStorage.getItem(LOGGED_IN_USER_KEY);
       if (storedData) {
-          const userData = JSON.parse(storedData);
-          const patientAccount = localStorage.getItem(`patientAccount_${userData.name}`);
-          if (patientAccount) {
-              setPatientData(JSON.parse(patientAccount));
-          } else {
-              setPatientData({ name: userData.name });
-          }
+        setPatientData(JSON.parse(storedData));
       }
     } catch (error) {
       console.error("Failed to load patient data from localStorage", error);
     }
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem(LOGGED_IN_USER_KEY);
+    router.push('/login');
+  };
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -103,11 +102,9 @@ export function PatientSidebar() {
             <p className="truncate font-semibold">{patientData?.name || 'Patient'}</p>
             <p className="truncate text-xs text-muted-foreground">Patient</p>
           </div>
-          <Link href="/" className="ml-auto" passHref>
-            <Button variant="ghost" size="icon" aria-label="Log out">
-              <LogOut />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon" aria-label="Log out" onClick={handleLogout}>
+            <LogOut />
+          </Button>
         </div>
       </SidebarFooter>
     </Sidebar>

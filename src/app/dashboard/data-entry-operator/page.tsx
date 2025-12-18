@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Users, Building, Truck, Server } from 'lucide-react';
 import Link from 'next/link';
 import { REGIONAL_DATA_KEY, type RegionalData } from './regional-data/page';
-import { LOGGED_IN_USER_KEY } from '@/app/page';
+import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 
 export default function DataEntryOperatorDashboardPage() {
   const [regionalData, setRegionalData] = useState<RegionalData[]>([]);

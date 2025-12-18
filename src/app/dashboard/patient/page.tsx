@@ -21,7 +21,7 @@ import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { LOGGED_IN_USER_KEY } from '@/app/page';
+import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 import { type Appointment } from '../doctor/appointments/page';
 import { format, parseISO } from 'date-fns';
 

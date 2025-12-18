@@ -49,7 +49,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { type Appointment } from './appointments/page';
 import { format, parseISO, isToday } from 'date-fns';
-import { LOGGED_IN_USER_KEY } from '@/app/page';
+import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 
 export default function DoctorDashboardPage() {
   const [tasks, setTasks] = useState<{ id: string, description: string, completed: boolean }[]>([]);

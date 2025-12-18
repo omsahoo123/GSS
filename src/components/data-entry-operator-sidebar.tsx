@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Sidebar,
   SidebarContent,
@@ -16,16 +16,17 @@ import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from './ui/button';
 import { useEffect, useState } from 'react';
-import { LOGGED_IN_USER_KEY } from '@/app/page';
+import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 
 const menuItems = [
-  { href: '/dashboard/data-entry-operator', label: 'Dashboard', icon: Home },
+  { href: '/dashboard/data-entry-operator', label: 'Dashboard', icon: Home, exact: true },
   { href: '/dashboard/data-entry-operator/regional-data', label: 'Regional Data', icon: PenSquare },
   { href: '/dashboard/data-entry-operator/disease-data', label: 'Disease Data', icon: Bug },
 ];
 
 export function DataEntryOperatorSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [userName, setUserName] = useState('Operator');
 
   useEffect(() => {
@@ -38,6 +39,11 @@ export function DataEntryOperatorSidebar() {
           console.error("Could not load user data", e);
       }
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem(LOGGED_IN_USER_KEY);
+    router.push('/login');
+  };
 
   return (
     <Sidebar>
@@ -53,7 +59,7 @@ export function DataEntryOperatorSidebar() {
             <SidebarMenuItem key={item.label}>
               <Link href={item.href} passHref>
                 <SidebarMenuButton
-                  isActive={pathname.startsWith(item.href)}
+                  isActive={item.exact ? pathname === item.href : pathname.startsWith(item.href)}
                   tooltip={item.label}
                 >
                   <item.icon />
@@ -73,11 +79,9 @@ export function DataEntryOperatorSidebar() {
             <p className="truncate font-semibold">{userName}</p>
             <p className="truncate text-xs text-muted-foreground">Data Entry Operator</p>
           </div>
-          <Link href="/" className="ml-auto" passHref>
-            <Button variant="ghost" size="icon" aria-label="Log out">
-              <LogOut />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon" aria-label="Log out" onClick={handleLogout}>
+            <LogOut />
+          </Button>
         </div>
       </SidebarFooter>
     </Sidebar>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -33,7 +32,7 @@ import Link from 'next/link';
 import type { RegionalData } from '../data-entry-operator/regional-data/page';
 import { REGIONAL_DATA_KEY } from '../data-entry-operator/regional-data/page';
 import { DISEASE_DATA_KEY, type DistrictDiseaseData } from '../data-entry-operator/disease-data/page';
-import { LOGGED_IN_USER_KEY } from '@/app/page';
+import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 
 const chartConfig = {
   cases: {

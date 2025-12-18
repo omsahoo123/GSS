@@ -25,7 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { LOGGED_IN_USER_KEY } from '@/app/page';
+import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 
 export const PHARMACY_LOCATION_KEY = 'pharmacistLocation';
 const INVENTORY_STORAGE_KEY = 'pharmacistInventory';

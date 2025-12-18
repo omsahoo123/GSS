@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Sidebar,
   SidebarContent,
@@ -25,7 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from './ui/button';
 import { useEffect, useState } from 'react';
-import { LOGGED_IN_USER_KEY } from '@/app/page';
+import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 
 const menuItems = [
   { href: '/dashboard/doctor', label: 'Dashboard', icon: Home, exact: true },
@@ -54,6 +54,7 @@ const menuItems = [
 
 export function DoctorSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const doctorAvatar = PlaceHolderImages.find(
     (img) => img.id === 'avatar-doctor'
   );
@@ -69,6 +70,11 @@ export function DoctorSidebar() {
         console.error("Could not load user data", e);
     }
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem(LOGGED_IN_USER_KEY);
+    router.push('/login');
+  };
 
   return (
     <Sidebar>
@@ -111,11 +117,9 @@ export function DoctorSidebar() {
             <p className="truncate font-semibold">{userName}</p>
             <p className="truncate text-xs text-muted-foreground">Doctor</p>
           </div>
-          <Link href="/" className="ml-auto" passHref>
-            <Button variant="ghost" size="icon" aria-label="Log out">
-              <LogOut />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon" aria-label="Log out" onClick={handleLogout}>
+            <LogOut />
+          </Button>
         </div>
       </SidebarFooter>
     </Sidebar>
