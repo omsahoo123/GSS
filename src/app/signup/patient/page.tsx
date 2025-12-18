@@ -41,8 +41,8 @@ export default function PatientSignupPage() {
       gender: '',
       phone: '',
       address: '',
-      age: undefined,
-      photo: undefined,
+      age: 0,
+      photo: null,
     },
   });
 
