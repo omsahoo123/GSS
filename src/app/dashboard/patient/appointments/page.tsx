@@ -17,7 +17,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Video, Building } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { LOGGED_IN_USER_KEY } from '@/app/page';
+import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 import { type Appointment } from '../../doctor/appointments/page';
 
 const doctors = [
@@ -75,7 +75,7 @@ export default function AppointmentsPage() {
     
     const newAppointment: Appointment = {
         id: `appt-${Date.now()}`,
-        doctor: doctors.find(d => d.id === data.doctorId)?.name || 'Unknown Doctor',
+        doctor: doctors.find(d => d.name === data.doctorId)?.name || 'Unknown Doctor',
         patient: patientName,
         date: new Date(data.appointmentDate),
         time: data.appointmentTime,
@@ -111,7 +111,7 @@ export default function AppointmentsPage() {
   };
   
   const selectedDoctorId = form.watch('doctorId');
-  const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
+  const selectedDoctor = doctors.find(d => d.name === selectedDoctorId);
   const doctorImage = PlaceHolderImages.find(p => p.id === selectedDoctor?.imageId);
 
   const filteredDoctors = selectedDepartment ? doctors.filter(d => d.department === selectedDepartment) : [];
