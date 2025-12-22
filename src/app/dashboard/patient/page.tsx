@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -37,6 +36,7 @@ import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 import { type Appointment } from '../doctor/appointments/page';
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { PROFESSIONAL_ACCOUNT_KEY } from '@/app/signup/professional/page';
 
 export default function PatientDashboardPage() {
   const [userName, setUserName] = useState('Patient');
@@ -44,6 +44,8 @@ export default function PatientDashboardPage() {
   const [canJoin, setCanJoin] = useState(false);
   const [countdown, setCountdown] = useState('');
   const { toast } = useToast();
+  const [doctorImage, setDoctorImage] = useState(PlaceHolderImages.find((img) => img.id === 'avatar-doctor'));
+
 
   const fetchUpcomingAppointment = () => {
      try {
@@ -61,7 +63,18 @@ export default function PatientDashboardPage() {
         .filter(appt => appt.patient === patientName && appt.status === 'Upcoming' && new Date(appt.date).setHours(0,0,0,0) >= now.setHours(0,0,0,0))
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
       
-      setUpcomingAppointment(nextAppointment || null);
+      if (nextAppointment) {
+        setUpcomingAppointment(nextAppointment);
+        // Find the specific doctor's account to get their details
+        const professionalKeys = Object.keys(localStorage).filter(key => key.startsWith(PROFESSIONAL_ACCOUNT_KEY));
+        const doctorAccount = professionalKeys.map(key => JSON.parse(localStorage.getItem(key)!)).find(acc => acc.name === nextAppointment.doctor);
+        
+        // This is a placeholder for a real avatar lookup. We'll use a default if not found.
+        const foundImage = PlaceHolderImages.find((img) => img.id === (doctorAccount ? 'doctor-2' : 'avatar-doctor'));
+        setDoctorImage(foundImage);
+      } else {
+        setUpcomingAppointment(null);
+      }
     } catch(e) {
       console.error("Error loading data", e);
     }
@@ -142,7 +155,6 @@ export default function PatientDashboardPage() {
   };
 
 
-  const doctorImage = PlaceHolderImages.find((img) => img.id === 'doctor-1');
   const healthyHabitsImages = PlaceHolderImages.filter((img) =>
     img.id.startsWith('healthy-habit-')
   );
@@ -306,5 +318,3 @@ export default function PatientDashboardPage() {
     </div>
   );
 }
-
-    
