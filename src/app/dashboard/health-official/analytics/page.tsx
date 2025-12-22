@@ -36,34 +36,12 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, BedDouble, Users, Download } from 'lucide-react';
-import { format, subDays, parseISO, eachDayOfInterval, isWithinInterval } from 'date-fns';
+import { format, subDays, parseISO, eachDayOfInterval } from 'date-fns';
 import { DISEASE_DATA_KEY, type DistrictDiseaseData } from '../../data-entry-operator/disease-data/page';
 import { REGIONAL_DATA_KEY } from '../../data-entry-operator/regional-data/page';
 import type { RegionalData } from '../../data-entry-operator/page';
 import { Input } from '@/components/ui/input';
-
-
-const regions = ['rampur', 'sitapur', 'aligarh', 'bareilly', 'meerut'];
-
-const allAgeDemographicsData = regions.reduce((acc, region) => {
-    acc[region] = [
-        { name: '0-18', value: Math.floor(Math.random() * 200 + 50) },
-        { name: '19-45', value: Math.floor(Math.random() * 300 + 100) },
-        { name: '46-65', value: Math.floor(Math.random() * 150 + 70) },
-        { name: '65+', value: Math.floor(Math.random() * 80 + 40) },
-    ];
-    return acc;
-}, {} as Record<string, {name: string, value: number}[]>);
-
-allAgeDemographicsData['all'] = Object.values(allAgeDemographicsData).flat().reduce((acc, curr) => {
-    const existing = acc.find(item => item.name === curr.name);
-    if (existing) {
-        existing.value += curr.value;
-    } else {
-        acc.push({ ...curr });
-    }
-    return acc;
-}, [] as {name: string, value: number}[]);
+import { PATIENT_ACCOUNT_KEY } from '@/app/signup/patient/page';
 
 
 const PIE_CHART_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -91,6 +69,7 @@ export default function HealthAnalyticsPage() {
   const [selectedRegion, setSelectedRegion] = useState('all');
   const [diseaseData, setDiseaseData] = useState<DistrictDiseaseData[]>([]);
   const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
+  const [allPatients, setAllPatients] = useState<any[]>([]);
   const [dateRange, setDateRange] = useState({
     from: subDays(new Date(), 29),
     to: new Date()
@@ -106,10 +85,18 @@ export default function HealthAnalyticsPage() {
         if(storedRegionalData) {
             setRegionalData(JSON.parse(storedRegionalData));
         }
+        const allPatientKeys = Object.keys(localStorage).filter(k => k.startsWith(PATIENT_ACCOUNT_KEY));
+        const patientAccounts = allPatientKeys.map(k => JSON.parse(localStorage.getItem(k)!));
+        setAllPatients(patientAccounts);
     } catch (error) {
         console.error("Failed to load data from localStorage", error);
     }
   };
+  
+  const regions = useMemo(() => {
+    return ['all', ...[...new Set(regionalData.map(d => d.district.toLowerCase()))]];
+  }, [regionalData]);
+
 
   useEffect(() => {
     fetchData();
@@ -171,8 +158,22 @@ export default function HealthAnalyticsPage() {
   }, [selectedRegion, regionalData]);
   
   const ageDemographicsData = useMemo(() => {
-    return allAgeDemographicsData[selectedRegion] || [];
-  }, [selectedRegion]);
+    const patientAges = allPatients.map(p => p.age).filter(age => age > 0);
+    const ageGroups: { [key: string]: number } = {
+        '0-18': 0,
+        '19-45': 0,
+        '46-65': 0,
+        '65+': 0,
+    };
+    patientAges.forEach(age => {
+        if (age <= 18) ageGroups['0-18']++;
+        else if (age <= 45) ageGroups['19-45']++;
+        else if (age <= 65) ageGroups['46-65']++;
+        else ageGroups['65+']++;
+    });
+
+    return Object.entries(ageGroups).map(([name, value]) => ({ name, value }));
+  }, [allPatients]);
 
   const handleDownload = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
@@ -198,7 +199,7 @@ export default function HealthAnalyticsPage() {
     });
     csvContent += "\n";
 
-    csvContent += "Patient Demographics by Age (Sample Data)\n";
+    csvContent += "Patient Demographics by Age\n";
     csvContent += "Age Group,Value\n";
     ageDemographicsData.forEach(row => {
         csvContent += `${row.name},${row.value}\n`;
@@ -233,8 +234,7 @@ export default function HealthAnalyticsPage() {
               <SelectValue placeholder="Select Region" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Regions</SelectItem>
-              {regions.map(r => <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>)}
+              {regions.map(r => <SelectItem key={r} value={r} className="capitalize">{r === 'all' ? 'All Regions' : r}</SelectItem>)}
             </SelectContent>
           </Select>
           <div className="flex items-center gap-2">
@@ -312,6 +312,7 @@ export default function HealthAnalyticsPage() {
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
+                  className="capitalize"
                 />
                 <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
                 <ChartTooltip
@@ -328,7 +329,7 @@ export default function HealthAnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Patient Demographics by Age (Sample Data)
+              Patient Demographics by Age
             </CardTitle>
             <CardDescription>
               Distribution of cases across different age groups.
