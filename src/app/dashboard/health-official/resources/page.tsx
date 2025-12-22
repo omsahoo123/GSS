@@ -33,7 +33,7 @@ const getOccupancyStatus = (occupancy: number) => {
 export default function ResourcesPage() {
     const [resourceData, setResourceData] = useState<RegionalData[]>([]);
 
-    useEffect(() => {
+    const fetchData = () => {
         try {
             const storedData = localStorage.getItem(REGIONAL_DATA_KEY);
             if (storedData) {
@@ -42,6 +42,14 @@ export default function ResourcesPage() {
         } catch (error) {
             console.error("Failed to load regional data from localStorage", error);
         }
+    };
+
+    useEffect(() => {
+        fetchData();
+        window.addEventListener('focus', fetchData);
+        return () => {
+            window.removeEventListener('focus', fetchData);
+        };
     }, []);
     
     const totalBeds = resourceData.reduce((sum, r) => sum + r.beds.total, 0);

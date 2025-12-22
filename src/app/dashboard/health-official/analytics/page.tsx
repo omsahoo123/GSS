@@ -96,7 +96,7 @@ export default function HealthAnalyticsPage() {
     to: new Date()
   });
 
-  useEffect(() => {
+  const fetchData = () => {
     try {
         const storedDiseaseData = localStorage.getItem(DISEASE_DATA_KEY);
         if (storedDiseaseData) {
@@ -109,6 +109,14 @@ export default function HealthAnalyticsPage() {
     } catch (error) {
         console.error("Failed to load data from localStorage", error);
     }
+  };
+
+  useEffect(() => {
+    fetchData();
+    window.addEventListener('focus', fetchData);
+    return () => {
+        window.removeEventListener('focus', fetchData);
+    };
   }, []);
 
   const availableDiseases = useMemo(() => {

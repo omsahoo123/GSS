@@ -71,7 +71,7 @@ export default function AlertsPage() {
   const [regions, setRegions] = useState<string[]>(['all']);
   const { toast } = useToast();
 
-  useEffect(() => {
+  const fetchData = () => {
     try {
       const storedAlerts = localStorage.getItem(HEALTH_ALERTS_STORAGE_KEY);
       if (storedAlerts) {
@@ -88,6 +88,14 @@ export default function AlertsPage() {
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
     }
+  };
+
+  useEffect(() => {
+    fetchData();
+    window.addEventListener('focus', fetchData);
+    return () => {
+        window.removeEventListener('focus', fetchData);
+    };
   }, []);
 
   useEffect(() => {

@@ -58,7 +58,7 @@ export default function HealthOfficialDashboardPage() {
     const [diseaseData, setDiseaseData] = useState<DistrictDiseaseData[]>([]);
     const [userName, setUserName] = useState('Official');
     
-    useEffect(() => {
+    const fetchData = () => {
         try {
             const userData = localStorage.getItem(LOGGED_IN_USER_KEY);
             if (userData) {
@@ -79,6 +79,14 @@ export default function HealthOfficialDashboardPage() {
         } catch (error) {
             console.error("Failed to load data from localStorage", error);
         }
+    };
+
+    useEffect(() => {
+        fetchData();
+        window.addEventListener('focus', fetchData);
+        return () => {
+            window.removeEventListener('focus', fetchData);
+        };
     }, []);
     
     const formattedDiseaseData = diseaseData.map(d => ({
