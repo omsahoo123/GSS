@@ -25,6 +25,8 @@ import { useEffect, useState } from 'react';
 import { type Appointment } from '../../appointments/page';
 import { type LabReport } from '../../lab-reports/page';
 import { format, parseISO } from 'date-fns';
+import { PATIENT_ACCOUNT_KEY } from '@/app/signup/patient/page';
+
 
 type PatientDetails = {
     id: string;
@@ -55,16 +57,30 @@ export default function PatientHistoryPage() {
             const patientName = patientAppointments[0].patient;
             const patientLabReports = allLabReports.filter(r => r.patientName === patientName);
             const lastVisit = patientAppointments.sort((a,b) => b.date.getTime() - a.date.getTime())[0];
-            const age = (patientName.length * 3) % 40 + 20;
+            
+            let patientAge = 0;
+            let avatarUrl = '';
+            
+            const allKeys = Object.keys(localStorage);
+            const patientAccountKey = allKeys.find(key => {
+                if (key.startsWith(PATIENT_ACCOUNT_KEY)) {
+                    const account = JSON.parse(localStorage.getItem(key) || '{}');
+                    return account.name === patientName;
+                }
+                return false;
+            });
+            
+            if (patientAccountKey) {
+                const patientAccount = JSON.parse(localStorage.getItem(patientAccountKey) || '{}');
+                patientAge = patientAccount.age;
+                avatarUrl = patientAccount.photo;
+            }
 
-            const patientAccountKey = `patientAccount_${patientName}`;
-            const patientAccount = JSON.parse(localStorage.getItem(patientAccountKey) || '{}');
-            const avatarUrl = patientAccount.photo;
 
             setPatient({
                 id: patientId,
                 name: patientName,
-                age: age,
+                age: patientAge,
                 lastVisit: format(lastVisit.date, 'PPP'),
                 avatarUrl: avatarUrl,
                 history: {

@@ -96,9 +96,11 @@ export default function AppointmentsPage() {
   const onSubmit = (data: AppointmentFormValues) => {
     setIsBooking(true);
     
+    const selectedDoctor = doctors.find(d => d.id === data.doctorId);
+
     const newAppointment: Appointment = {
       id: `appt-${Date.now()}`,
-      doctor: doctors.find(d => d.name === data.doctorId)?.name || 'Unknown Doctor',
+      doctor: selectedDoctor?.name || 'Unknown Doctor',
       patient: patientName,
       date: new Date(data.appointmentDate),
       time: data.appointmentTime,
@@ -134,7 +136,7 @@ export default function AppointmentsPage() {
   };
   
   const selectedDoctorId = form.watch('doctorId');
-  const selectedDoctor = doctors.find(d => d.name === selectedDoctorId);
+  const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
   const doctorImage = PlaceHolderImages.find(p => p.id === selectedDoctor?.imageId);
 
   const filteredDoctors = selectedDepartment ? doctors.filter(d => d.department.toLowerCase().includes(selectedDepartment.toLowerCase())) : [];
@@ -201,7 +203,7 @@ export default function AppointmentsPage() {
                           </FormControl>
                           <SelectContent>
                             {filteredDoctors.map(doctor => (
-                              <SelectItem key={doctor.id} value={doctor.name}>
+                              <SelectItem key={doctor.id} value={doctor.id}>
                                 {doctor.name} - {doctor.specialty}
                               </SelectItem>
                             ))}
