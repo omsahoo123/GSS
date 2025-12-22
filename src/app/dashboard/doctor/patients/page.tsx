@@ -27,10 +27,12 @@ import { Input } from '@/components/ui/input';
 import { format, parseISO } from 'date-fns';
 import { type Appointment } from '../appointments/page';
 import { LOGGED_IN_USER_KEY } from '@/app/login/page';
+import { PATIENT_ACCOUNT_KEY } from '@/app/signup/patient/page';
 
 type PatientSummary = {
     id: string;
     name: string;
+    phone: string;
     age: number;
     lastVisit: string;
     type: 'Video' | 'In-Person';
@@ -55,17 +57,21 @@ function PatientsPageComponent() {
                 const doctorAppointments = allAppointments.filter(appt => appt.doctor === doctorName);
 
                 const uniquePatients = new Map<string, PatientSummary>();
+                
+                const allPatientKeys = Object.keys(localStorage).filter(k => k.startsWith(PATIENT_ACCOUNT_KEY));
+                const allPatientAccounts = allPatientKeys.map(k => JSON.parse(localStorage.getItem(k)!));
 
                 doctorAppointments.forEach(appt => {
                     const lastVisit = format(appt.date, 'yyyy-MM-dd');
-                    const age = (appt.patient.length * 3) % 40 + 20; // Generate a mock age based on name
-                    
+                    const patientAccount = allPatientAccounts.find(p => p.name === appt.patient);
+
                     const existingPatient = uniquePatients.get(appt.patient);
                     if (!existingPatient || lastVisit > existingPatient.lastVisit) {
                         uniquePatients.set(appt.patient, {
                             id: `pat-${appt.patient.replace(/\s+/g, '-').toLowerCase()}`,
                             name: appt.patient,
-                            age: age,
+                            phone: patientAccount?.phone || '',
+                            age: patientAccount?.age || 0,
                             lastVisit: lastVisit,
                             type: appt.type,
                             avatarId: 'avatar-patient', // Default avatar
@@ -149,10 +155,10 @@ function PatientsPageComponent() {
                           <div className="font-medium">{patient.name}</div>
                       </div>
                     </TableCell>
-                    <TableCell>{patient.age}</TableCell>
+                    <TableCell>{patient.age > 0 ? patient.age : 'N/A'}</TableCell>
                     <TableCell>{format(parseISO(patient.lastVisit), 'PPP')}</TableCell>
                     <TableCell className="text-right">
-                       <Link href={`/dashboard/doctor/patients/${patient.id}`} passHref>
+                       <Link href={`/dashboard/doctor/patients/${patient.id}?phone=${patient.phone}`} passHref>
                         <Button variant="outline" size="sm">
                           <FileText className="mr-2 h-4 w-4" /> View History
                         </Button>
@@ -202,10 +208,10 @@ function PatientsPageComponent() {
                           <div className="font-medium">{patient.name}</div>
                       </div>
                     </TableCell>
-                    <TableCell>{patient.age}</TableCell>
+                    <TableCell>{patient.age > 0 ? patient.age : 'N/A'}</TableCell>
                     <TableCell>{format(parseISO(patient.lastVisit), 'PPP')}</TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/dashboard/doctor/patients/${patient.id}`} passHref>
+                      <Link href={`/dashboard/doctor/patients/${patient.id}?phone=${patient.phone}`} passHref>
                         <Button variant="outline" size="sm">
                           <FileText className="mr-2 h-4 w-4" /> View History
                         </Button>

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -42,11 +42,13 @@ type PatientDetails = {
 
 export default function PatientHistoryPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const patientId = params.patientId as string;
+  const patientPhone = searchParams.get('phone');
   const [patient, setPatient] = useState<PatientDetails | null>(null);
 
   useEffect(() => {
-    if (!patientId) return;
+    if (!patientId || !patientPhone) return;
     try {
         const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]').map((a:any) => ({...a, date: parseISO(a.date)}));
         const allLabReports: LabReport[] = JSON.parse(localStorage.getItem('allLabReports') || '[]');
@@ -61,17 +63,11 @@ export default function PatientHistoryPage() {
             let patientAge = 0;
             let avatarUrl = '';
             
-            const allKeys = Object.keys(localStorage);
-            const patientAccountKey = allKeys.find(key => {
-                if (key.startsWith(PATIENT_ACCOUNT_KEY)) {
-                    const account = JSON.parse(localStorage.getItem(key) || '{}');
-                    return account.name === patientName;
-                }
-                return false;
-            });
+            const patientAccountKey = `${PATIENT_ACCOUNT_KEY}${patientPhone}`;
+            const patientAccountString = localStorage.getItem(patientAccountKey);
             
-            if (patientAccountKey) {
-                const patientAccount = JSON.parse(localStorage.getItem(patientAccountKey) || '{}');
+            if (patientAccountString) {
+                const patientAccount = JSON.parse(patientAccountString);
                 patientAge = patientAccount.age;
                 avatarUrl = patientAccount.photo;
             }
@@ -92,7 +88,7 @@ export default function PatientHistoryPage() {
     } catch(e) {
         console.error("Error loading patient history", e);
     }
-  }, [patientId]);
+  }, [patientId, patientPhone]);
   
   if (!patient) {
     return (
@@ -137,7 +133,7 @@ export default function PatientHistoryPage() {
             <div className="flex-1">
                 <CardTitle className="text-3xl font-bold">{patient.name}</CardTitle>
                 <CardDescription className="text-base text-muted-foreground">
-                    Age: {patient.age} &bull; Patient ID: {patient.id} &bull; Last Visit: {patient.lastVisit}
+                    Age: {patient.age > 0 ? patient.age : 'N/A'} &bull; Patient ID: {patient.id} &bull; Last Visit: {patient.lastVisit}
                 </CardDescription>
             </div>
         </CardHeader>
