@@ -83,13 +83,15 @@ export default function InventoryPage() {
     }
   }, []);
 
-  useEffect(() => {
+  const saveInventory = (updatedInventory: Medicine[]) => {
+    setInventory(updatedInventory);
     try {
-      localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+      localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(updatedInventory));
     } catch (error) {
       console.error("Failed to save inventory to localStorage", error);
+      toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save inventory data.' });
     }
-  }, [inventory]);
+  };
 
   const form = useForm<InventoryFormValues>({
     resolver: zodResolver(inventorySchema),
@@ -143,7 +145,7 @@ export default function InventoryPage() {
       });
     }
 
-    setInventory(updatedInventory.map(updateStatus));
+    saveInventory(updatedInventory.map(updateStatus));
     form.reset();
   };
 
@@ -161,7 +163,7 @@ export default function InventoryPage() {
       m.id === medicineId ? { ...m, ...editingValues } : m
     ).map(updateStatus);
     
-    setInventory(updatedInventory);
+    saveInventory(updatedInventory);
     setEditingMedicineId(null);
 
     toast({
