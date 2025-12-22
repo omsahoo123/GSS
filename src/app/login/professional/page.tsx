@@ -45,7 +45,7 @@ export default function ProfessionalLoginPage() {
         variant: 'destructive',
         title: 'Account Not Found',
         description: 'No account found with that User ID.',
-        action: <Button variant="secondary" size="sm" onClick={() => router.push(`/signup/professional?role=${role}`)}>Sign Up</Button>,
+        action: ['doctor', 'pharmacist'].includes(role) ? <Button variant="secondary" size="sm" onClick={() => router.push(`/signup/professional?role=${role}`)}>Sign Up</Button> : undefined,
       });
       return;
     }
@@ -70,6 +70,8 @@ export default function ProfessionalLoginPage() {
   };
 
   const roleLabel = role.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+  const canSignUp = ['doctor', 'pharmacist'].includes(role);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-secondary">
@@ -103,12 +105,15 @@ export default function ProfessionalLoginPage() {
                 Forgot Password?
               </Link>
             </div>
-          <div className="text-center text-sm text-muted-foreground pt-4">
-            Don't have an account?{' '}
-            <Link href={`/signup/professional?role=${role}`} className="text-primary underline">
-              Sign Up
-            </Link>
-          </div>
+          
+          {canSignUp && (
+            <div className="text-center text-sm text-muted-foreground pt-4">
+              Don't have an account?{' '}
+              <Link href={`/signup/professional?role=${role}`} className="text-primary underline">
+                Sign Up
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
