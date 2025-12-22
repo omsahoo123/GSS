@@ -10,8 +10,8 @@ import { KeyRound } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import Link from 'next/link';
 import { LOGGED_IN_USER_KEY } from '../page';
+import { PROFESSIONAL_ACCOUNT_KEY } from '@/app/signup/professional/page';
 
-export const PROFESSIONAL_ACCOUNT_KEY = 'professionalAccount_';
 
 export default function ProfessionalLoginPage() {
   const router = useRouter();
@@ -29,6 +29,38 @@ export default function ProfessionalLoginPage() {
     } else {
       router.push('/login');
     }
+
+    // Seed administrative accounts if they don't exist
+    const seedAdminAccounts = () => {
+      const accountsToSeed = [
+        {
+          name: 'Aditi Singh',
+          userId: 'health01',
+          email: 'aditi.singh@gov.in',
+          phone: '9876543210',
+          password: 'password123',
+          role: 'health-official',
+        },
+        {
+          name: 'Ravi Kumar',
+          userId: 'dataop01',
+          email: 'ravi.kumar@gov.in',
+          phone: '9876543211',
+          password: 'password123',
+          role: 'data-entry-operator',
+        }
+      ];
+
+      accountsToSeed.forEach(account => {
+        const accountKey = `${PROFESSIONAL_ACCOUNT_KEY}${account.userId}`;
+        if (!localStorage.getItem(accountKey)) {
+          localStorage.setItem(accountKey, JSON.stringify(account));
+        }
+      });
+    };
+
+    seedAdminAccounts();
+
   }, [searchParams, router]);
 
   const handleLogin = () => {
