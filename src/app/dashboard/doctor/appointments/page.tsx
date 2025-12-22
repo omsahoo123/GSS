@@ -37,6 +37,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { format, parseISO } from 'date-fns';
 import { Video, FileText } from 'lucide-react';
 import Link from 'next/link';
+import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 
 const APPOINTMENTS_KEY = 'allAppointmentsData';
 
@@ -51,26 +52,29 @@ export type Appointment = {
     notes: string;
 };
 
-
-const loggedInDoctorName = 'Dr. Priya Singh';
-
 export default function DoctorAppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [currentAppointment, setCurrentAppointment] = useState<Appointment | null>(null);
   const [noteText, setNoteText] = useState('');
+  const [loggedInDoctorName, setLoggedInDoctorName] = useState('');
 
   const fetchAppointments = () => {
     try {
-      const storedData = localStorage.getItem(APPOINTMENTS_KEY);
-      if (storedData) {
-        const parsedData: Appointment[] = JSON.parse(storedData).map((appt: any) => ({
-            ...appt,
-            date: parseISO(appt.date)
-        }));
-        setAppointments(parsedData);
-      }
+        const doctorData = JSON.parse(localStorage.getItem(LOGGED_IN_USER_KEY) || '{}');
+        const doctorName = doctorData.name || '';
+        setLoggedInDoctorName(doctorName);
+      
+        const storedData = localStorage.getItem(APPOINTMENTS_KEY);
+        if (storedData) {
+            const parsedData: Appointment[] = JSON.parse(storedData).map((appt: any) => ({
+                ...appt,
+                date: parseISO(appt.date)
+            }));
+            const doctorAppointments = parsedData.filter(appt => appt.doctor === doctorName);
+            setAppointments(doctorAppointments);
+        }
     } catch (e) {
       console.error("Error loading appointments", e);
     }
@@ -78,23 +82,23 @@ export default function DoctorAppointmentsPage() {
   
   useEffect(() => {
     fetchAppointments();
-    // Add event listener to refetch data when window gets focus
     window.addEventListener('focus', fetchAppointments);
     return () => {
       window.removeEventListener('focus', fetchAppointments);
     };
   }, []);
 
-  const saveAppointments = (updatedAppointments: Appointment[]) => {
-    setAppointments(updatedAppointments);
+  const saveAllAppointments = (updatedAppointments: Appointment[]) => {
     localStorage.setItem(APPOINTMENTS_KEY, JSON.stringify(updatedAppointments));
+    fetchAppointments(); // Refetch to get the filtered list for the current doctor
   };
   
   const handleStatusChange = (appointmentId: string, status: string) => {
-    const updatedAppointments = appointments.map((appt) =>
+    const allAppointments: Appointment[] = JSON.parse(localStorage.getItem(APPOINTMENTS_KEY) || '[]').map((appt: any) => ({ ...appt, date: parseISO(appt.date) }));
+    const updatedAllAppointments = allAppointments.map((appt) =>
         appt.id === appointmentId ? { ...appt, status: status as Appointment['status'] } : appt
     );
-    saveAppointments(updatedAppointments);
+    saveAllAppointments(updatedAllAppointments);
   };
   
   const openNotesDialog = (appointment: Appointment) => {
@@ -105,22 +109,23 @@ export default function DoctorAppointmentsPage() {
   
   const handleSaveNote = () => {
     if (currentAppointment) {
-      const updatedAppointments = appointments.map((appt) =>
+       const allAppointments: Appointment[] = JSON.parse(localStorage.getItem(APPOINTMENTS_KEY) || '[]').map((appt: any) => ({ ...appt, date: parseISO(appt.date) }));
+      const updatedAllAppointments = allAppointments.map((appt) =>
           appt.id === currentAppointment.id ? { ...appt, notes: noteText } : appt
         );
-      saveAppointments(updatedAppointments);
+      saveAllAppointments(updatedAllAppointments);
     }
     setIsNotesDialogOpen(false);
     setCurrentAppointment(null);
     setNoteText('');
   };
 
-  const doctorAppointments = appointments.filter(
-    (appt) => appt.doctor === loggedInDoctorName && selectedDate && format(appt.date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
+  const filteredAppointments = appointments.filter(
+    (appt) => selectedDate && format(appt.date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
   );
 
-  const onlineAppointments = doctorAppointments.filter((appt) => appt.type === 'Video');
-  const inPersonAppointments = doctorAppointments.filter((appt) => appt.type === 'In-Person');
+  const onlineAppointments = filteredAppointments.filter((appt) => appt.type === 'Video');
+  const inPersonAppointments = filteredAppointments.filter((appt) => appt.type === 'In-Person');
 
   return (
     <div className="space-y-6">

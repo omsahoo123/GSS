@@ -65,7 +65,8 @@ export default function DoctorDashboardPage() {
 
   const fetchDoctorData = () => {
     try {
-      const doctorName = JSON.parse(localStorage.getItem(LOGGED_IN_USER_KEY) || '{}').name || 'Doctor';
+      const doctorData = JSON.parse(localStorage.getItem(LOGGED_IN_USER_KEY) || '{}');
+      const doctorName = doctorData.name || 'Doctor';
       setUserName(doctorName);
 
       const doctorTasksKey = `doctorTasks_${doctorName}`;
@@ -74,13 +75,14 @@ export default function DoctorDashboardPage() {
         setTasks(JSON.parse(storedTasks));
       }
 
-      const storedAppointments = localStorage.getItem('allAppointmentsData');
-       if (storedAppointments) {
-        const parsedData: Appointment[] = JSON.parse(storedAppointments).map((appt: any) => ({
+      const allAppointments = localStorage.getItem('allAppointmentsData');
+       if (allAppointments) {
+        const parsedData: Appointment[] = JSON.parse(allAppointments).map((appt: any) => ({
             ...appt,
             date: parseISO(appt.date)
         }));
-        setAppointments(parsedData);
+        const doctorAppointments = parsedData.filter(appt => appt.doctor === doctorName);
+        setAppointments(doctorAppointments);
       }
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
@@ -89,14 +91,14 @@ export default function DoctorDashboardPage() {
 
   useEffect(() => {
     fetchDoctorData();
-    // Add event listener to refetch data when window gets focus
     window.addEventListener('focus', fetchDoctorData);
     return () => {
       window.removeEventListener('focus', fetchDoctorData);
     };
-  }, [userName]);
+  }, []);
 
   useEffect(() => {
+    if (userName === 'Doctor') return;
     try {
         const doctorTasksKey = `doctorTasks_${userName}`;
         localStorage.setItem(doctorTasksKey, JSON.stringify(tasks));
@@ -106,10 +108,10 @@ export default function DoctorDashboardPage() {
   }, [tasks, userName]);
 
   const todaysAppointments = appointments.filter(
-    (appt) => appt.doctor === userName && isToday(appt.date) && appt.status === 'Upcoming'
+    (appt) => isToday(appt.date) && appt.status === 'Upcoming'
   );
   
-  const totalPatients = new Set(appointments.filter(a => a.doctor === userName).map(a => a.patient)).size;
+  const totalPatients = new Set(appointments.map(a => a.patient)).size;
 
 
   const handleAddTask = (e: React.FormEvent) => {

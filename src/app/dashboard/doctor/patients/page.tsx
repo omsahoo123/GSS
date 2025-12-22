@@ -26,6 +26,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 import { format, parseISO } from 'date-fns';
 import { type Appointment } from '../appointments/page';
+import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 
 type PatientSummary = {
     id: string;
@@ -41,32 +42,47 @@ function PatientsPageComponent() {
     const initialSearch = searchParams.get('search') || '';
     const [searchTerm, setSearchTerm] = useState(initialSearch);
     const [allPatients, setAllPatients] = useState<PatientSummary[]>([]);
+    const [loggedInDoctorName, setLoggedInDoctorName] = useState('');
 
     useEffect(() => {
-        try {
-            const storedAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]').map((appt: any) => ({...appt, date: parseISO(appt.date)}));
-            const uniquePatients = new Map<string, PatientSummary>();
-
-            storedAppointments.forEach(appt => {
-                const lastVisit = format(appt.date, 'yyyy-MM-dd');
-                const age = (appt.patient.length * 3) % 40 + 20; // Generate a mock age based on name
+        const fetchData = () => {
+            try {
+                const doctorData = JSON.parse(localStorage.getItem(LOGGED_IN_USER_KEY) || '{}');
+                const doctorName = doctorData.name || '';
+                setLoggedInDoctorName(doctorName);
                 
-                const existingPatient = uniquePatients.get(appt.patient);
-                if (!existingPatient || lastVisit > existingPatient.lastVisit) {
-                     uniquePatients.set(appt.patient, {
-                        id: `pat-${appt.patient.replace(/\s+/g, '-').toLowerCase()}`,
-                        name: appt.patient,
-                        age: age,
-                        lastVisit: lastVisit,
-                        type: appt.type,
-                        avatarId: 'avatar-patient', // Default avatar
-                     });
-                }
-            });
-            setAllPatients(Array.from(uniquePatients.values()));
-        } catch (e) {
-            console.error("Failed to load patient data", e);
-        }
+                const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('allAppointmentsData') || '[]').map((appt: any) => ({...appt, date: parseISO(appt.date)}));
+                const doctorAppointments = allAppointments.filter(appt => appt.doctor === doctorName);
+
+                const uniquePatients = new Map<string, PatientSummary>();
+
+                doctorAppointments.forEach(appt => {
+                    const lastVisit = format(appt.date, 'yyyy-MM-dd');
+                    const age = (appt.patient.length * 3) % 40 + 20; // Generate a mock age based on name
+                    
+                    const existingPatient = uniquePatients.get(appt.patient);
+                    if (!existingPatient || lastVisit > existingPatient.lastVisit) {
+                        uniquePatients.set(appt.patient, {
+                            id: `pat-${appt.patient.replace(/\s+/g, '-').toLowerCase()}`,
+                            name: appt.patient,
+                            age: age,
+                            lastVisit: lastVisit,
+                            type: appt.type,
+                            avatarId: 'avatar-patient', // Default avatar
+                        });
+                    }
+                });
+                setAllPatients(Array.from(uniquePatients.values()));
+            } catch (e) {
+                console.error("Failed to load patient data", e);
+            }
+        };
+
+        fetchData();
+        window.addEventListener('focus', fetchData);
+        return () => {
+            window.removeEventListener('focus', fetchData);
+        };
     }, []);
 
     useEffect(() => {
@@ -87,7 +103,7 @@ function PatientsPageComponent() {
         <div>
           <h1 className="font-headline text-3xl font-bold">Manage Patients</h1>
           <p className="text-muted-foreground">
-            View patient records and manage their medical history.
+            View patient records for {loggedInDoctorName}.
           </p>
         </div>
         <div className="relative w-full max-w-sm">
