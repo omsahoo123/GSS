@@ -17,6 +17,7 @@ import {
   Package,
   Receipt,
   LineChart,
+  User,
 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -29,6 +30,7 @@ const menuItems = [
   { href: '/dashboard/pharmacist/inventory', label: 'Inventory', icon: Package },
   { href: '/dashboard/pharmacist/prescriptions', label: 'Prescriptions', icon: Receipt },
   { href: '/dashboard/pharmacist/reports', label: 'Sales Reports', icon: LineChart },
+  { href: '/dashboard/pharmacist/profile', label: 'Profile', icon: User },
 ];
 
 export function PharmacistSidebar() {

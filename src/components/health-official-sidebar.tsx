@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Siren,
   Truck,
+  User,
 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -31,6 +32,7 @@ const menuItems = [
   { href: '/dashboard/health-official/resources', label: 'Resources', icon: Truck },
   { href: '/dashboard/health-official/reports', label: 'Reports', icon: ClipboardList },
   { href: '/dashboard/health-official/alerts', label: 'Alerts', icon: Siren },
+  { href: '/dashboard/health-official/profile', label: 'Profile', icon: User },
 ];
 
 export function HealthOfficialSidebar() {

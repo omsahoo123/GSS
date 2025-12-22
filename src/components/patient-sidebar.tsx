@@ -17,6 +17,7 @@ import {
   Home,
   LogOut,
   Pill,
+  User,
   Video,
 } from 'lucide-react';
 import { Logo } from '@/components/icons';
@@ -31,6 +32,7 @@ const menuItems = [
   { href: '/dashboard/patient/records', label: 'Health Records', icon: HeartPulse },
   { href: '/dashboard/patient/pharmacy-stock', label: 'Pharmacy Stock', icon: Pill },
   { href: '/dashboard/patient/consultation', label: 'Video Consultation', icon: Video },
+  { href: '/dashboard/patient/profile', label: 'Profile', icon: User },
 ];
 
 type PatientData = {

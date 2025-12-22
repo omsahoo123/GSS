@@ -19,6 +19,7 @@ import {
   FileText,
   Video,
   BeakerIcon,
+  User,
 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -49,6 +50,11 @@ const menuItems = [
     href: '/dashboard/doctor/lab-reports',
     label: 'Lab Reports',
     icon: BeakerIcon,
+  },
+  {
+    href: '/dashboard/doctor/profile',
+    label: 'Profile',
+    icon: User,
   },
 ];
 
