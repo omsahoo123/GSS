@@ -43,7 +43,7 @@ export default function LandingPage() {
         <section className="relative h-[60vh] w-full">
            {heroImage && (
             <Image
-              src="https://picsum.photos/seed/h-care-india/1200/800"
+              src={heroImage.imageUrl}
               alt={heroImage.description}
               fill
               className="object-cover"
