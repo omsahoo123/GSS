@@ -8,6 +8,7 @@ import { Logo } from '@/components/icons';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ArrowRight, Heart, Users, Stethoscope } from 'lucide-react';
+import { PROFESSIONAL_ACCOUNT_KEY } from './signup/professional/page';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -18,6 +19,38 @@ export default function LandingPage() {
     // Simulate fetching the number of patients from localStorage
     const patientKeys = Object.keys(localStorage).filter(key => key.startsWith('patientAccount_'));
     setPatientCount(patientKeys.length);
+
+    // Seed administrative accounts if they don't exist
+    const seedAdminAccounts = () => {
+      const accountsToSeed = [
+        {
+          name: 'Aditi Singh',
+          userId: 'health01',
+          email: 'aditi.singh@gov.in',
+          phone: '9876543210',
+          password: 'password123',
+          role: 'health-official',
+        },
+        {
+          name: 'Ravi Kumar',
+          userId: 'dataop01',
+          email: 'ravi.kumar@gov.in',
+          phone: '9876543211',
+          password: 'password123',
+          role: 'data-entry-operator',
+        }
+      ];
+
+      accountsToSeed.forEach(account => {
+        const accountKey = `${PROFESSIONAL_ACCOUNT_KEY}${account.userId}`;
+        if (!localStorage.getItem(accountKey)) {
+          localStorage.setItem(accountKey, JSON.stringify(account));
+        }
+      });
+    };
+
+    seedAdminAccounts();
+
   }, []);
 
   const handleGetStarted = () => {
