@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -46,7 +47,7 @@ const chartConfig = {
 export default function PharmacistReportsPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-    useEffect(() => {
+    const fetchTransactions = () => {
         try {
             const storedTransactions = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
             if (storedTransactions) {
@@ -54,6 +55,14 @@ export default function PharmacistReportsPage() {
             }
         } catch (error) {
             console.error("Failed to load transactions from localStorage", error);
+        }
+    };
+    
+    useEffect(() => {
+        fetchTransactions();
+        window.addEventListener('focus', fetchTransactions);
+        return () => {
+          window.removeEventListener('focus', fetchTransactions);
         }
     }, []);
 
@@ -191,3 +200,5 @@ export default function PharmacistReportsPage() {
     </div>
   );
 }
+
+    

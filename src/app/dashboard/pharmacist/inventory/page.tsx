@@ -64,7 +64,7 @@ export default function InventoryPage() {
   const [editingValues, setEditingValues] = useState<{ quantity: number, price: number }>({ quantity: 0, price: 0 });
   const { toast } = useToast();
   
-  useEffect(() => {
+  const fetchInventory = () => {
     try {
       const storedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
       if (storedInventory) {
@@ -72,6 +72,14 @@ export default function InventoryPage() {
       }
     } catch (error) {
       console.error("Failed to load inventory from localStorage", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchInventory();
+    window.addEventListener('focus', fetchInventory);
+    return () => {
+      window.removeEventListener('focus', fetchInventory);
     }
   }, []);
 
@@ -352,5 +360,7 @@ export default function InventoryPage() {
     </div>
   );
 }
+
+    
 
     
