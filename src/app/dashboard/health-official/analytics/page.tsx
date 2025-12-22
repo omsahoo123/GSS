@@ -35,13 +35,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, BedDouble, Users, Download } from 'lucide-react';
+import { TrendingUp, BedDouble, Users, Download, ChevronDown } from 'lucide-react';
 import { format, subDays, parseISO, eachDayOfInterval } from 'date-fns';
 import { DISEASE_DATA_KEY, type DistrictDiseaseData } from '../../data-entry-operator/disease-data/page';
 import { REGIONAL_DATA_KEY } from '../../data-entry-operator/regional-data/page';
 import type { RegionalData } from '../../data-entry-operator/page';
 import { Input } from '@/components/ui/input';
 import { PATIENT_ACCOUNT_KEY } from '@/app/signup/patient/page';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 
 const PIE_CHART_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -74,6 +75,18 @@ export default function HealthAnalyticsPage() {
     from: subDays(new Date(), 29),
     to: new Date()
   });
+  
+  const availableDiseases = useMemo(() => {
+    const all = new Set(diseaseData.flatMap(d => d.entries.map(e => e.diseaseName)))
+    return Array.from(all).filter(Boolean); // Filter out empty strings
+  }, [diseaseData]);
+  
+  const [selectedDiseases, setSelectedDiseases] = useState<string[]>(availableDiseases);
+
+  useEffect(() => {
+    setSelectedDiseases(availableDiseases);
+  }, [availableDiseases]);
+
 
   const fetchData = () => {
     try {
@@ -105,11 +118,6 @@ export default function HealthAnalyticsPage() {
         window.removeEventListener('focus', fetchData);
     };
   }, []);
-
-  const availableDiseases = useMemo(() => {
-    const all = new Set(diseaseData.flatMap(d => d.entries.map(e => e.diseaseName)))
-    return Array.from(all).filter(Boolean); // Filter out empty strings
-  }, [diseaseData]);
   
   const diseaseChartConfig = useMemo(() => {
     return availableDiseases.reduce((config, diseaseName, index) => {
@@ -135,7 +143,7 @@ export default function HealthAnalyticsPage() {
     return intervalDays.map(date => {
         const dailyData: {[key: string]: any} = { date: format(date, 'MMM d') };
 
-        availableDiseases.forEach(diseaseName => {
+        selectedDiseases.forEach(diseaseName => {
             const key = diseaseName.replace(/\s+/g, '-').toLowerCase();
             const totalCasesForDay = filteredByRegion.reduce((sum, district) => {
                 const dayEntries = district.entries.filter(e => 
@@ -148,7 +156,7 @@ export default function HealthAnalyticsPage() {
         });
         return dailyData;
     });
-  }, [selectedRegion, diseaseData, availableDiseases, dateRange]);
+  }, [selectedRegion, diseaseData, selectedDiseases, dateRange]);
 
   const hospitalOccupancyData = useMemo(() => {
      if (selectedRegion !== 'all') {
@@ -184,9 +192,9 @@ export default function HealthAnalyticsPage() {
     csvContent += `Generated on: ${format(new Date(), 'yyyy-MM-dd')}\n\n`;
 
     csvContent += "Daily Disease Trends\n";
-    csvContent += "Date," + availableDiseases.join(',') + '\n';
+    csvContent += "Date," + selectedDiseases.join(',') + '\n';
     dailyCaseData.forEach(row => {
-        const rowData = [row.date, ...availableDiseases.map(d => row[d.replace(/\s+/g, '-').toLowerCase()] || 0)];
+        const rowData = [row.date, ...selectedDiseases.map(d => row[d.replace(/\s+/g, '-').toLowerCase()] || 0)];
         csvContent += rowData.join(',') + '\n';
     });
     csvContent += "\n";
@@ -219,6 +227,16 @@ export default function HealthAnalyticsPage() {
       setDateRange(prev => ({ ...prev, [field]: newDate }));
   };
 
+  const handleDiseaseSelectionChange = (diseaseName: string) => {
+    setSelectedDiseases(prev => {
+      if (prev.includes(diseaseName)) {
+        return prev.filter(d => d !== diseaseName);
+      } else {
+        return [...prev, diseaseName];
+      }
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -237,6 +255,28 @@ export default function HealthAnalyticsPage() {
               {regions.map(r => <SelectItem key={r} value={r} className="capitalize">{r === 'all' ? 'All Regions' : r}</SelectItem>)}
             </SelectContent>
           </Select>
+
+           <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-40">
+                Diseases <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>Show Diseases</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {availableDiseases.map(disease => (
+                 <DropdownMenuCheckboxItem
+                    key={disease}
+                    checked={selectedDiseases.includes(disease)}
+                    onCheckedChange={() => handleDiseaseSelectionChange(disease)}
+                 >
+                    {disease}
+                 </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+           </DropdownMenu>
+
           <div className="flex items-center gap-2">
             <Input type="date" value={format(dateRange.from, 'yyyy-MM-dd')} onChange={(e) => handleDateChange(e, 'from')} />
              <span className="text-muted-foreground">to</span>
@@ -270,7 +310,7 @@ export default function HealthAnalyticsPage() {
               <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
               <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
               <Legend />
-              {availableDiseases.map((disease) => {
+              {selectedDiseases.map((disease) => {
                 const key = disease.replace(/\s+/g, '-').toLowerCase();
                 return <Line
                     key={key}
@@ -374,3 +414,5 @@ export default function HealthAnalyticsPage() {
     </div>
   );
 }
+
+    
