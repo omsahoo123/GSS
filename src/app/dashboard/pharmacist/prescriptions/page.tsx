@@ -1,12 +1,10 @@
-
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 import {
   Card,
@@ -180,6 +178,12 @@ export default function PharmacistPrescriptionsPage() {
                     description: `${data.medication} is not in the inventory. Please add it first.`,
                 });
             }
+        } else {
+             toast({
+                variant: 'destructive',
+                title: 'Medicine Not Found',
+                description: `${data.medication} is not in the inventory. Please add it first.`,
+            });
         }
     } catch (error) {
         console.error("Failed to update inventory/transactions from localStorage", error);
@@ -346,7 +350,7 @@ export default function PharmacistPrescriptionsPage() {
                       {presc.patientName}
                     </TableCell>
                     <TableCell>{presc.medication} {presc.dosage}</TableCell>
-                    <TableCell className="hidden sm:table-cell">{presc.date}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{format(parseISO(presc.date), 'PPP')}</TableCell>
                     <TableCell className="hidden sm:table-cell">
                       <Badge variant={getStatusVariant(presc.status)}>
                         {presc.status}
@@ -376,7 +380,7 @@ export default function PharmacistPrescriptionsPage() {
             <DialogHeader>
               <DialogTitle>Recorded Prescription Details</DialogTitle>
               <DialogDescription>
-                Viewing prescription for {selectedPrescription?.patientName} filled on {selectedPrescription?.date}.
+                Viewing prescription for {selectedPrescription?.patientName} filled on {selectedPrescription?.date ? format(parseISO(selectedPrescription.date), 'PPP') : ''}.
               </DialogDescription>
             </DialogHeader>
             {selectedPrescription && (

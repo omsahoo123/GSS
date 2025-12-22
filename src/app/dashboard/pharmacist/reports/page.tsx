@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -25,7 +23,7 @@ import {
 } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { IndianRupee, Pill, CalendarDays } from 'lucide-react';
-import { format, subDays } from 'date-fns';
+import { format, subDays, parseISO } from 'date-fns';
 
 type Transaction = {
     id: string;
@@ -51,7 +49,10 @@ export default function PharmacistReportsPage() {
         try {
             const storedTransactions = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
             if (storedTransactions) {
-                setTransactions(JSON.parse(storedTransactions));
+                setTransactions(JSON.parse(storedTransactions).map((t: any) => ({
+                    ...t,
+                    date: t.date ? format(parseISO(t.date), 'yyyy-MM-dd') : 'N/A'
+                })));
             }
         } catch (error) {
             console.error("Failed to load transactions from localStorage", error);
@@ -182,13 +183,13 @@ export default function PharmacistReportsPage() {
                 {transactions.slice(0, 10).map((transaction) => (
                     <TableRow key={transaction.id}>
                         <TableCell className="font-medium">{transaction.medicine}</TableCell>
-                        <TableCell>{format(new Date(transaction.date), 'PPP')}</TableCell>
+                        <TableCell>{format(parseISO(transaction.date), 'PPP')}</TableCell>
                         <TableCell className="text-right">₹{transaction.amount.toFixed(2)}</TableCell>
                     </TableRow>
                 ))}
                  {transactions.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={3} className="text-center text-muted-foreground">
+                        <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
                             No transactions recorded yet.
                         </TableCell>
                     </TableRow>
@@ -200,5 +201,3 @@ export default function PharmacistReportsPage() {
     </div>
   );
 }
-
-    

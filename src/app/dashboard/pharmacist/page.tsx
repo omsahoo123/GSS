@@ -68,8 +68,8 @@ export default function PharmacistDashboardPage() {
     resolver: zodResolver(locationSchema),
     defaultValues: getInitialLocation(),
   });
-
-  useEffect(() => {
+  
+  const fetchData = () => {
     try {
       const userData = localStorage.getItem(LOGGED_IN_USER_KEY);
       if (userData) {
@@ -82,6 +82,14 @@ export default function PharmacistDashboardPage() {
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
     }
+  }
+
+  useEffect(() => {
+    fetchData();
+    window.addEventListener('focus', fetchData);
+    return () => {
+      window.removeEventListener('focus', fetchData);
+    };
   }, []);
 
   const onSubmit = (data: LocationFormValues) => {
