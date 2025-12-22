@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -62,7 +63,7 @@ export default function DoctorDashboardPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [userName, setUserName] = useState('Doctor');
 
-  useEffect(() => {
+  const fetchDoctorData = () => {
     try {
       const doctorName = JSON.parse(localStorage.getItem(LOGGED_IN_USER_KEY) || '{}').name || 'Doctor';
       setUserName(doctorName);
@@ -84,7 +85,16 @@ export default function DoctorDashboardPage() {
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
     }
-  }, []);
+  };
+
+  useEffect(() => {
+    fetchDoctorData();
+    // Add event listener to refetch data when window gets focus
+    window.addEventListener('focus', fetchDoctorData);
+    return () => {
+      window.removeEventListener('focus', fetchDoctorData);
+    };
+  }, [userName]);
 
   useEffect(() => {
     try {

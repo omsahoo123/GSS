@@ -61,7 +61,7 @@ export default function DoctorAppointmentsPage() {
   const [currentAppointment, setCurrentAppointment] = useState<Appointment | null>(null);
   const [noteText, setNoteText] = useState('');
 
-  useEffect(() => {
+  const fetchAppointments = () => {
     try {
       const storedData = localStorage.getItem(APPOINTMENTS_KEY);
       if (storedData) {
@@ -74,6 +74,15 @@ export default function DoctorAppointmentsPage() {
     } catch (e) {
       console.error("Error loading appointments", e);
     }
+  };
+  
+  useEffect(() => {
+    fetchAppointments();
+    // Add event listener to refetch data when window gets focus
+    window.addEventListener('focus', fetchAppointments);
+    return () => {
+      window.removeEventListener('focus', fetchAppointments);
+    };
   }, []);
 
   const saveAppointments = (updatedAppointments: Appointment[]) => {
