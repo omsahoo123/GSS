@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -101,6 +100,11 @@ export default function HealthAnalyticsPage() {
         const allPatientKeys = Object.keys(localStorage).filter(k => k.startsWith(PATIENT_ACCOUNT_KEY));
         const patientAccounts = allPatientKeys.map(k => JSON.parse(localStorage.getItem(k)!));
         setAllPatients(patientAccounts);
+        
+        // Fetch doctor-generated data as well for future use
+        const allLabReports = localStorage.getItem('allLabReports');
+        const allPrescriptions = localStorage.getItem('allPrescriptions');
+        // These are not yet used in charts, but fetching them makes the data layer complete.
     } catch (error) {
         console.error("Failed to load data from localStorage", error);
     }
@@ -248,7 +252,7 @@ export default function HealthAnalyticsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Select Region" />
             </SelectTrigger>
             <SelectContent>
@@ -258,7 +262,7 @@ export default function HealthAnalyticsPage() {
 
            <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-40">
+              <Button variant="outline" className="w-full sm:w-40">
                 Diseases <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
@@ -277,12 +281,12 @@ export default function HealthAnalyticsPage() {
             </DropdownMenuContent>
            </DropdownMenu>
 
-          <div className="flex items-center gap-2">
-            <Input type="date" value={format(dateRange.from, 'yyyy-MM-dd')} onChange={(e) => handleDateChange(e, 'from')} />
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <Input type="date" value={format(dateRange.from, 'yyyy-MM-dd')} onChange={(e) => handleDateChange(e, 'from')} className="w-full sm:w-auto"/>
              <span className="text-muted-foreground">to</span>
-            <Input type="date" value={format(dateRange.to, 'yyyy-MM-dd')} onChange={(e) => handleDateChange(e, 'to')} />
+            <Input type="date" value={format(dateRange.to, 'yyyy-MM-dd')} onChange={(e) => handleDateChange(e, 'to')} className="w-full sm:w-auto"/>
           </div>
-          <Button onClick={handleDownload} variant="outline">
+          <Button onClick={handleDownload} variant="outline" className="w-full sm:w-auto">
             <Download className="mr-2 h-4 w-4" />
             Report
           </Button>
@@ -353,6 +357,7 @@ export default function HealthAnalyticsPage() {
                   axisLine={false}
                   tickMargin={8}
                   className="capitalize"
+                  width={80}
                 />
                 <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
                 <ChartTooltip
@@ -372,7 +377,7 @@ export default function HealthAnalyticsPage() {
               Patient Demographics by Age
             </CardTitle>
             <CardDescription>
-              Distribution of cases across different age groups.
+              Distribution of registered patients across different age groups.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -414,5 +419,3 @@ export default function HealthAnalyticsPage() {
     </div>
   );
 }
-
-    
