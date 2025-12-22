@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -41,13 +41,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Download, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { REGIONAL_DATA_KEY } from '../../data-entry-operator/regional-data/page';
+import { RegionalData } from '../../data-entry-operator/page';
 
 const reportTypes = {
   'disease-summary': 'Weekly Disease Summary',
   'resource-utilization': 'Monthly Resource Utilization',
 };
-
-const regions = ['all', 'rampur', 'sitapur', 'aligarh', 'bareilly', 'meerut'];
 
 const reportSchema = z.object({
   reportType: z.string().min(1, 'Please select a report type.'),
@@ -69,7 +69,21 @@ type GeneratedReport = {
 export default function ReportsPage() {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [generatedReport, setGeneratedReport] = useState<GeneratedReport | null>(null);
+  const [regions, setRegions] = useState<string[]>(['all']);
   const { toast } = useToast();
+
+  useEffect(() => {
+    try {
+      const storedRegionalData = localStorage.getItem(REGIONAL_DATA_KEY);
+      if (storedRegionalData) {
+        const regionalData: RegionalData[] = JSON.parse(storedRegionalData);
+        const districtNames = regionalData.map((d) => d.district);
+        setRegions(['all', ...districtNames]);
+      }
+    } catch (error) {
+      console.error("Failed to load regional data from localStorage", error);
+    }
+  }, []);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportSchema),
@@ -87,14 +101,16 @@ export default function ReportsPage() {
     const endDate = format(new Date(data.endDate), 'PPP');
 
     let content = '';
+    const availableRegions = regions.filter(r => r !== 'all');
+    const criticalDistrict = availableRegions.length > 0 ? availableRegions[Math.floor(Math.random() * availableRegions.length)] : 'a district';
+
     if (data.reportType === 'disease-summary') {
       const cases = Math.floor(Math.random() * 500) + 50;
       const trend = Math.random() > 0.5 ? 'increased' : 'decreased';
       const percentage = (Math.random() * 25 + 5).toFixed(1);
-      content = `Between ${startDate} and ${endDate}, a total of ${cases} communicable disease cases were reported in ${regionName}. The overall trend has ${trend} by ${percentage}% compared to the previous period. The most prevalent illness was the Flu, particularly in the Aligarh district if 'All Regions' is selected.`;
+      content = `Between ${startDate} and ${endDate}, a total of ${cases} communicable disease cases were reported in ${regionName}. The overall trend has ${trend} by ${percentage}% compared to the previous period. The most prevalent illness was the Flu, particularly in the ${criticalDistrict} district if 'All Regions' is selected.`;
     } else if (data.reportType === 'resource-utilization') {
       const occupancy = (Math.random() * 40 + 50).toFixed(1);
-      const criticalDistrict = regions[Math.floor(Math.random() * (regions.length - 1)) + 1];
       content = `For the period of ${startDate} to ${endDate} in ${regionName}, the average hospital bed occupancy was ${occupancy}%. The ${criticalDistrict} district experienced the highest strain with occupancy peaking at 95%. Staffing levels remained adequate, but ambulance deployment times saw a minor increase of 5%.`;
     }
     
@@ -257,3 +273,5 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+    
