@@ -51,6 +51,12 @@ import {
 import { type Appointment } from './appointments/page';
 import { format, parseISO, isToday } from 'date-fns';
 import { LOGGED_IN_USER_KEY } from '@/app/login/page';
+import { PATIENT_ACCOUNT_KEY } from '@/app/signup/patient/page';
+
+export type AgeGroupData = {
+  age: string;
+  patients: number;
+};
 
 export default function DoctorDashboardPage() {
   const [tasks, setTasks] = useState<{ id: string, description: string, completed: boolean }[]>([]);
@@ -62,6 +68,7 @@ export default function DoctorDashboardPage() {
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [userName, setUserName] = useState('Doctor');
+  const [demographicsData, setDemographicsData] = useState<AgeGroupData[]>([]);
 
   const fetchDoctorData = () => {
     try {
@@ -83,6 +90,34 @@ export default function DoctorDashboardPage() {
         }));
         const doctorAppointments = parsedData.filter(appt => appt.doctor === doctorName);
         setAppointments(doctorAppointments);
+
+        // Process demographics data
+        const uniquePatientNames = [...new Set(doctorAppointments.map(a => a.patient))];
+        const allPatientKeys = Object.keys(localStorage).filter(k => k.startsWith(PATIENT_ACCOUNT_KEY));
+        const allPatientAccounts = allPatientKeys.map(k => JSON.parse(localStorage.getItem(k)!));
+        
+        const patientAges = uniquePatientNames.map(name => {
+          const account = allPatientAccounts.find(p => p.name === name);
+          return account?.age || 0;
+        }).filter(age => age > 0);
+
+        const ageGroups: { [key: string]: number } = {
+          '0-18': 0,
+          '19-30': 0,
+          '31-45': 0,
+          '46-60': 0,
+          '60+': 0,
+        };
+
+        patientAges.forEach(age => {
+          if (age <= 18) ageGroups['0-18']++;
+          else if (age <= 30) ageGroups['19-30']++;
+          else if (age <= 45) ageGroups['31-45']++;
+          else if (age <= 60) ageGroups['46-60']++;
+          else ageGroups['60+']++;
+        });
+
+        setDemographicsData(Object.entries(ageGroups).map(([age, patients]) => ({ age, patients })));
       }
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
@@ -239,7 +274,7 @@ export default function DoctorDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <PatientDemographicsChart />
+            <PatientDemographicsChart chartData={demographicsData} />
           </CardContent>
         </Card>
         <Card>

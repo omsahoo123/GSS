@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
@@ -6,16 +7,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import type { AgeGroupData } from '@/app/dashboard/doctor/page';
 
-const chartData = [
-  { age: '0-10', patients: 15 },
-  { age: '11-20', patients: 25 },
-  { age: '21-30', patients: 45 },
-  { age: '31-40', patients: 60 },
-  { age: '41-50', patients: 55 },
-  { age: '51-60', patients: 40 },
-  { age: '60+', patients: 30 },
-];
 
 const chartConfig = {
   patients: {
@@ -24,7 +17,15 @@ const chartConfig = {
   },
 };
 
-export function PatientDemographicsChart() {
+export function PatientDemographicsChart({ chartData }: { chartData: AgeGroupData[] }) {
+  if (!chartData || chartData.every(d => d.patients === 0)) {
+    return (
+      <div className="flex h-[200px] w-full items-center justify-center rounded-lg border-2 border-dashed">
+        <p className="text-muted-foreground">No patient data available to display chart.</p>
+      </div>
+    );
+  }
+  
   return (
     <ChartContainer config={chartConfig} className="h-[200px] w-full">
       <BarChart accessibilityLayer data={chartData}>
