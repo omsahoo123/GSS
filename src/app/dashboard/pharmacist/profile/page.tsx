@@ -30,6 +30,13 @@ export default function PharmacistProfilePage() {
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
+    defaultValues: {
+        name: '',
+        userId: '',
+        email: '',
+        phone: '',
+        licenseNumber: '',
+    }
   });
 
   useEffect(() => {

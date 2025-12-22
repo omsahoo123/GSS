@@ -29,6 +29,12 @@ export default function HealthOfficialProfilePage() {
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
+    defaultValues: {
+        name: '',
+        userId: '',
+        email: '',
+        phone: '',
+    }
   });
 
   useEffect(() => {

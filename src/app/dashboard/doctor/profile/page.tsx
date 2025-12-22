@@ -31,6 +31,14 @@ export default function DoctorProfilePage() {
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
+    defaultValues: {
+        name: '',
+        userId: '',
+        email: '',
+        phone: '',
+        licenseNumber: '',
+        specialization: '',
+    }
   });
 
   useEffect(() => {

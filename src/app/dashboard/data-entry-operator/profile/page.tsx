@@ -29,6 +29,12 @@ export default function DataEntryProfilePage() {
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
+    defaultValues: {
+        name: '',
+        userId: '',
+        email: '',
+        phone: '',
+    }
   });
 
   useEffect(() => {
