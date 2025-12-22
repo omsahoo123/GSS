@@ -25,12 +25,17 @@ export default function ForgotPasswordPage() {
       toast({ variant: 'destructive', title: 'User ID Required', description: 'Please enter your User ID.' });
       return;
     }
-    const account = localStorage.getItem(`${PROFESSIONAL_ACCOUNT_KEY}${userId}`);
-    if (!account) {
+    const accountString = localStorage.getItem(`${PROFESSIONAL_ACCOUNT_KEY}${userId}`);
+    if (!accountString) {
       toast({ variant: 'destructive', title: 'Account Not Found', description: 'No professional account exists with this User ID.' });
       return;
     }
-    toast({ title: 'OTP Sent!', description: 'A verification OTP has been sent. (It\'s 123456)' });
+
+    const account = JSON.parse(accountString);
+    toast({ 
+      title: 'OTP Sent!', 
+      description: `A verification OTP has been sent to your registered email ${account.email}. (It's 123456)` 
+    });
     setStep(2);
   };
 
@@ -90,7 +95,7 @@ export default function ForgotPasswordPage() {
       case 2:
         return (
           <>
-            <CardDescription>Enter the 6-digit OTP we sent to you.</CardDescription>
+            <CardDescription>Enter the 6-digit OTP we sent to your registered email.</CardDescription>
             <Input
               type="text"
               placeholder="Enter OTP"
