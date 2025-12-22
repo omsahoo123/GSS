@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
 import type { RegionalData } from '../page';
+import { DISEASE_DATA_KEY } from '../disease-data/page';
 
 export const REGIONAL_DATA_KEY = 'healthRegionalData';
 
@@ -51,35 +52,50 @@ export default function RegionalDataPage() {
     },
   });
   
-  const { fields, append } = useFieldArray({
+  const { fields, append, replace } = useFieldArray({
     control: form.control,
     name: "regionalData",
   });
   
-  useEffect(() => {
+  const fetchData = () => {
     try {
       const storedData = localStorage.getItem(REGIONAL_DATA_KEY);
-      const diseaseDataStored = localStorage.getItem('healthDiseaseData');
+      const diseaseDataStored = localStorage.getItem(DISEASE_DATA_KEY);
 
-      if (storedData) {
-        form.reset({ regionalData: JSON.parse(storedData) });
-      } else if (diseaseDataStored) {
-        // If regional data is empty but disease data exists, create entries for those districts
-        const diseaseData = JSON.parse(diseaseDataStored);
-        const newRegionalData = diseaseData.map((d: { district: string; }) => ({
+      const existingData = storedData ? JSON.parse(storedData) : [];
+      const diseaseData = diseaseDataStored ? JSON.parse(diseaseDataStored) : [];
+
+      const existingDistricts = new Set(existingData.map((d: { district: string; }) => d.district));
+
+      const newRegionalDataFromDiseases = diseaseData
+        .filter((d: { district: string; }) => !existingDistricts.has(d.district))
+        .map((d: { district: string; }) => ({
              district: d.district,
              population: 0,
              beds: { occupied: 0, total: 0 },
              ambulances: 0,
              staff: { doctors: 0, nurses: 0 },
         }));
-        form.reset({ regionalData: newRegionalData });
-      }
+      
+      const finalData = [...existingData, ...newRegionalDataFromDiseases];
+
+      // Use replace instead of reset to work better with useFieldArray
+      replace(finalData);
 
     } catch (error) {
       console.error("Failed to load regional data from localStorage", error);
     }
-  }, [form]);
+  }
+
+  useEffect(() => {
+    fetchData();
+    window.addEventListener('focus', fetchData);
+
+    return () => {
+      window.removeEventListener('focus', fetchData);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
 
   const onSubmit = (data: FormValues) => {
