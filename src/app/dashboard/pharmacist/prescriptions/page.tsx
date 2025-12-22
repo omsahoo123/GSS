@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -333,8 +334,8 @@ export default function PharmacistPrescriptionsPage() {
                 <TableRow>
                   <TableHead>Patient</TableHead>
                   <TableHead>Medication</TableHead>
-                  <TableHead>Date Filled</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden sm:table-cell">Date Filled</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
                   <TableHead className="text-right">Details</TableHead>
                 </TableRow>
               </TableHeader>
@@ -345,8 +346,8 @@ export default function PharmacistPrescriptionsPage() {
                       {presc.patientName}
                     </TableCell>
                     <TableCell>{presc.medication} {presc.dosage}</TableCell>
-                    <TableCell>{presc.date}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">{presc.date}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Badge variant={getStatusVariant(presc.status)}>
                         {presc.status}
                       </Badge>

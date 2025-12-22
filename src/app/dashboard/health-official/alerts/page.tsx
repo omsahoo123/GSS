@@ -179,7 +179,7 @@ export default function AlertsPage() {
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                      <FormField
                         control={form.control}
                         name="region"
@@ -277,9 +277,9 @@ export default function AlertsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Region</TableHead>
-                  <TableHead>Date Issued</TableHead>
+                  <TableHead className="hidden sm:table-cell">Priority</TableHead>
+                  <TableHead className="hidden md:table-cell">Region</TableHead>
+                  <TableHead className="hidden md:table-cell">Date Issued</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -287,11 +287,11 @@ export default function AlertsPage() {
                 {filteredAlerts.map((alert) => (
                   <TableRow key={alert.id}>
                     <TableCell className="font-medium">{alert.title}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Badge variant={getPriorityVariant(alert.priority)}>{alert.priority}</Badge>
                     </TableCell>
-                    <TableCell className="capitalize">{alert.region}</TableCell>
-                    <TableCell>{alert.date}</TableCell>
+                    <TableCell className="hidden md:table-cell capitalize">{alert.region}</TableCell>
+                    <TableCell className="hidden md:table-cell">{alert.date}</TableCell>
                     <TableCell>
                       <Badge variant={alert.status === 'Active' ? 'default' : 'outline'}>{alert.status}</Badge>
                     </TableCell>

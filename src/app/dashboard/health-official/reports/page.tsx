@@ -244,7 +244,7 @@ export default function ReportsPage() {
               <p>{generatedReport.content}</p>
             </div>
           )}
-          <DialogFooter className="sm:justify-between">
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
               Close
             </Button>

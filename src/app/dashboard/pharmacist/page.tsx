@@ -117,13 +117,13 @@ export default function PharmacistDashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Inventory Overview</CardTitle>
             <CardDescription>A summary of your current stock status.</CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-3 gap-4 text-center">
+          <CardContent className="grid grid-cols-1 gap-4 text-center sm:grid-cols-3">
             <div className="rounded-lg border p-4">
               <PackageCheck className="mx-auto h-8 w-8 text-green-600" />
               <p className="mt-2 text-2xl font-bold">{inStockCount}</p>

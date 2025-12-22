@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -283,7 +284,7 @@ export default function InventoryPage() {
                   <TableHead>Quantity</TableHead>
                    <TableHead>Price (₹)</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Supplier</TableHead>
+                  <TableHead className="hidden sm:table-cell">Supplier</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -319,7 +320,7 @@ export default function InventoryPage() {
                     <TableCell>
                       <Badge variant={getStatusVariant(med.status)}>{med.status}</Badge>
                     </TableCell>
-                    <TableCell>{med.supplier}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{med.supplier}</TableCell>
                     <TableCell className="text-right">
                        {editingMedicineId === med.id ? (
                         <div className="flex items-center justify-end gap-2">

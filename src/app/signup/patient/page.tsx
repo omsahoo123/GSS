@@ -98,7 +98,7 @@ export default function PatientSignupPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-secondary py-12">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-secondary py-12 px-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
           <Link href="/" className="flex items-center justify-center gap-2 mb-4">
@@ -125,7 +125,7 @@ export default function PatientSignupPage() {
                 <FormMessage>{form.formState.errors.photo?.message as string}</FormMessage>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="name"

@@ -117,13 +117,13 @@ export default function DiseaseDataPage() {
                 <CardDescription>Enter the name of a new district to start tracking its data.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex w-full max-w-sm items-center space-x-2">
+                <div className="flex w-full max-w-sm flex-col gap-2 sm:flex-row sm:items-center">
                     <Input 
                         value={newDistrictName}
                         onChange={(e) => setNewDistrictName(e.target.value)}
                         placeholder="e.g., Lucknow"
                     />
-                    <Button onClick={handleAddDistrict}>
+                    <Button onClick={handleAddDistrict} className="w-full sm:w-auto">
                         <PlusCircle className="mr-2 h-4 w-4" /> Add District
                     </Button>
                 </div>
@@ -178,7 +178,7 @@ function DistrictCard({ districtIndex, control, removeDistrict }: { districtInde
             </CardHeader>
             <CardContent className="space-y-4">
                 {fields.map((entryField, entryIndex) => (
-                    <div key={entryField.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div key={entryField.id} className="grid grid-cols-1 items-end gap-4 md:grid-cols-[1fr_1fr_1fr_auto]">
                          <FormField
                             control={control}
                             name={`diseaseData.${districtIndex}.entries.${entryIndex}.date`}
@@ -212,8 +212,8 @@ function DistrictCard({ districtIndex, control, removeDistrict }: { districtInde
                             </FormItem>
                             )}
                         />
-                        <Button variant="ghost" size="sm" onClick={() => remove(entryIndex)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Remove Entry
+                        <Button variant="ghost" size="sm" onClick={() => remove(entryIndex)} className="w-full md:w-auto">
+                            <Trash2 className="mr-2 h-4 w-4" /> Remove
                         </Button>
                     </div>
                 ))}
