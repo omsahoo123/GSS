@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,70 +17,77 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
-import type { RegionalData } from '../page';
 import { DISEASE_DATA_KEY } from '../disease-data/page';
 
 export const REGIONAL_DATA_KEY = 'healthRegionalData';
 
+const hospitalInfrastructureSchema = z.object({
+    district: z.string(),
+    hospitalName: z.string(),
+    population: z.coerce.number().min(0),
+    beds: z.object({
+        occupied: z.coerce.number().min(0),
+        total: z.coerce.number().min(0),
+    }).refine(data => data.occupied <= data.total, {
+        message: "Occupied beds cannot exceed total beds",
+        path: ["occupied"],
+    }),
+    ambulances: z.coerce.number().min(0),
+    staff: z.object({
+        doctors: z.coerce.number().min(0),
+        nurses: z.coerce.number().min(0),
+    })
+});
+
 const regionalDataSchema = z.object({
-    regionalData: z.array(z.object({
-        district: z.string().min(1, 'District name is required.'),
-        population: z.coerce.number().min(0),
-        beds: z.object({
-            occupied: z.coerce.number().min(0),
-            total: z.coerce.number().min(0),
-        }).refine(data => data.occupied <= data.total, {
-            message: "Occupied beds cannot exceed total beds",
-            path: ["occupied"],
-        }),
-        ambulances: z.coerce.number().min(0),
-        staff: z.object({
-            doctors: z.coerce.number().min(0),
-            nurses: z.coerce.number().min(0),
-        })
-    }))
+    hospitals: z.array(hospitalInfrastructureSchema)
 });
 
 type FormValues = z.infer<typeof regionalDataSchema>;
 
-export default function RegionalDataPage() {
+export default function HospitalInfrastructurePage() {
   const { toast } = useToast();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(regionalDataSchema),
     defaultValues: {
-      regionalData: [],
+      hospitals: [],
     },
   });
   
-  const { fields, append, replace } = useFieldArray({
+  const { fields, replace } = useFieldArray({
     control: form.control,
-    name: "regionalData",
+    name: "hospitals",
   });
   
   const fetchData = () => {
     try {
       const storedData = localStorage.getItem(REGIONAL_DATA_KEY);
-      const diseaseDataStored = localStorage.getItem(DISEASE_DATA_KEY);
+      const districtHospitalDataStored = localStorage.getItem(DISEASE_DATA_KEY);
 
       const existingData = storedData ? JSON.parse(storedData) : [];
-      const diseaseData = diseaseDataStored ? JSON.parse(diseaseDataStored) : [];
+      const districtHospitalData = districtHospitalDataStored ? JSON.parse(districtHospitalDataStored) : [];
+      
+      const existingHospitalKeys = new Set(existingData.map((d: any) => `${d.district}-${d.hospitalName}`));
 
-      const existingDistricts = new Set(existingData.map((d: { district: string; }) => d.district));
-
-      const newRegionalDataFromDiseases = diseaseData
-        .filter((d: { district: string; }) => !existingDistricts.has(d.district))
-        .map((d: { district: string; }) => ({
-             district: d.district,
+      const newHospitalInfrastructure = districtHospitalData
+        .flatMap((district: { district: string, hospitals: {name: string}[] }) => 
+            district.hospitals.map(hospital => ({
+                district: district.district,
+                hospitalName: hospital.name
+            }))
+        )
+        .filter((h: { district: string, hospitalName: string }) => !existingHospitalKeys.has(`${h.district}-${h.hospitalName}`))
+        .map((h: { district: string, hospitalName: string }) => ({
+             ...h,
              population: 0,
              beds: { occupied: 0, total: 0 },
              ambulances: 0,
              staff: { doctors: 0, nurses: 0 },
         }));
       
-      const finalData = [...existingData, ...newRegionalDataFromDiseases];
+      const finalData = [...existingData, ...newHospitalInfrastructure];
 
-      // Use replace instead of reset to work better with useFieldArray
       replace(finalData);
 
     } catch (error) {
@@ -100,10 +108,10 @@ export default function RegionalDataPage() {
 
   const onSubmit = (data: FormValues) => {
     try {
-        localStorage.setItem(REGIONAL_DATA_KEY, JSON.stringify(data.regionalData));
+        localStorage.setItem(REGIONAL_DATA_KEY, JSON.stringify(data.hospitals));
         toast({
             title: 'Data Saved!',
-            description: 'The regional health data has been successfully updated.',
+            description: 'The hospital infrastructure data has been successfully updated.',
         });
     } catch (error) {
         console.error("Failed to save data to localStorage", error);
@@ -118,9 +126,9 @@ export default function RegionalDataPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-headline text-3xl font-bold">Manage Regional Data</h1>
+        <h1 className="font-headline text-3xl font-bold">Manage Hospital Infrastructure</h1>
         <p className="text-muted-foreground">
-          Update the core health and resource metrics for each district. Add districts in the 'Disease Data' page first.
+          Update the core health and resource metrics for each hospital. Add new hospitals in the 'Districts & Hospitals' page.
         </p>
       </div>
 
@@ -129,25 +137,27 @@ export default function RegionalDataPage() {
             {fields.map((field, index) => (
                  <Card key={field.id}>
                     <CardHeader>
-                        <CardTitle>{form.getValues(`regionalData.${index}.district`)}</CardTitle>
-                        <CardDescription>Update the metrics for this district.</CardDescription>
+                        <CardTitle>{form.getValues(`hospitals.${index}.hospitalName`)}</CardTitle>
+                        <CardDescription>
+                           District: {form.getValues(`hospitals.${index}.district`)}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <FormField
+                             <FormField
                                 control={form.control}
-                                name={`regionalData.${index}.population`}
+                                name={`hospitals.${index}.population`}
                                 render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Total Population</FormLabel>
-                                    <FormControl><Input type="number" placeholder="e.g., 900000" {...field} /></FormControl>
+                                    <FormLabel>Population Served</FormLabel>
+                                    <FormControl><Input type="number" placeholder="e.g., 50000" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                                 )}
                             />
                             <FormField
                                 control={form.control}
-                                name={`regionalData.${index}.beds.occupied`}
+                                name={`hospitals.${index}.beds.occupied`}
                                 render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Occupied Beds</FormLabel>
@@ -158,7 +168,7 @@ export default function RegionalDataPage() {
                             />
                             <FormField
                                 control={form.control}
-                                name={`regionalData.${index}.beds.total`}
+                                name={`hospitals.${index}.beds.total`}
                                 render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Total Beds</FormLabel>
@@ -169,33 +179,33 @@ export default function RegionalDataPage() {
                             />
                              <FormField
                                 control={form.control}
-                                name={`regionalData.${index}.ambulances`}
+                                name={`hospitals.${index}.ambulances`}
                                 render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Ambulances</FormLabel>
-                                    <FormControl><Input type="number" placeholder="e.g., 15" {...field} /></FormControl>
+                                    <FormControl><Input type="number" placeholder="e.g., 5" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                                 )}
                             />
                              <FormField
                                 control={form.control}
-                                name={`regionalData.${index}.staff.doctors`}
+                                name={`hospitals.${index}.staff.doctors`}
                                 render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Doctors</FormLabel>
-                                    <FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl>
+                                    <FormControl><Input type="number" placeholder="e.g., 20" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                                 )}
                             />
                              <FormField
                                 control={form.control}
-                                name={`regionalData.${index}.staff.nurses`}
+                                name={`hospitals.${index}.staff.nurses`}
                                 render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Nurses</FormLabel>
-                                    <FormControl><Input type="number" placeholder="e.g., 120" {...field} /></FormControl>
+                                    <FormControl><Input type="number" placeholder="e.g., 40" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                                 )}
@@ -208,7 +218,7 @@ export default function RegionalDataPage() {
             {fields.length === 0 && (
                  <Card>
                     <CardContent className="pt-6">
-                        <p className="text-center text-muted-foreground">No districts found. Please add a district on the "Disease Data" page to begin entering regional metrics.</p>
+                        <p className="text-center text-muted-foreground">No hospitals found. Please add a district and hospital on the "Districts & Hospitals" page to begin.</p>
                     </CardContent>
                 </Card>
             )}

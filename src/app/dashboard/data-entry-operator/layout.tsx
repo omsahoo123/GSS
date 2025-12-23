@@ -1,3 +1,4 @@
+
 import { DataEntryOperatorSidebar } from '@/components/data-entry-operator-sidebar';
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 

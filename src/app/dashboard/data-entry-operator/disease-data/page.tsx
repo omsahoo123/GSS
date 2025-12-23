@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,76 +17,67 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Save, PlusCircle, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { Save, PlusCircle, Trash2, Hospital } from 'lucide-react';
+import Link from 'next/link';
 
 export const DISEASE_DATA_KEY = 'healthDiseaseData';
 
-export type DiseaseEntry = {
-    date: string;
-    diseaseName: string;
-    caseCount: number;
-};
+const hospitalSchema = z.object({
+  name: z.string().min(1, "Hospital name is required."),
+});
 
-export type DistrictDiseaseData = {
-    district: string;
-    entries: DiseaseEntry[];
-};
+const districtSchema = z.object({
+  district: z.string().min(1, "District name is required."),
+  hospitals: z.array(hospitalSchema)
+});
 
 const diseaseDataSchema = z.object({
-    diseaseData: z.array(z.object({
-        district: z.string(),
-        entries: z.array(z.object({
-            date: z.string().min(1, "Date is required."),
-            diseaseName: z.string().min(1, "Disease name is required."),
-            caseCount: z.coerce.number().min(0, "Cases cannot be negative."),
-        }))
-    }))
+    districts: z.array(districtSchema)
 });
 
 type FormValues = z.infer<typeof diseaseDataSchema>;
 
-export default function DiseaseDataPage() {
+export default function ManageDistrictsAndHospitalsPage() {
   const { toast } = useToast();
   const [newDistrictName, setNewDistrictName] = useState('');
   
   const form = useForm<FormValues>({
     resolver: zodResolver(diseaseDataSchema),
     defaultValues: {
-      diseaseData: [],
+      districts: [],
     },
   });
   
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: "diseaseData",
+    name: "districts",
   });
   
   useEffect(() => {
     try {
       const storedData = localStorage.getItem(DISEASE_DATA_KEY);
       if (storedData) {
-        form.reset({ diseaseData: JSON.parse(storedData) });
+        form.reset({ districts: JSON.parse(storedData) });
       }
     } catch (error) {
-      console.error("Failed to load disease data from localStorage", error);
+      console.error("Failed to load district data from localStorage", error);
     }
   }, [form]);
   
 
   const onSubmit = (data: FormValues) => {
     try {
-        localStorage.setItem(DISEASE_DATA_KEY, JSON.stringify(data.diseaseData));
+        localStorage.setItem(DISEASE_DATA_KEY, JSON.stringify(data.districts));
         toast({
             title: 'Data Saved!',
-            description: 'The disease case data has been successfully updated.',
+            description: 'The district and hospital list has been successfully updated.',
         });
     } catch (error) {
         console.error("Failed to save data to localStorage", error);
         toast({
             variant: 'destructive',
             title: 'Save Failed',
-            description: 'There was an error saving the disease data.',
+            description: 'There was an error saving the data.',
         });
     }
   };
@@ -97,7 +89,7 @@ export default function DiseaseDataPage() {
     }
     append({
         district: newDistrictName,
-        entries: [{ date: format(new Date(), 'yyyy-MM-dd'), diseaseName: 'Flu', caseCount: 0 }]
+        hospitals: []
     });
     setNewDistrictName('');
   };
@@ -105,16 +97,16 @@ export default function DiseaseDataPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-headline text-3xl font-bold">Manage Daily Disease Data</h1>
+        <h1 className="font-headline text-3xl font-bold">Manage Districts & Hospitals</h1>
         <p className="text-muted-foreground">
-          Log daily disease cases for each district.
+          Step 1: Add districts. Step 2: Add hospitals to those districts. Step 3: Go to the <Link href="/dashboard/data-entry-operator/hospital-data" className="text-primary underline">Hospital Data Entry</Link> page to add cases.
         </p>
       </div>
 
        <Card>
             <CardHeader>
                 <CardTitle>Add New District</CardTitle>
-                <CardDescription>Enter the name of a new district to start tracking its data.</CardDescription>
+                <CardDescription>Enter the name of a new district to start adding hospitals to it.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex w-full max-w-sm flex-col gap-2 sm:flex-row sm:items-center">
@@ -153,16 +145,23 @@ export default function DiseaseDataPage() {
 function DistrictCard({ districtIndex, control, removeDistrict }: { districtIndex: number, control: any, removeDistrict: (index: number) => void }) {
     const { fields, append, remove } = useFieldArray({
         control,
-        name: `diseaseData.${districtIndex}.entries`
+        name: `districts.${districtIndex}.hospitals`
     });
 
     const districtName = useWatch({
       control,
-      name: `diseaseData.${districtIndex}.district`
+      name: `districts.${districtIndex}.district`
     });
 
-    const addNewEntry = () => {
-        append({ date: format(new Date(), 'yyyy-MM-dd'), diseaseName: '', caseCount: 0 });
+    const [newHospitalName, setNewHospitalName] = useState('');
+
+    const addNewHospital = () => {
+        if (!newHospitalName.trim()) {
+            // This toast is optional, basic validation prevents empty append
+            return;
+        }
+        append({ name: newHospitalName });
+        setNewHospitalName('');
     };
 
     return (
@@ -170,59 +169,48 @@ function DistrictCard({ districtIndex, control, removeDistrict }: { districtInde
             <CardHeader className="flex-row items-start justify-between">
                 <div>
                     <CardTitle>{districtName}</CardTitle>
-                    <CardDescription>Manage daily case entries for this district.</CardDescription>
+                    <CardDescription>Manage hospitals for this district.</CardDescription>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => removeDistrict(districtIndex)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
+                    <span className="sr-only">Remove District</span>
                 </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-                {fields.map((entryField, entryIndex) => (
-                    <div key={entryField.id} className="grid grid-cols-1 items-end gap-4 md:grid-cols-[1fr_1fr_1fr_auto]">
-                         <FormField
-                            control={control}
-                            name={`diseaseData.${districtIndex}.entries.${entryIndex}.date`}
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Date</FormLabel>
-                                <FormControl><Input type="date" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                         <FormField
-                            control={control}
-                            name={`diseaseData.${districtIndex}.entries.${entryIndex}.diseaseName`}
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Disease Name</FormLabel>
-                                <FormControl><Input placeholder="e.g., Dengue" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={control}
-                            name={`diseaseData.${districtIndex}.entries.${entryIndex}.caseCount`}
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Number of Cases</FormLabel>
-                                <FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        <Button variant="ghost" size="sm" onClick={() => remove(entryIndex)} className="w-full md:w-auto">
-                            <Trash2 className="mr-2 h-4 w-4" /> Remove
+                {fields.map((hospitalField, hospitalIndex) => (
+                    <div key={hospitalField.id} className="flex items-center justify-between rounded-md border p-3">
+                         <div className="flex items-center gap-2">
+                             <Hospital className="h-4 w-4 text-muted-foreground"/>
+                             <FormField
+                                control={control}
+                                name={`districts.${districtIndex}.hospitals.${hospitalIndex}.name`}
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormControl><Input {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                         </div>
+                        <Button variant="ghost" size="icon" onClick={() => remove(hospitalIndex)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <span className="sr-only">Remove Hospital</span>
                         </Button>
                     </div>
                 ))}
-                 {fields.length === 0 && <p className="text-muted-foreground text-center">No entries for this district yet. Add one to begin.</p>}
+                 {fields.length === 0 && <p className="text-muted-foreground text-center">No hospitals added for this district yet.</p>}
             </CardContent>
             <CardFooter>
-                <Button variant="secondary" onClick={addNewEntry}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Entry
-                </Button>
+                 <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+                    <Input 
+                        value={newHospitalName}
+                        onChange={(e) => setNewHospitalName(e.target.value)}
+                        placeholder="New Hospital Name"
+                    />
+                    <Button variant="secondary" onClick={addNewHospital} className="w-full sm:w-auto">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Hospital
+                    </Button>
+                </div>
             </CardFooter>
         </Card>
     )

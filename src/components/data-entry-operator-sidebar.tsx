@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -11,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { Home, LogOut, PenSquare, Bug, User } from 'lucide-react';
+import { Home, LogOut, PenSquare, Hospital, User, ClipboardPaste } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from './ui/button';
@@ -20,8 +21,9 @@ import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 
 const menuItems = [
   { href: '/dashboard/data-entry-operator', label: 'Dashboard', icon: Home, exact: true },
-  { href: '/dashboard/data-entry-operator/regional-data', label: 'Regional Data', icon: PenSquare },
-  { href: '/dashboard/data-entry-operator/disease-data', label: 'Disease Data', icon: Bug },
+  { href: '/dashboard/data-entry-operator/disease-data', label: 'Districts & Hospitals', icon: Hospital },
+  { href: '/dashboard/data-entry-operator/regional-data', label: 'Hospital Infrastructure', icon: PenSquare },
+  { href: '/dashboard/data-entry-operator/hospital-data', label: 'Hospital Data Entry', icon: ClipboardPaste },
   { href: '/dashboard/data-entry-operator/profile', label: 'Profile', icon: User },
 ];
 
