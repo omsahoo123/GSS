@@ -131,13 +131,13 @@ export default function HealthAnalyticsPage() {
   };
   
   const regions = useMemo(() => {
-    return ['all', ...[...new Set(regionalData.map(d => d.district.toLowerCase()))]];
+    return ['all', ...[...new Set(regionalData.map(d => d.district))]];
   }, [regionalData]);
 
   const availableHospitals = useMemo(() => {
     let hospitals = regionalData;
     if (selectedRegion !== 'all') {
-      hospitals = hospitals.filter(h => h.district.toLowerCase() === selectedRegion.toLowerCase());
+      hospitals = hospitals.filter(h => h.district === selectedRegion);
     }
     
     const hospitalOptions = hospitals
@@ -179,7 +179,7 @@ export default function HealthAnalyticsPage() {
 
     let filteredByRegion = diseaseData;
     if (selectedRegion !== 'all') {
-      filteredByRegion = filteredByRegion.filter(d => d.district.toLowerCase() === selectedRegion);
+      filteredByRegion = filteredByRegion.filter(d => d.district === selectedRegion);
     }
 
     let filteredByHospital = filteredByRegion;
@@ -209,7 +209,7 @@ export default function HealthAnalyticsPage() {
 
   const hospitalOccupancyData = useMemo(() => {
      if (selectedRegion !== 'all') {
-        return regionalData.filter(d => d.district.toLowerCase() === selectedRegion);
+        return regionalData.filter(d => d.district === selectedRegion);
      }
      // When 'all' regions selected, group by district
      const districtSummary = regionalData.reduce((acc, curr) => {
