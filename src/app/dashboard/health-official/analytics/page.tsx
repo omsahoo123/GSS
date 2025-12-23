@@ -425,7 +425,7 @@ export default function HealthAnalyticsPage() {
                   cursor={false}
                   content={<ChartTooltipContent formatter={(value) => `${(value as number).toFixed(1)}%`} />}
                 />
-                <Bar dataKey="occupancy" fill="var(--color-occupancy)" radius={4} />
+                <Bar key="occupancy" dataKey="occupancy" fill="var(--color-occupancy)" radius={4} />
               </BarChart>
             </ChartContainer>
           </CardContent>
