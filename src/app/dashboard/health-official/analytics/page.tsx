@@ -316,7 +316,7 @@ export default function HealthAnalyticsPage() {
               <SelectValue placeholder="Select Hospital" />
             </SelectTrigger>
             <SelectContent>
-              {availableHospitals.map(h => <SelectItem key={h.value} value={h.value} className="capitalize">{h.label}</SelectItem>)}
+              {availableHospitals.map(h => <SelectItem key={`${h.value}-${h.label}`} value={h.value} className="capitalize">{h.label}</SelectItem>)}
             </SelectContent>
           </Select>
 
