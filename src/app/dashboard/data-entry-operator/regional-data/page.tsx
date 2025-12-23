@@ -76,7 +76,7 @@ export default function HospitalInfrastructurePage() {
       const finalData = districtHospitalData.map((dist: { district: string; hospitals: { name: string }[] }) => {
         const existingDistrict = existingData.find((d: any) => d.districtName === dist.district);
         
-        const hospitals = dist.hospitals.map(h => {
+        const hospitals = (dist.hospitals || []).map((h: {name: string}) => {
           const existingHospital = existingDistrict?.hospitals.find((eh: any) => eh.hospitalName === h.name);
           return existingHospital || {
             hospitalName: h.name,
@@ -179,7 +179,7 @@ function DistrictInfrastructureCard({ districtIndex, control }: { districtIndex:
     name: `districts.${districtIndex}.hospitals`,
   });
 
-  const totals = districtData.hospitals.reduce(
+  const totals = (districtData.hospitals || []).reduce(
     (acc, hospital) => {
       acc.population += hospital.population || 0;
       acc.beds.occupied += hospital.beds?.occupied || 0;
@@ -329,3 +329,5 @@ function HospitalInfrastructureForm({ districtIndex, hospitalIndex, control }: {
     </div>
   )
 }
+
+    
