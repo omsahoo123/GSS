@@ -140,14 +140,13 @@ export default function HealthAnalyticsPage() {
       hospitals = hospitals.filter(h => h.district.toLowerCase() === selectedRegion);
     }
     
-    if (!hospitals) {
-      return [{label: 'All Hospitals', value: 'all'}];
-    }
-    
-    const hospitalOptions = hospitals.map(h => ({
-      label: h.hospitalName,
-      value: h.hospitalName
+    const hospitalOptions = hospitals
+        .filter(h => h && h.hospitalName) // Ensure h and h.hospitalName are not undefined
+        .map(h => ({
+            label: h.hospitalName,
+            value: h.hospitalName
     }));
+
     return [{label: 'All Hospitals', value: 'all'}, ...hospitalOptions];
   }, [regionalData, selectedRegion]);
 
@@ -430,7 +429,7 @@ export default function HealthAnalyticsPage() {
                   cursor={false}
                   content={<ChartTooltipContent formatter={(value) => `${(value as number).toFixed(1)}%`} />}
                 />
-                <Bar key="occupancy" dataKey="occupancy" fill="var(--color-occupancy)" radius={4} />
+                <Bar dataKey="occupancy" fill="var(--color-occupancy)" radius={4} key="occupancy" />
               </BarChart>
             </ChartContainer>
           </CardContent>
