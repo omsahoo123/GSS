@@ -137,7 +137,7 @@ export default function HealthAnalyticsPage() {
   const availableHospitals = useMemo(() => {
     let hospitals = regionalData;
     if (selectedRegion !== 'all') {
-      hospitals = hospitals.filter(h => h.district.toLowerCase() === selectedRegion);
+      hospitals = hospitals.filter(h => h.district.toLowerCase() === selectedRegion.toLowerCase());
     }
     
     const hospitalOptions = hospitals
