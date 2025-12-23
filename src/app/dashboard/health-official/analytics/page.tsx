@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -36,12 +37,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { TrendingUp, BedDouble, Users, Download, ChevronDown } from 'lucide-react';
 import { format, subDays, parseISO, eachDayOfInterval } from 'date-fns';
-import { DISEASE_DATA_KEY, type DistrictDiseaseData } from '../../data-entry-operator/disease-data/page';
+import { HOSPITAL_CASE_DATA_KEY } from '../../data-entry-operator/hospital-data/page';
 import { REGIONAL_DATA_KEY } from '../../data-entry-operator/regional-data/page';
 import type { RegionalData } from '../../data-entry-operator/page';
 import { Input } from '@/components/ui/input';
 import { PATIENT_ACCOUNT_KEY } from '@/app/signup/patient/page';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { type LabReport } from '../../doctor/lab-reports/page';
+import { type Prescription } from '../../doctor/prescriptions/page';
 
 
 const PIE_CHART_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -53,6 +56,15 @@ const LINE_CHART_COLORS = [
     'hsl(var(--chart-5))',
 ];
 
+type HospitalCaseData = {
+  district: string;
+  hospitalName: string;
+  entries: {
+    date: string;
+    diseaseName: string;
+    caseCount: number;
+  }[];
+}
 
 const occupancyChartConfig = {
   occupancy: { label: 'Occupancy', color: 'hsl(var(--destructive))' },
@@ -67,15 +79,18 @@ const ageChartConfig = {
 
 export default function HealthAnalyticsPage() {
   const [selectedRegion, setSelectedRegion] = useState('all');
-  const [diseaseData, setDiseaseData] = useState<DistrictDiseaseData[]>([]);
+  const [diseaseData, setDiseaseData] = useState<HospitalCaseData[]>([]);
   const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
   const [allPatients, setAllPatients] = useState<any[]>([]);
+  const [labReports, setLabReports] = useState<LabReport[]>([]);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [dateRange, setDateRange] = useState({
     from: subDays(new Date(), 29),
     to: new Date()
   });
   
   const availableDiseases = useMemo(() => {
+    if(!diseaseData) return [];
     const all = new Set(diseaseData.flatMap(d => d.entries.map(e => e.diseaseName)))
     return Array.from(all).filter(Boolean); // Filter out empty strings
   }, [diseaseData]);
@@ -89,7 +104,7 @@ export default function HealthAnalyticsPage() {
 
   const fetchData = () => {
     try {
-        const storedDiseaseData = localStorage.getItem(DISEASE_DATA_KEY);
+        const storedDiseaseData = localStorage.getItem(HOSPITAL_CASE_DATA_KEY);
         if (storedDiseaseData) {
             setDiseaseData(JSON.parse(storedDiseaseData));
         }
@@ -101,10 +116,14 @@ export default function HealthAnalyticsPage() {
         const patientAccounts = allPatientKeys.map(k => JSON.parse(localStorage.getItem(k)!));
         setAllPatients(patientAccounts);
         
-        // Fetch doctor-generated data as well for future use
         const allLabReports = localStorage.getItem('allLabReports');
+        if(allLabReports) {
+            setLabReports(JSON.parse(allLabReports));
+        }
         const allPrescriptions = localStorage.getItem('allPrescriptions');
-        // These are not yet used in charts, but fetching them makes the data layer complete.
+        if(allPrescriptions) {
+            setPrescriptions(JSON.parse(allPrescriptions));
+        }
     } catch (error) {
         console.error("Failed to load data from localStorage", error);
     }
@@ -135,7 +154,7 @@ export default function HealthAnalyticsPage() {
   }, [availableDiseases]);
 
   const dailyCaseData = useMemo(() => {
-    if (!dateRange.from || !dateRange.to) return [];
+    if (!dateRange.from || !dateRange.to || !diseaseData) return [];
 
     let filteredByRegion = diseaseData;
     if (selectedRegion !== 'all') {
@@ -149,8 +168,8 @@ export default function HealthAnalyticsPage() {
 
         selectedDiseases.forEach(diseaseName => {
             const key = diseaseName.replace(/\s+/g, '-').toLowerCase();
-            const totalCasesForDay = filteredByRegion.reduce((sum, district) => {
-                const dayEntries = district.entries.filter(e => 
+            const totalCasesForDay = filteredByRegion.reduce((sum, hospital) => {
+                const dayEntries = hospital.entries.filter(e => 
                     e.diseaseName === diseaseName &&
                     format(parseISO(e.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
                 );
@@ -204,10 +223,10 @@ export default function HealthAnalyticsPage() {
     csvContent += "\n";
 
     csvContent += "Hospital Bed Occupancy\n";
-    csvContent += "Region,Occupied,Total,Occupancy (%)\n";
+    csvContent += "Hospital,District,Occupied,Total,Occupancy (%)\n";
     hospitalOccupancyData.forEach(row => {
         const occupancy = row.beds.total > 0 ? (row.beds.occupied / row.beds.total) * 100 : 0;
-        csvContent += `${row.district},${row.beds.occupied},${row.beds.total},${occupancy.toFixed(1)}\n`;
+        csvContent += `${row.hospitalName},${row.district},${row.beds.occupied},${row.beds.total},${occupancy.toFixed(1)}\n`;
     });
     csvContent += "\n";
 
@@ -346,12 +365,12 @@ export default function HealthAnalyticsPage() {
             <ChartContainer config={occupancyChartConfig} className="h-72 w-full">
               <BarChart
                 accessibilityLayer
-                data={hospitalOccupancyData.map(d => ({...d, occupancy: d.beds.total > 0 ? (d.beds.occupied / d.beds.total) * 100 : 0, region: d.district}))}
+                data={hospitalOccupancyData.map(d => ({...d, occupancy: d.beds.total > 0 ? (d.beds.occupied / d.beds.total) * 100 : 0, hospitalName: d.hospitalName}))}
                 layout="vertical"
                  margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
               >
                 <YAxis
-                  dataKey="region"
+                  dataKey="hospitalName"
                   type="category"
                   tickLine={false}
                   axisLine={false}
@@ -419,3 +438,5 @@ export default function HealthAnalyticsPage() {
     </div>
   );
 }
+
+    

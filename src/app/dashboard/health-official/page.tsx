@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -31,7 +32,7 @@ import { BarChart, Bar, XAxis, YAxis } from 'recharts';
 import Link from 'next/link';
 import type { RegionalData } from '../data-entry-operator/regional-data/page';
 import { REGIONAL_DATA_KEY } from '../data-entry-operator/regional-data/page';
-import { DISEASE_DATA_KEY, type DistrictDiseaseData } from '../data-entry-operator/disease-data/page';
+import { HOSPITAL_CASE_DATA_KEY } from '../data-entry-operator/hospital-data/page';
 import { LOGGED_IN_USER_KEY } from '@/app/login/page';
 
 const chartConfig = {
@@ -51,11 +52,21 @@ type Alert = {
     date: string;
 };
 
+type HospitalCaseData = {
+  district: string;
+  hospitalName: string;
+  entries: {
+    date: string;
+    diseaseName: string;
+    caseCount: number;
+  }[];
+}
+
 
 export default function HealthOfficialDashboardPage() {
     const [alertData, setAlertData] = useState<Alert[]>([]);
     const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
-    const [diseaseData, setDiseaseData] = useState<DistrictDiseaseData[]>([]);
+    const [diseaseData, setDiseaseData] = useState<HospitalCaseData[]>([]);
     const [userName, setUserName] = useState('Official');
     
     const fetchData = () => {
@@ -72,7 +83,7 @@ export default function HealthOfficialDashboardPage() {
             if(storedRegionalData) {
                 setRegionalData(JSON.parse(storedRegionalData));
             }
-            const storedDiseaseData = localStorage.getItem(DISEASE_DATA_KEY);
+            const storedDiseaseData = localStorage.getItem(HOSPITAL_CASE_DATA_KEY);
             if(storedDiseaseData) {
                 setDiseaseData(JSON.parse(storedDiseaseData));
             }
@@ -89,10 +100,17 @@ export default function HealthOfficialDashboardPage() {
         };
     }, []);
     
-    const formattedDiseaseData = diseaseData.map(d => ({
-        region: d.district,
-        cases: d.entries.reduce((total, current) => total + current.caseCount, 0),
-    }));
+    const formattedDiseaseData = regionalData.map(region => {
+        const regionCases = diseaseData
+            .filter(d => d.district === region.district)
+            .reduce((total, hospital) => {
+                return total + (hospital.entries?.reduce((sum, entry) => sum + entry.caseCount, 0) || 0);
+            }, 0);
+        return {
+            region: region.district,
+            cases: regionCases
+        };
+    });
 
 
     const getPriorityVariant = (priority: string) => {
@@ -278,3 +296,5 @@ export default function HealthOfficialDashboardPage() {
     </div>
   );
 }
+
+    
