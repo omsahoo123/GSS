@@ -77,8 +77,8 @@ export default function HospitalInfrastructurePage() {
         const existingDistrict = existingData.find((d: any) => d.districtName === dist.district);
         
         const hospitals = (dist.hospitals || []).map((h: {name: string}) => {
-          const existingHospital = existingDistrict?.hospitals.find((eh: any) => eh.hospitalName === h.name);
-          return existingHospital || {
+          const existingHospitalData = existingDistrict?.hospitals.find((eh: any) => eh.hospitalName === h.name);
+          return existingHospitalData || {
             hospitalName: h.name,
             population: 0,
             beds: { occupied: 0, total: 0 },
@@ -329,5 +329,3 @@ function HospitalInfrastructureForm({ districtIndex, hospitalIndex, control }: {
     </div>
   )
 }
-
-    
