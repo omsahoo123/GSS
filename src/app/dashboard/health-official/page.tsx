@@ -30,7 +30,6 @@ import {
 } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis } from 'recharts';
 import Link from 'next/link';
-import type { RegionalData } from '../data-entry-operator/regional-data/page';
 import { REGIONAL_DATA_KEY } from '../data-entry-operator/regional-data/page';
 import { HOSPITAL_CASE_DATA_KEY } from '../data-entry-operator/hospital-data/page';
 import { LOGGED_IN_USER_KEY } from '@/app/login/page';
@@ -62,10 +61,32 @@ type HospitalCaseData = {
   }[];
 }
 
+type DistrictData = {
+  districtName: string;
+  hospitals: {
+    population: number;
+    beds: {
+        occupied: number;
+        total: number;
+    };
+    ambulances: number;
+  }[]
+}
+
+type SummarizedRegionalData = {
+  district: string;
+  population: number;
+  beds: {
+    occupied: number;
+    total: number;
+  };
+  ambulances: number;
+};
+
 
 export default function HealthOfficialDashboardPage() {
     const [alertData, setAlertData] = useState<Alert[]>([]);
-    const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
+    const [regionalData, setRegionalData] = useState<SummarizedRegionalData[]>([]);
     const [diseaseData, setDiseaseData] = useState<HospitalCaseData[]>([]);
     const [userName, setUserName] = useState('Official');
     
@@ -81,7 +102,22 @@ export default function HealthOfficialDashboardPage() {
             }
             const storedRegionalData = localStorage.getItem(REGIONAL_DATA_KEY);
             if(storedRegionalData) {
-                setRegionalData(JSON.parse(storedRegionalData));
+                 const parsedData: DistrictData[] = JSON.parse(storedRegionalData);
+                 const summarizedData = parsedData.map(district => {
+                    const districtTotals = district.hospitals.reduce((acc, hospital) => {
+                      acc.population += hospital.population || 0;
+                      acc.beds.occupied += hospital.beds?.occupied || 0;
+                      acc.beds.total += hospital.beds?.total || 0;
+                      acc.ambulances += hospital.ambulances || 0;
+                      return acc;
+                    }, { population: 0, beds: { occupied: 0, total: 0 }, ambulances: 0 });
+          
+                    return {
+                      district: district.districtName,
+                      ...districtTotals
+                    }
+                  });
+                  setRegionalData(summarizedData);
             }
             const storedDiseaseData = localStorage.getItem(HOSPITAL_CASE_DATA_KEY);
             if(storedDiseaseData) {

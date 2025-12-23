@@ -19,8 +19,37 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { BedDouble, Ambulance, Users } from 'lucide-react';
-import type { RegionalData } from '../../data-entry-operator/page';
 import { REGIONAL_DATA_KEY } from '../../data-entry-operator/regional-data/page';
+
+type DistrictData = {
+  districtName: string;
+  hospitals: {
+    population: number;
+    beds: {
+        occupied: number;
+        total: number;
+    };
+    ambulances: number;
+    staff: {
+      doctors: number;
+      nurses: number;
+    }
+  }[]
+}
+
+type SummarizedRegionalData = {
+  district: string;
+  population: number;
+  beds: {
+    occupied: number;
+    total: number;
+  };
+  ambulances: number;
+  staff: {
+    doctors: number;
+    nurses: number;
+  }
+};
 
 
 const getOccupancyStatus = (occupancy: number) => {
@@ -31,13 +60,30 @@ const getOccupancyStatus = (occupancy: number) => {
 
 
 export default function ResourcesPage() {
-    const [resourceData, setResourceData] = useState<RegionalData[]>([]);
+    const [resourceData, setResourceData] = useState<SummarizedRegionalData[]>([]);
 
     const fetchData = () => {
         try {
             const storedData = localStorage.getItem(REGIONAL_DATA_KEY);
             if (storedData) {
-                setResourceData(JSON.parse(storedData));
+              const parsedData: DistrictData[] = JSON.parse(storedData);
+              const summarizedData = parsedData.map(district => {
+                const districtTotals = district.hospitals.reduce((acc, hospital) => {
+                  acc.population += hospital.population || 0;
+                  acc.beds.occupied += hospital.beds?.occupied || 0;
+                  acc.beds.total += hospital.beds?.total || 0;
+                  acc.ambulances += hospital.ambulances || 0;
+                  acc.staff.doctors += hospital.staff?.doctors || 0;
+                  acc.staff.nurses += hospital.staff?.nurses || 0;
+                  return acc;
+                }, { population: 0, beds: { occupied: 0, total: 0 }, ambulances: 0, staff: { doctors: 0, nurses: 0 } });
+      
+                return {
+                  district: district.districtName,
+                  ...districtTotals
+                }
+              });
+              setResourceData(summarizedData);
             }
         } catch (error) {
             console.error("Failed to load regional data from localStorage", error);

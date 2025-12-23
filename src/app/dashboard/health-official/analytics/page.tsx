@@ -39,7 +39,6 @@ import { TrendingUp, BedDouble, Users, Download, ChevronDown, Hospital } from 'l
 import { format, subDays, parseISO, eachDayOfInterval } from 'date-fns';
 import { HOSPITAL_CASE_DATA_KEY } from '../../data-entry-operator/hospital-data/page';
 import { REGIONAL_DATA_KEY } from '../../data-entry-operator/regional-data/page';
-import type { RegionalData } from '../../data-entry-operator/page';
 import { Input } from '@/components/ui/input';
 import { PATIENT_ACCOUNT_KEY } from '@/app/signup/patient/page';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -66,6 +65,24 @@ type HospitalCaseData = {
   }[];
 }
 
+type DistrictInfrastructure = {
+  districtName: string;
+  hospitals: {
+    hospitalName: string;
+    population: number;
+    beds: {
+        occupied: number;
+        total: number;
+    };
+    ambulances: number;
+    staff: {
+      doctors: number;
+      nurses: number;
+    }
+  }[]
+}
+
+
 const occupancyChartConfig = {
   occupancy: { label: 'Occupancy', color: 'hsl(var(--destructive))' },
 };
@@ -81,7 +98,7 @@ export default function HealthAnalyticsPage() {
   const [selectedRegion, setSelectedRegion] = useState('all');
   const [selectedHospital, setSelectedHospital] = useState('all');
   const [diseaseData, setDiseaseData] = useState<HospitalCaseData[]>([]);
-  const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
+  const [regionalData, setRegionalData] = useState<DistrictInfrastructure[]>([]);
   const [allPatients, setAllPatients] = useState<any[]>([]);
   const [labReports, setLabReports] = useState<LabReport[]>([]);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
@@ -135,13 +152,14 @@ export default function HealthAnalyticsPage() {
   };
   
   const regions = useMemo(() => {
-    return ['all', ...[...new Set(regionalData.map((d) => d.district))]];
+    return ['all', ...[...new Set(regionalData.map((d) => d.districtName))]];
   }, [regionalData]);
 
   const availableHospitals = useMemo(() => {
     if (!regionalData) return [{ label: 'All Hospitals', value: 'all' }];
     
-    let hospitals = regionalData;
+    let hospitals = regionalData.flatMap(d => d.hospitals.map(h => ({...h, district: d.districtName})));
+
     if (selectedRegion !== 'all') {
       hospitals = hospitals.filter(h => h.district === selectedRegion);
     }
@@ -216,18 +234,27 @@ export default function HealthAnalyticsPage() {
 
   const hospitalOccupancyData = useMemo(() => {
      if (selectedRegion !== 'all') {
-        return regionalData.filter(d => d.district === selectedRegion);
+        const district = regionalData.find(d => d.districtName === selectedRegion);
+        return district ? district.hospitals : [];
      }
      // When 'all' regions selected, group by district
      const districtSummary = regionalData.reduce((acc, curr) => {
-        if (!acc[curr.district]) {
-            acc[curr.district] = { district: curr.district, beds: { occupied: 0, total: 0 }, hospitalName: curr.district };
+        const districtTotals = curr.hospitals.reduce((subAcc, hospital) => {
+            subAcc.occupied += hospital.beds?.occupied || 0;
+            subAcc.total += hospital.beds?.total || 0;
+            return subAcc;
+        }, {occupied: 0, total: 0});
+
+        if (!acc[curr.districtName]) {
+            acc[curr.districtName] = { districtName: curr.districtName, beds: { occupied: 0, total: 0 } };
         }
-        acc[curr.district].beds.occupied += curr.beds.occupied;
-        acc[curr.district].beds.total += curr.beds.total;
+        acc[curr.districtName].beds.occupied += districtTotals.occupied;
+        acc[curr.districtName].beds.total += districtTotals.total;
         return acc;
      }, {} as Record<string, any>);
-     return Object.values(districtSummary);
+
+     return Object.values(districtSummary).map(d => ({...d, hospitalName: d.districtName}));
+
   }, [selectedRegion, regionalData]);
   
   const ageDemographicsData = useMemo(() => {
@@ -265,10 +292,10 @@ export default function HealthAnalyticsPage() {
     csvContent += "\n";
 
     csvContent += "Hospital Bed Occupancy\n";
-    csvContent += "Hospital,District,Occupied,Total,Occupancy (%)\n";
+    csvContent += "Name,Occupied,Total,Occupancy (%)\n";
     hospitalOccupancyData.forEach(row => {
         const occupancy = row.beds.total > 0 ? (row.beds.occupied / row.beds.total) * 100 : 0;
-        csvContent += `${row.hospitalName},${row.district},${row.beds.occupied},${row.beds.total},${occupancy.toFixed(1)}\n`;
+        csvContent += `${row.hospitalName},${row.beds.occupied},${row.beds.total},${occupancy.toFixed(1)}\n`;
     });
     csvContent += "\n";
 

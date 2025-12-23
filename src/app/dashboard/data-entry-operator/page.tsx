@@ -19,8 +19,31 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Users, Building, Truck, Server } from 'lucide-react';
 import Link from 'next/link';
-import { REGIONAL_DATA_KEY, type RegionalData } from './regional-data/page';
+import { REGIONAL_DATA_KEY } from './regional-data/page';
 import { LOGGED_IN_USER_KEY } from '@/app/login/page';
+
+type DistrictData = {
+  districtName: string;
+  hospitals: {
+    population: number;
+    beds: {
+        occupied: number;
+        total: number;
+    };
+    ambulances: number;
+  }[]
+}
+
+export type RegionalData = {
+  district: string;
+  population: number;
+  beds: {
+    occupied: number;
+    total: number;
+  };
+  ambulances: number;
+};
+
 
 export default function DataEntryOperatorDashboardPage() {
   const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
@@ -30,7 +53,22 @@ export default function DataEntryOperatorDashboardPage() {
     try {
       const storedData = localStorage.getItem(REGIONAL_DATA_KEY);
       if (storedData) {
-        setRegionalData(JSON.parse(storedData));
+        const parsedData: DistrictData[] = JSON.parse(storedData);
+        const summarizedData = parsedData.map(district => {
+          const districtTotals = district.hospitals.reduce((acc, hospital) => {
+            acc.population += hospital.population || 0;
+            acc.beds.occupied += hospital.beds?.occupied || 0;
+            acc.beds.total += hospital.beds?.total || 0;
+            acc.ambulances += hospital.ambulances || 0;
+            return acc;
+          }, { population: 0, beds: { occupied: 0, total: 0 }, ambulances: 0 });
+
+          return {
+            district: district.districtName,
+            ...districtTotals
+          }
+        });
+        setRegionalData(summarizedData);
       }
       const userData = localStorage.getItem(LOGGED_IN_USER_KEY);
       if (userData) {
@@ -42,7 +80,7 @@ export default function DataEntryOperatorDashboardPage() {
   }, []);
 
   const totalPopulation = regionalData.reduce((sum, r) => sum + (r.population || 0), 0);
-  const totalHospitals = regionalData.length;
+  const totalDistricts = regionalData.length;
   const totalAmbulances = regionalData.reduce((sum, r) => sum + (r.ambulances || 0), 0);
   const districtsWithMissingData = regionalData.filter(r => !r.population || !r.beds.total).length;
 
@@ -86,7 +124,7 @@ export default function DataEntryOperatorDashboardPage() {
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalHospitals}</div>
+            <div className="text-2xl font-bold">{totalDistricts}</div>
             <p className="text-xs text-muted-foreground">
               Total districts with data entries
             </p>
