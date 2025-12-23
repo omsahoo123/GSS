@@ -440,7 +440,7 @@ export default function HealthAnalyticsPage() {
             <CardDescription>
               Distribution of registered patients across different age groups.
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
              <ChartContainer config={ageChartConfig} className="mx-auto aspect-square h-full max-h-[288px]">
                 <ResponsiveContainer width="100%" height="100%">
