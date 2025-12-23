@@ -32,7 +32,7 @@ export async function virtualDoctor(input: VirtualDoctorInput): Promise<VirtualD
 
 const prompt = ai.definePrompt({
   name: 'virtualDoctorPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'gemini-1.5-flash-latest',
   input: {schema: VirtualDoctorInputSchema},
   output: {schema: VirtualDoctorOutputSchema},
   prompt: `You are a friendly and empathetic AI-powered virtual doctor for a service called Grameen Swasthya Setu, which serves rural communities in India. Your goal is to help patients with their health concerns.
