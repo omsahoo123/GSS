@@ -91,8 +91,12 @@ export default function HealthAnalyticsPage() {
   });
   
   const availableDiseases = useMemo(() => {
-    if(!diseaseData) return [];
-    const all = new Set(diseaseData.flatMap(d => d.entries.map(e => e.diseaseName)))
+    if (!diseaseData) return [];
+    const all = new Set(
+      diseaseData.flatMap(hospital =>
+        hospital.entries.map(entry => entry.diseaseName)
+      )
+    );
     return Array.from(all).filter(Boolean); // Filter out empty strings
   }, [diseaseData]);
   
@@ -131,7 +135,7 @@ export default function HealthAnalyticsPage() {
   };
   
   const regions = useMemo(() => {
-    return ['all', ...[...new Set(regionalData.map(d => d.district))]];
+    return ['all', ...[...new Set(regionalData.map((d) => d.district))]];
   }, [regionalData]);
 
   const availableHospitals = useMemo(() => {
@@ -141,7 +145,7 @@ export default function HealthAnalyticsPage() {
     }
     
     const hospitalOptions = hospitals
-        .filter(h => h && h.hospitalName) // Ensure h and h.hospitalName are not undefined
+        .filter(h => h && h.hospitalName)
         .map(h => ({
             label: h.hospitalName,
             value: h.hospitalName
