@@ -71,12 +71,15 @@ export default function HospitalInfrastructurePage() {
       const existingHospitalKeys = new Set(existingData.map((d: any) => `${d.district}-${d.hospitalName}`));
 
       const newHospitalInfrastructure = districtHospitalData
-        .flatMap((district: { district: string, hospitals: {name: string}[] }) => 
-            district.hospitals.map(hospital => ({
+        .flatMap((district: { district: string, hospitals: {name: string}[] }) => {
+            if (!district || !Array.isArray(district.hospitals)) {
+                return []; // Safely skip if district or district.hospitals is not as expected
+            }
+            return district.hospitals.map(hospital => ({
                 district: district.district,
                 hospitalName: hospital.name
-            }))
-        )
+            }));
+        })
         .filter((h: { district: string, hospitalName: string }) => !existingHospitalKeys.has(`${h.district}-${h.hospitalName}`))
         .map((h: { district: string, hospitalName: string }) => ({
              ...h,
