@@ -207,32 +207,32 @@ function DistrictInfrastructureCard({ districtIndex, control }: { districtIndex:
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-center mb-6">
             <div className="rounded-lg border p-3">
                  <Users className="mx-auto h-6 w-6 text-muted-foreground"/>
-                 <p className="mt-1 text-xl font-bold">{totals.population.toLocaleString()}</p>
+                 <p className="mt-1 text-xl font-bold">{totals.population > 0 ? totals.population.toLocaleString() : ''}</p>
                  <p className="text-xs text-muted-foreground">Population</p>
             </div>
             <div className="rounded-lg border p-3">
                  <Bed className="mx-auto h-6 w-6 text-muted-foreground"/>
-                 <p className="mt-1 text-xl font-bold">{totals.beds.occupied}</p>
+                 <p className="mt-1 text-xl font-bold">{totals.beds.occupied > 0 ? totals.beds.occupied : ''}</p>
                  <p className="text-xs text-muted-foreground">Occupied Beds</p>
             </div>
             <div className="rounded-lg border p-3">
                  <Bed className="mx-auto h-6 w-6 text-muted-foreground"/>
-                 <p className="mt-1 text-xl font-bold">{totals.beds.total}</p>
+                 <p className="mt-1 text-xl font-bold">{totals.beds.total > 0 ? totals.beds.total : ''}</p>
                  <p className="text-xs text-muted-foreground">Total Beds</p>
             </div>
             <div className="rounded-lg border p-3">
                  <Ambulance className="mx-auto h-6 w-6 text-muted-foreground"/>
-                 <p className="mt-1 text-xl font-bold">{totals.ambulances}</p>
+                 <p className="mt-1 text-xl font-bold">{totals.ambulances > 0 ? totals.ambulances : ''}</p>
                  <p className="text-xs text-muted-foreground">Ambulances</p>
             </div>
             <div className="rounded-lg border p-3">
                  <User className="mx-auto h-6 w-6 text-muted-foreground"/>
-                 <p className="mt-1 text-xl font-bold">{totals.staff.doctors}</p>
+                 <p className="mt-1 text-xl font-bold">{totals.staff.doctors > 0 ? totals.staff.doctors : ''}</p>
                  <p className="text-xs text-muted-foreground">Doctors</p>
             </div>
             <div className="rounded-lg border p-3">
                  <UserCog className="mx-auto h-6 w-6 text-muted-foreground"/>
-                 <p className="mt-1 text-xl font-bold">{totals.staff.nurses}</p>
+                 <p className="mt-1 text-xl font-bold">{totals.staff.nurses > 0 ? totals.staff.nurses : ''}</p>
                  <p className="text-xs text-muted-foreground">Nurses</p>
             </div>
         </div>
