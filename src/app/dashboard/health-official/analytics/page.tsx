@@ -211,8 +211,7 @@ export default function HealthAnalyticsPage() {
      if (selectedRegion !== 'all') {
         return regionalData.filter(d => d.district.toLowerCase() === selectedRegion);
      }
-     // When 'all' regions selected, maybe group by district instead of showing all hospitals?
-     // For now, let's just show all hospitals as before, but this can be changed.
+     // When 'all' regions selected, group by district
      const districtSummary = regionalData.reduce((acc, curr) => {
         if (!acc[curr.district]) {
             acc[curr.district] = { district: curr.district, beds: { occupied: 0, total: 0 }, hospitalName: curr.district };
