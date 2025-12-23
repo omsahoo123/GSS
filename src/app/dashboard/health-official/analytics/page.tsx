@@ -117,13 +117,13 @@ export default function HealthAnalyticsPage() {
         const patientAccounts = allPatientKeys.map(k => JSON.parse(localStorage.getItem(k)!));
         setAllPatients(patientAccounts);
         
-        const allLabReports = localStorage.getItem('allLabReports');
-        if(allLabReports) {
-            setLabReports(JSON.parse(allLabReports));
+        const allLabReportsData = localStorage.getItem('allLabReports');
+        if(allLabReportsData) {
+            setLabReports(JSON.parse(allLabReportsData));
         }
-        const allPrescriptions = localStorage.getItem('allPrescriptions');
-        if(allPrescriptions) {
-            setPrescriptions(JSON.parse(allPrescriptions));
+        const allPrescriptionsData = localStorage.getItem('allPrescriptions');
+        if(allPrescriptionsData) {
+            setPrescriptions(JSON.parse(allPrescriptionsData));
         }
     } catch (error) {
         console.error("Failed to load data from localStorage", error);
@@ -139,6 +139,11 @@ export default function HealthAnalyticsPage() {
     if (selectedRegion !== 'all') {
       hospitals = hospitals.filter(h => h.district.toLowerCase() === selectedRegion);
     }
+    
+    if (!hospitals) {
+      return [{label: 'All Hospitals', value: 'all'}];
+    }
+    
     const hospitalOptions = hospitals.map(h => ({
       label: h.hospitalName,
       value: h.hospitalName
