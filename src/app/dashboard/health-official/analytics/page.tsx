@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, BedDouble, Users, Download, ChevronDown } from 'lucide-react';
+import { TrendingUp, BedDouble, Users, Download, ChevronDown, Hospital } from 'lucide-react';
 import { format, subDays, parseISO, eachDayOfInterval } from 'date-fns';
 import { HOSPITAL_CASE_DATA_KEY } from '../../data-entry-operator/hospital-data/page';
 import { REGIONAL_DATA_KEY } from '../../data-entry-operator/regional-data/page';
@@ -79,6 +79,7 @@ const ageChartConfig = {
 
 export default function HealthAnalyticsPage() {
   const [selectedRegion, setSelectedRegion] = useState('all');
+  const [selectedHospital, setSelectedHospital] = useState('all');
   const [diseaseData, setDiseaseData] = useState<HospitalCaseData[]>([]);
   const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
   const [allPatients, setAllPatients] = useState<any[]>([]);
@@ -133,6 +134,17 @@ export default function HealthAnalyticsPage() {
     return ['all', ...[...new Set(regionalData.map(d => d.district.toLowerCase()))]];
   }, [regionalData]);
 
+  const availableHospitals = useMemo(() => {
+    let hospitals = regionalData;
+    if (selectedRegion !== 'all') {
+      hospitals = hospitals.filter(h => h.district.toLowerCase() === selectedRegion);
+    }
+    const hospitalOptions = hospitals.map(h => ({
+      label: h.hospitalName,
+      value: h.hospitalName
+    }));
+    return [{label: 'All Hospitals', value: 'all'}, ...hospitalOptions];
+  }, [regionalData, selectedRegion]);
 
   useEffect(() => {
     fetchData();
@@ -141,6 +153,11 @@ export default function HealthAnalyticsPage() {
         window.removeEventListener('focus', fetchData);
     };
   }, []);
+
+  useEffect(() => {
+    // Reset hospital selection when region changes
+    setSelectedHospital('all');
+  }, [selectedRegion]);
   
   const diseaseChartConfig = useMemo(() => {
     return availableDiseases.reduce((config, diseaseName, index) => {
@@ -161,6 +178,11 @@ export default function HealthAnalyticsPage() {
       filteredByRegion = filteredByRegion.filter(d => d.district.toLowerCase() === selectedRegion);
     }
 
+    let filteredByHospital = filteredByRegion;
+    if (selectedHospital !== 'all') {
+      filteredByHospital = filteredByHospital.filter(d => d.hospitalName === selectedHospital);
+    }
+
     const intervalDays = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
 
     return intervalDays.map(date => {
@@ -168,7 +190,7 @@ export default function HealthAnalyticsPage() {
 
         selectedDiseases.forEach(diseaseName => {
             const key = diseaseName.replace(/\s+/g, '-').toLowerCase();
-            const totalCasesForDay = filteredByRegion.reduce((sum, hospital) => {
+            const totalCasesForDay = filteredByHospital.reduce((sum, hospital) => {
                 const dayEntries = hospital.entries.filter(e => 
                     e.diseaseName === diseaseName &&
                     format(parseISO(e.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
@@ -179,13 +201,23 @@ export default function HealthAnalyticsPage() {
         });
         return dailyData;
     });
-  }, [selectedRegion, diseaseData, selectedDiseases, dateRange]);
+  }, [selectedRegion, selectedHospital, diseaseData, selectedDiseases, dateRange]);
 
   const hospitalOccupancyData = useMemo(() => {
      if (selectedRegion !== 'all') {
         return regionalData.filter(d => d.district.toLowerCase() === selectedRegion);
      }
-     return regionalData;
+     // When 'all' regions selected, maybe group by district instead of showing all hospitals?
+     // For now, let's just show all hospitals as before, but this can be changed.
+     const districtSummary = regionalData.reduce((acc, curr) => {
+        if (!acc[curr.district]) {
+            acc[curr.district] = { district: curr.district, beds: { occupied: 0, total: 0 }, hospitalName: curr.district };
+        }
+        acc[curr.district].beds.occupied += curr.beds.occupied;
+        acc[curr.district].beds.total += curr.beds.total;
+        return acc;
+     }, {} as Record<string, any>);
+     return Object.values(districtSummary);
   }, [selectedRegion, regionalData]);
   
   const ageDemographicsData = useMemo(() => {
@@ -262,7 +294,7 @@ export default function HealthAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4">
         <div>
           <h1 className="font-headline text-3xl font-bold">Health Analytics</h1>
           <p className="text-muted-foreground">
@@ -276,6 +308,15 @@ export default function HealthAnalyticsPage() {
             </SelectTrigger>
             <SelectContent>
               {regions.map(r => <SelectItem key={r} value={r} className="capitalize">{r === 'all' ? 'All Regions' : r}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          
+           <Select value={selectedHospital} onValueChange={setSelectedHospital}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Select Hospital" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableHospitals.map(h => <SelectItem key={h.value} value={h.value} className="capitalize">{h.label}</SelectItem>)}
             </SelectContent>
           </Select>
 
@@ -300,7 +341,7 @@ export default function HealthAnalyticsPage() {
             </DropdownMenuContent>
            </DropdownMenu>
 
-          <div className="flex w-full items-center gap-2 sm:w-auto">
+          <div className="flex w-full items-center gap-2 sm:w-auto flex-1 min-w-[280px]">
             <Input type="date" value={format(dateRange.from, 'yyyy-MM-dd')} onChange={(e) => handleDateChange(e, 'from')} className="w-full sm:w-auto"/>
              <span className="text-muted-foreground">to</span>
             <Input type="date" value={format(dateRange.to, 'yyyy-MM-dd')} onChange={(e) => handleDateChange(e, 'to')} className="w-full sm:w-auto"/>
@@ -319,7 +360,7 @@ export default function HealthAnalyticsPage() {
             Daily Disease Trends
           </CardTitle>
           <CardDescription>
-            Reported cases over the selected date range.
+            Reported cases for {selectedHospital === 'all' ? 'all selected hospitals' : selectedHospital} in {selectedRegion === 'all' ? 'all regions' : selectedRegion}.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -355,28 +396,29 @@ export default function HealthAnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BedDouble className="h-5 w-5" />
-              Hospital Bed Occupancy by Region
+              Hospital Bed Occupancy
             </CardTitle>
             <CardDescription>
-              Percentage of occupied beds in key districts.
+              Percentage of occupied beds in {selectedRegion === 'all' ? 'all regions (grouped by district)' : selectedRegion}.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={occupancyChartConfig} className="h-72 w-full">
               <BarChart
                 accessibilityLayer
-                data={hospitalOccupancyData.map(d => ({...d, occupancy: d.beds.total > 0 ? (d.beds.occupied / d.beds.total) * 100 : 0, hospitalName: d.hospitalName}))}
+                data={hospitalOccupancyData.map(d => ({...d, occupancy: d.beds.total > 0 ? (d.beds.occupied / d.beds.total) * 100 : 0, name: d.hospitalName}))}
                 layout="vertical"
                  margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
               >
                 <YAxis
-                  dataKey="hospitalName"
+                  dataKey="name"
                   type="category"
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
                   className="capitalize"
-                  width={80}
+                  width={100}
+                  interval={0}
                 />
                 <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
                 <ChartTooltip
@@ -398,7 +440,7 @@ export default function HealthAnalyticsPage() {
             <CardDescription>
               Distribution of registered patients across different age groups.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
              <ChartContainer config={ageChartConfig} className="mx-auto aspect-square h-full max-h-[288px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -438,5 +480,3 @@ export default function HealthAnalyticsPage() {
     </div>
   );
 }
-
-    
