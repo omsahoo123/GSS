@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -65,10 +65,15 @@ export default function HospitalDataPage() {
       const storedDistrictData = localStorage.getItem(DISEASE_DATA_KEY);
       const districtData = storedDistrictData ? JSON.parse(storedDistrictData) : [];
       
-      const hospitals = districtData.flatMap((d: any) => d.hospitals.map((h: any) => ({
-        label: `${h.name}, ${d.district}`,
-        value: `${d.district}|${h.name}`
-      })));
+      const hospitals = districtData.flatMap((d: any) => {
+        if (!d.hospitals || !Array.isArray(d.hospitals)) {
+          return [];
+        }
+        return d.hospitals.map((h: any) => ({
+          label: `${h.name}, ${d.district}`,
+          value: `${d.district}|${h.name}`
+        }));
+      });
       setAvailableHospitals(hospitals);
       
       const allHospitalData = hospitals.map((h: {value: string}) => {
