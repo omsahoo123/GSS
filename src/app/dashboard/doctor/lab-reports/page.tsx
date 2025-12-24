@@ -60,6 +60,7 @@ export type LabReport = {
     date: string;
     status: 'Available' | 'Pending';
     fileName: string;
+    fileDataUrl: string; // To store the file content
 };
 
 type LabReportFormValues = z.infer<typeof labReportSchema>;
@@ -100,35 +101,44 @@ export default function LabReportsPage() {
   });
 
   const onSubmit = (data: LabReportFormValues) => {
-    const newReport: LabReport = {
-      id: `lab-${Date.now()}`,
-      patientId: `pat-${data.patientName.replace(' ', '').toLowerCase()}`,
-      patientName: data.patientName,
-      reportName: data.reportName,
-      date: format(new Date(), 'yyyy-MM-dd'),
-      status: 'Available',
-      fileName: data.reportFile[0].name,
+    const file = data.reportFile[0];
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+        const newReport: LabReport = {
+          id: `lab-${Date.now()}`,
+          patientId: `pat-${data.patientName.replace(' ', '').toLowerCase()}`,
+          patientName: data.patientName,
+          reportName: data.reportName,
+          date: format(new Date(), 'yyyy-MM-dd'),
+          status: 'Available',
+          fileName: file.name,
+          fileDataUrl: reader.result as string,
+        };
+
+        saveReports([newReport, ...labReports]);
+        toast({
+          title: 'Lab Report Uploaded',
+          description: `A new report for ${data.patientName} has been added.`,
+        });
+        form.reset();
+        const fileInput = document.getElementById('reportFile') as HTMLInputElement;
+        if(fileInput) fileInput.value = '';
     };
 
-    saveReports([newReport, ...labReports]);
-    toast({
-      title: 'Lab Report Uploaded',
-      description: `A new report for ${data.patientName} has been added.`,
-    });
-    form.reset();
-    (document.getElementById('reportFile') as HTMLInputElement).value = '';
+    reader.onerror = () => {
+        toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not read the uploaded file.' });
+    }
+
+    reader.readAsDataURL(file);
   };
   
   const handleDownload = (report: LabReport) => {
-    const fileContent = `This is a dummy lab report for ${report.reportName} for patient ${report.patientName} dated ${report.date}.`;
-    const blob = new Blob([fileContent], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `${report.fileName.split('.')[0]}.txt`;
+    a.href = report.fileDataUrl;
+    a.download = report.fileName;
     document.body.appendChild(a);
     a.click();
-    window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   };
   
@@ -274,3 +284,5 @@ export default function LabReportsPage() {
     </div>
   );
 }
+
+    

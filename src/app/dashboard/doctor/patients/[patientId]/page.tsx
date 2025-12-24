@@ -102,16 +102,12 @@ export default function PatientHistoryPage() {
     );
   }
 
-  const handleDownload = (fileName: string) => {
-    const fileContent = `This is a dummy lab report for ${fileName}.`;
-    const blob = new Blob([fileContent], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
+  const handleDownload = (report: LabReport) => {
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `${fileName.split('.')[0]}.txt`;
+    a.href = report.fileDataUrl;
+    a.download = report.fileName;
     document.body.appendChild(a);
     a.click();
-    window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   };
 
@@ -199,7 +195,7 @@ export default function PatientHistoryPage() {
                     <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => handleDownload(report.fileName)}
+                        onClick={() => handleDownload(report)}
                     >
                       <Download className="mr-2 h-4 w-4" />
                       Download
@@ -222,3 +218,5 @@ export default function PatientHistoryPage() {
     </div>
   );
 }
+
+    

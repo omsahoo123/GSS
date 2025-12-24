@@ -63,18 +63,35 @@ export default function HealthRecordsPage() {
     }
   }, []);
 
-  const handleDownload = (fileName: string, fileContentDetails: string) => {
-    const fileContent = `This is a dummy file for ${fileName}.\n\nDetails:\n${fileContentDetails}`;
-    const blob = new Blob([fileContent], { type: 'text/plain' });
+  const handleDownload = (report: LabReport) => {
+    const a = document.createElement('a');
+    a.href = report.fileDataUrl;
+    a.download = report.fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+  
+  const handlePrescriptionDownload = (prescription: Prescription) => {
+    const fileContent = `
+      Prescription Details
+      --------------------
+      Patient: ${prescription.patientName}
+      Date: ${format(parseISO(prescription.date), 'PPP')}
+      Medication: ${prescription.medication}
+      Dosage: ${prescription.dosage}
+      Instructions: ${prescription.instructions}
+    `;
+    const blob = new Blob([fileContent.trim()], { type: 'text/plain' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${fileName.split('.')[0]}.txt`;
+    a.download = `prescription_${prescription.patientName}_${prescription.date}.txt`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
-  };
+  }
 
   const getPrescriptionForConsultation = (consultation: Appointment) => {
       return prescriptions.find(p => p.patientName === consultation.patient && format(parseISO(p.date), 'yyyy-MM-dd') === format(consultation.date, 'yyyy-MM-dd'))
@@ -132,7 +149,7 @@ export default function HealthRecordsPage() {
                                 <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => handleDownload(`${prescription.medication}_Prescription`, `Doctor: ${consult.doctor}\nDate: ${prescription.date}\nMedication: ${prescription.medication}\nDosage: ${prescription.dosage}\nInstructions: ${prescription.instructions}`)}
+                                onClick={() => handlePrescriptionDownload(prescription)}
                                 >
                                 <Download className="mr-2 h-4 w-4" />
                                 Prescription
@@ -189,7 +206,7 @@ export default function HealthRecordsPage() {
                           variant="outline" 
                           size="sm" 
                           disabled={report.status !== 'Available'}
-                          onClick={() => handleDownload(report.fileName, `Report: ${report.reportName}\nDate: ${report.date}`)}
+                          onClick={() => handleDownload(report)}
                         >
                           <Download className="mr-2 h-4 w-4" />
                           Download
@@ -212,3 +229,5 @@ export default function HealthRecordsPage() {
     </div>
   );
 }
+
+    
