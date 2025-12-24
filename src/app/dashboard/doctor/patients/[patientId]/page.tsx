@@ -25,7 +25,7 @@ import { useEffect, useState } from 'react';
 import { type Appointment } from '../../appointments/page';
 import { type LabReport } from '../../lab-reports/page';
 import { format, parseISO } from 'date-fns';
-import { PATIENT_ACCOUNT_KEY } from '@/app/signup/patient/page';
+import { PATIENT_ACCOUNT_KEY, PATIENT_PHOTO_KEY } from '@/app/signup/patient/page';
 
 
 type PatientDetails = {
@@ -65,11 +65,14 @@ export default function PatientHistoryPage() {
             
             const patientAccountKey = `${PATIENT_ACCOUNT_KEY}${patientPhone}`;
             const patientAccountString = localStorage.getItem(patientAccountKey);
+            const patientPhotoString = localStorage.getItem(`${PATIENT_PHOTO_KEY}${patientPhone}`);
             
             if (patientAccountString) {
                 const patientAccount = JSON.parse(patientAccountString);
                 patientAge = patientAccount.age;
-                avatarUrl = patientAccount.photo;
+            }
+             if (patientPhotoString) {
+                avatarUrl = patientPhotoString;
             }
 
 
@@ -218,5 +221,3 @@ export default function PatientHistoryPage() {
     </div>
   );
 }
-
-    
