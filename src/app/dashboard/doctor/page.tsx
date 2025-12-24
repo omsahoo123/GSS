@@ -91,7 +91,7 @@ export default function DoctorDashboardPage() {
         const doctorAppointments = parsedData.filter(appt => appt.doctor === doctorName);
         setAppointments(doctorAppointments);
 
-        // Process demographics data
+        // Process demographics data only for the doctor's patients
         const uniquePatientNames = [...new Set(doctorAppointments.map(a => a.patient))];
         const allPatientKeys = Object.keys(localStorage).filter(k => k.startsWith(PATIENT_ACCOUNT_KEY));
         const allPatientAccounts = allPatientKeys.map(k => JSON.parse(localStorage.getItem(k)!));
@@ -458,3 +458,5 @@ export default function DoctorDashboardPage() {
     </div>
   );
 }
+
+    
