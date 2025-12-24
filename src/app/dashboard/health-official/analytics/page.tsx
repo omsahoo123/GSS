@@ -117,7 +117,7 @@ export default function HealthAnalyticsPage() {
     return Array.from(all).filter(Boolean); // Filter out empty strings
   }, [diseaseData]);
   
-  const [selectedDiseases, setSelectedDiseases] = useState<string[]>(availableDiseases);
+  const [selectedDiseases, setSelectedDiseases] = useState<string[]>([]);
 
   useEffect(() => {
     setSelectedDiseases(availableDiseases);
@@ -240,8 +240,8 @@ export default function HealthAnalyticsPage() {
      // When 'all' regions selected, group by district
      const districtSummary = regionalData.reduce((acc, curr) => {
         const districtTotals = curr.hospitals.reduce((subAcc, hospital) => {
-            subAcc.occupied += hospital.beds?.occupied || 0;
-            subAcc.total += hospital.beds?.total || 0;
+            subAcc.occupied += Number(hospital.beds?.occupied) || 0;
+            subAcc.total += Number(hospital.beds?.total) || 0;
             return subAcc;
         }, {occupied: 0, total: 0});
 
@@ -443,7 +443,7 @@ export default function HealthAnalyticsPage() {
             <ChartContainer config={occupancyChartConfig} className="h-72 w-full">
               <BarChart
                 accessibilityLayer
-                data={hospitalOccupancyData.map(d => ({...d, occupancy: d.beds.total > 0 ? (d.beds.occupied / d.beds.total) * 100 : 0, name: d.hospitalName}))}
+                data={hospitalOccupancyData.map(d => ({...d, occupancy: d.beds.total > 0 ? (d.beds.occupied / d.beds.total) * 100 : 0, name: d.hospitalName || d.districtName}))}
                 layout="vertical"
                  margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
               >

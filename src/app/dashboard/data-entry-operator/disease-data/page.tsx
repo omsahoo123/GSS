@@ -53,7 +53,7 @@ export default function ManageDistrictsAndHospitalsPage() {
     name: "districts",
   });
   
-  useEffect(() => {
+  const fetchData = () => {
     try {
       const storedData = localStorage.getItem(DISEASE_DATA_KEY);
       if (storedData) {
@@ -62,7 +62,16 @@ export default function ManageDistrictsAndHospitalsPage() {
     } catch (error) {
       console.error("Failed to load district data from localStorage", error);
     }
-  }, [form]);
+  };
+
+  useEffect(() => {
+    fetchData();
+    window.addEventListener('focus', fetchData);
+    return () => {
+        window.removeEventListener('focus', fetchData);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
 
   const onSubmit = (data: FormValues) => {
