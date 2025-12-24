@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,7 +14,7 @@ import { LOGGED_IN_USER_KEY } from '../page';
 import { PROFESSIONAL_ACCOUNT_KEY } from '@/app/signup/professional/page';
 
 
-export default function ProfessionalLoginPage() {
+function ProfessionalLoginComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -150,4 +151,12 @@ export default function ProfessionalLoginPage() {
       </Card>
     </div>
   );
+}
+
+export default function ProfessionalLoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProfessionalLoginComponent />
+    </Suspense>
+  )
 }
