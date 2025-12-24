@@ -125,7 +125,7 @@ export default function LabReportsPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = report.fileName;
+    a.download = `${report.fileName.split('.')[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);

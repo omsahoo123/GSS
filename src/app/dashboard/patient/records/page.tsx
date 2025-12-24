@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -68,7 +69,7 @@ export default function HealthRecordsPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = fileName;
+    a.download = `${fileName.split('.')[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
@@ -131,7 +132,7 @@ export default function HealthRecordsPage() {
                                 <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => handleDownload(`${prescription.medication}_Prescription.txt`, `Doctor: ${consult.doctor}\nDate: ${prescription.date}\nMedication: ${prescription.medication}\nDosage: ${prescription.dosage}\nInstructions: ${prescription.instructions}`)}
+                                onClick={() => handleDownload(`${prescription.medication}_Prescription`, `Doctor: ${consult.doctor}\nDate: ${prescription.date}\nMedication: ${prescription.medication}\nDosage: ${prescription.dosage}\nInstructions: ${prescription.instructions}`)}
                                 >
                                 <Download className="mr-2 h-4 w-4" />
                                 Prescription

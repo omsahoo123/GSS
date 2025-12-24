@@ -108,7 +108,7 @@ export default function PatientHistoryPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = fileName;
+    a.download = `${fileName.split('.')[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
