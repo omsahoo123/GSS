@@ -83,7 +83,7 @@ export default function HospitalDataPage() {
       });
       replace(allHospitalData);
 
-    } catch (error) => {
+    } catch (error) {
       console.error("Failed to load hospital data from localStorage", error);
     }
   }
