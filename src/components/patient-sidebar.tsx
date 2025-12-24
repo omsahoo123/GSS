@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -25,6 +26,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from './ui/button';
 import React, { useEffect, useState } from 'react';
 import { LOGGED_IN_USER_KEY } from '@/app/login/page';
+import { PATIENT_PHOTO_KEY } from '@/app/signup/patient/page';
+
 
 const menuItems = [
   { href: '/dashboard/patient', label: 'Dashboard', icon: Home, exact: true },
@@ -37,19 +40,26 @@ const menuItems = [
 
 type PatientData = {
   name: string;
-  photo?: string;
+  phone: string;
 };
 
 export function PatientSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [patientData, setPatientData] = useState<PatientData | null>(null);
+  const [patientPhoto, setPatientPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     try {
       const storedData = localStorage.getItem(LOGGED_IN_USER_KEY);
       if (storedData) {
-        setPatientData(JSON.parse(storedData));
+        const parsedData: PatientData = JSON.parse(storedData);
+        setPatientData(parsedData);
+
+        const storedPhoto = localStorage.getItem(`${PATIENT_PHOTO_KEY}${parsedData.phone}`);
+        if(storedPhoto) {
+          setPatientPhoto(storedPhoto);
+        }
       }
     } catch (error) {
       console.error("Failed to load patient data from localStorage", error);
@@ -93,8 +103,8 @@ export function PatientSidebar() {
       <SidebarFooter className="border-t">
         <div className="flex items-center gap-3 p-2">
           <Avatar className="h-10 w-10">
-            {patientData?.photo && (
-              <AvatarImage src={patientData.photo} alt={patientData.name} />
+            {patientPhoto && patientData && (
+              <AvatarImage src={patientPhoto} alt={patientData.name} />
             )}
             <AvatarFallback>
               {patientData ? getInitials(patientData.name) : 'P'}

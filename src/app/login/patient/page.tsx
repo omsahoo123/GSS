@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -10,8 +11,7 @@ import { ArrowRight, KeyRound } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import Link from 'next/link';
 import { LOGGED_IN_USER_KEY } from '../page';
-
-export const PATIENT_ACCOUNT_KEY = 'patientAccount_';
+import { PATIENT_ACCOUNT_KEY } from '@/app/signup/patient/page';
 
 export default function PatientLoginPage() {
   const [phone, setPhone] = useState('');
@@ -50,7 +50,9 @@ export default function PatientLoginPage() {
     const patientDataString = localStorage.getItem(`${PATIENT_ACCOUNT_KEY}${phone}`);
     if (patientDataString) {
         const patientData = JSON.parse(patientDataString);
-        localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify({ role: 'patient', ...patientData }));
+        // Exclude photo from the logged-in user object to avoid quota issues
+        const { photo, ...sessionData } = patientData;
+        localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify({ role: 'patient', ...sessionData }));
         toast({ title: 'Login Successful!', description: `Welcome back, ${patientData.name}!` });
         router.push('/dashboard/patient');
     } else {

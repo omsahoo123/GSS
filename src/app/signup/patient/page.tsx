@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -17,6 +18,8 @@ import { Logo } from '@/components/icons';
 import Link from 'next/link';
 
 export const PATIENT_ACCOUNT_KEY = 'patientAccount_';
+export const PATIENT_PHOTO_KEY = 'patientPhoto_';
+
 
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -77,10 +80,13 @@ export default function PatientSignupPage() {
         gender: data.gender,
         address: data.address,
         phone: data.phone,
-        photo: data.photo,
       };
 
+      // Store main data and photo separately
       localStorage.setItem(`${PATIENT_ACCOUNT_KEY}${data.phone}`, JSON.stringify(patientData));
+      if (data.photo) {
+        localStorage.setItem(`${PATIENT_PHOTO_KEY}${data.phone}`, data.photo);
+      }
       
       toast({
         title: 'Account Created!',
@@ -88,11 +94,19 @@ export default function PatientSignupPage() {
       });
       router.push('/login/patient');
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Signup Failed',
-        description: 'Something went wrong. Please try again.',
-      });
+       if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+         toast({
+            variant: 'destructive',
+            title: 'Image Too Large',
+            description: 'The profile picture is too large. Please choose a smaller file.',
+        });
+       } else {
+        toast({
+            variant: 'destructive',
+            title: 'Signup Failed',
+            description: 'Something went wrong. Please try again.',
+        });
+       }
       console.error(error);
     }
   };
