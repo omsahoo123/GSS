@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Save, Camera } from 'lucide-react';
 import { LOGGED_IN_USER_KEY } from '@/app/login/page';
-import { PATIENT_ACCOUNT_KEY } from '@/app/signup/patient/page';
+import { PATIENT_ACCOUNT_KEY, PATIENT_PHOTO_KEY } from '@/app/signup/patient/page';
 
 
 const profileSchema = z.object({
@@ -52,12 +53,12 @@ export default function PatientProfilePage() {
       const patientAccount = JSON.parse(localStorage.getItem(`${PATIENT_ACCOUNT_KEY}${loggedInUser.phone}`) || '{}');
       
       if(patientAccount.phone) {
-        setCurrentUser(patientAccount);
-        form.reset({
-            ...patientAccount,
-        });
-        if(patientAccount.photo) {
-            setPhotoPreview(patientAccount.photo);
+        const patientPhoto = localStorage.getItem(`${PATIENT_PHOTO_KEY}${loggedInUser.phone}`);
+        const fullAccount = { ...patientAccount, photo: patientPhoto };
+        setCurrentUser(fullAccount);
+        form.reset(fullAccount);
+        if(patientPhoto) {
+            setPhotoPreview(patientPhoto);
         }
       }
     } catch(e) {
@@ -83,15 +84,19 @@ export default function PatientProfilePage() {
     if(!currentUser) return;
     try {
       const patientData = {
-        ...currentUser,
         name: data.name,
         age: data.age,
         gender: data.gender,
         address: data.address,
-        photo: data.photo,
+        phone: data.phone,
       };
 
       localStorage.setItem(`${PATIENT_ACCOUNT_KEY}${currentUser.phone}`, JSON.stringify(patientData));
+      if (data.photo) {
+          localStorage.setItem(`${PATIENT_PHOTO_KEY}${currentUser.phone}`, data.photo);
+      }
+      
+      // Update the session data, but without the large photo string
       localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify({ role: 'patient', ...patientData }));
       
       toast({
