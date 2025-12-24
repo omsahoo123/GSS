@@ -83,7 +83,7 @@ export default function HospitalDataPage() {
       });
       replace(allHospitalData);
 
-    } catch (error) {
+    } catch (error) => {
       console.error("Failed to load hospital data from localStorage", error);
     }
   }
@@ -179,7 +179,7 @@ function HospitalCaseCard({ hospitalIndex, control }: { hospitalIndex: number, c
     const districtName = useWatch({ control, name: `hospitalData.${hospitalIndex}.district` });
 
     const addNewEntry = () => {
-        append({ date: format(new Date(), 'yyyy-MM-dd'), diseaseName: 'Flu', caseCount: 0 });
+        append({ date: format(new Date(), 'yyyy-MM-dd'), diseaseName: '', caseCount: 0 });
     };
 
     return (
