@@ -44,6 +44,7 @@ export default function HospitalDataPage() {
   const { toast } = useToast();
   const [availableHospitals, setAvailableHospitals] = useState<{label: string, value: string}[]>([]);
   const [selectedHospital, setSelectedHospital] = useState<string>('');
+  const [isClient, setIsClient] = useState(false);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(hospitalDataSchema),
@@ -89,6 +90,7 @@ export default function HospitalDataPage() {
   }
 
   useEffect(() => {
+    setIsClient(true);
     fetchData();
     window.addEventListener('focus', fetchData);
 
@@ -116,6 +118,10 @@ export default function HospitalDataPage() {
   };
 
   const visibleHospitalIndex = fields.findIndex(field => `${field.district}|${field.hospitalName}` === selectedHospital);
+  
+  if (!isClient) {
+      return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
