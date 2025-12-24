@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -21,6 +22,7 @@ import { Users, Building, Truck, Server } from 'lucide-react';
 import Link from 'next/link';
 import { REGIONAL_DATA_KEY } from './regional-data/page';
 import { LOGGED_IN_USER_KEY } from '@/app/login/page';
+import { DISEASE_DATA_KEY } from './disease-data/page';
 
 type DistrictData = {
   districtName: string;
@@ -48,18 +50,19 @@ export type RegionalData = {
 export default function DataEntryOperatorDashboardPage() {
   const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
   const [userName, setUserName] = useState('Operator');
+  const [totalHospitals, setTotalHospitals] = useState(0);
 
-  useEffect(() => {
+  const fetchData = () => {
     try {
       const storedData = localStorage.getItem(REGIONAL_DATA_KEY);
       if (storedData) {
         const parsedData: DistrictData[] = JSON.parse(storedData);
         const summarizedData = parsedData.map(district => {
           const districtTotals = district.hospitals.reduce((acc, hospital) => {
-            acc.population += hospital.population || 0;
-            acc.beds.occupied += hospital.beds?.occupied || 0;
-            acc.beds.total += hospital.beds?.total || 0;
-            acc.ambulances += hospital.ambulances || 0;
+            acc.population += Number(hospital.population) || 0;
+            acc.beds.occupied += Number(hospital.beds?.occupied) || 0;
+            acc.beds.total += Number(hospital.beds?.total) || 0;
+            acc.ambulances += Number(hospital.ambulances) || 0;
             return acc;
           }, { population: 0, beds: { occupied: 0, total: 0 }, ambulances: 0 });
 
@@ -70,12 +73,28 @@ export default function DataEntryOperatorDashboardPage() {
         });
         setRegionalData(summarizedData);
       }
+      
+      const storedDistrictData = localStorage.getItem(DISEASE_DATA_KEY);
+      if(storedDistrictData) {
+        const parsedDistrictData = JSON.parse(storedDistrictData);
+        const hospitalCount = parsedDistrictData.reduce((count: number, district: any) => count + (district.hospitals?.length || 0), 0);
+        setTotalHospitals(hospitalCount);
+      }
+
       const userData = localStorage.getItem(LOGGED_IN_USER_KEY);
       if (userData) {
         setUserName(JSON.parse(userData).name);
       }
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
+    }
+  }
+
+  useEffect(() => {
+    fetchData();
+    window.addEventListener('focus', fetchData);
+    return () => {
+      window.removeEventListener('focus', fetchData);
     }
   }, []);
 
@@ -119,14 +138,14 @@ export default function DataEntryOperatorDashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Monitored Districts
+              Monitored Hospitals
             </CardTitle>
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalDistricts}</div>
+            <div className="text-2xl font-bold">{totalHospitals}</div>
             <p className="text-xs text-muted-foreground">
-              Total districts with data entries
+              In {totalDistricts} districts
             </p>
           </CardContent>
         </Card>

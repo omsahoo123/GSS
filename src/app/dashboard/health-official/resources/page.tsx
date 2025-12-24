@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -69,12 +70,12 @@ export default function ResourcesPage() {
               const parsedData: DistrictData[] = JSON.parse(storedData);
               const summarizedData = parsedData.map(district => {
                 const districtTotals = district.hospitals.reduce((acc, hospital) => {
-                  acc.population += hospital.population || 0;
-                  acc.beds.occupied += hospital.beds?.occupied || 0;
-                  acc.beds.total += hospital.beds?.total || 0;
-                  acc.ambulances += hospital.ambulances || 0;
-                  acc.staff.doctors += hospital.staff?.doctors || 0;
-                  acc.staff.nurses += hospital.staff?.nurses || 0;
+                  acc.population += Number(hospital.population) || 0;
+                  acc.beds.occupied += Number(hospital.beds?.occupied) || 0;
+                  acc.beds.total += Number(hospital.beds?.total) || 0;
+                  acc.ambulances += Number(hospital.ambulances) || 0;
+                  acc.staff.doctors += Number(hospital.staff?.doctors) || 0;
+                  acc.staff.nurses += Number(hospital.staff?.nurses) || 0;
                   return acc;
                 }, { population: 0, beds: { occupied: 0, total: 0 }, ambulances: 0, staff: { doctors: 0, nurses: 0 } });
       

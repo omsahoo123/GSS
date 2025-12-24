@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 import {
   Card,
@@ -42,7 +42,18 @@ import { Input } from '@/components/ui/input';
 import { Download, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { REGIONAL_DATA_KEY } from '../../data-entry-operator/regional-data/page';
-import { RegionalData } from '../../data-entry-operator/page';
+
+type DistrictData = {
+  districtName: string;
+  hospitals: {
+    population: number;
+    beds: {
+        occupied: number;
+        total: number;
+    };
+    ambulances: number;
+  }[]
+}
 
 const reportTypes = {
   'disease-summary': 'Weekly Disease Summary',
@@ -76,8 +87,8 @@ export default function ReportsPage() {
     try {
       const storedRegionalData = localStorage.getItem(REGIONAL_DATA_KEY);
       if (storedRegionalData) {
-        const regionalData: RegionalData[] = JSON.parse(storedRegionalData);
-        const districtNames = regionalData.map((d) => d.district);
+        const regionalData: DistrictData[] = JSON.parse(storedRegionalData);
+        const districtNames = regionalData.map((d) => d.districtName);
         setRegions(['all', ...districtNames]);
       }
     } catch (error) {

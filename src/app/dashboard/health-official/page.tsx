@@ -105,10 +105,10 @@ export default function HealthOfficialDashboardPage() {
                  const parsedData: DistrictData[] = JSON.parse(storedRegionalData);
                  const summarizedData = parsedData.map(district => {
                     const districtTotals = district.hospitals.reduce((acc, hospital) => {
-                      acc.population += hospital.population || 0;
-                      acc.beds.occupied += hospital.beds?.occupied || 0;
-                      acc.beds.total += hospital.beds?.total || 0;
-                      acc.ambulances += hospital.ambulances || 0;
+                      acc.population += Number(hospital.population) || 0;
+                      acc.beds.occupied += Number(hospital.beds?.occupied) || 0;
+                      acc.beds.total += Number(hospital.beds?.total) || 0;
+                      acc.ambulances += Number(hospital.ambulances) || 0;
                       return acc;
                     }, { population: 0, beds: { occupied: 0, total: 0 }, ambulances: 0 });
           
@@ -140,7 +140,7 @@ export default function HealthOfficialDashboardPage() {
         const regionCases = diseaseData
             .filter(d => d.district === region.district)
             .reduce((total, hospital) => {
-                return total + (hospital.entries?.reduce((sum, entry) => sum + entry.caseCount, 0) || 0);
+                return total + (hospital.entries?.reduce((sum, entry) => sum + Number(entry.caseCount), 0) || 0);
             }, 0);
         return {
             region: region.district,
@@ -160,7 +160,7 @@ export default function HealthOfficialDashboardPage() {
 
     const activeAlertsCount = alertData.filter(a => a.status === 'Active').length;
     const totalPopulation = regionalData.reduce((sum, r) => sum + (r.population || 0), 0);
-    const hospitalsAtCapacity = regionalData.filter(r => r.beds.total > 0 && (r.beds.occupied / r.beds.total) >= 0.95).length;
+    const districtsAtCapacity = regionalData.filter(r => r.beds.total > 0 && (r.beds.occupied / r.beds.total) >= 0.95).length;
 
 
   return (
@@ -207,12 +207,12 @@ export default function HealthOfficialDashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Hospitals At Capacity
+              Districts At Capacity
             </CardTitle>
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{hospitalsAtCapacity}/{regionalData.length}</div>
+            <div className="text-2xl font-bold">{districtsAtCapacity}/{regionalData.length}</div>
             <p className="text-xs text-muted-foreground">
               Districts with high occupancy
             </p>
